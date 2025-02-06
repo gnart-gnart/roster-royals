@@ -83,9 +83,27 @@ function HomePage() {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
-          <Typography variant="h4" sx={{ mb: 3 }}>
-            Your Groups
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h4">
+              Your Groups
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              size="small"
+              sx={{
+                backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                border: '1px solid rgba(96, 165, 250, 0.3)',
+                color: '#f8fafc',
+                '&:hover': {
+                  backgroundColor: 'rgba(96, 165, 250, 0.2)',
+                  border: '1px solid rgba(96, 165, 250, 0.6)',
+                },
+              }}
+            >
+              Create Group
+            </Button>
+          </Box>
           <Grid container spacing={2}>
             {mockGroups.map((group) => (
               <Grid item xs={12} key={group.id}>
