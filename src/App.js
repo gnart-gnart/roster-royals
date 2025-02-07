@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import GroupPage from './pages/GroupPage';
+import CreateGroupPage from './pages/CreateGroupPage';
 
 const theme = createTheme({
   palette: {
@@ -98,6 +99,7 @@ function App() {
           <Route path="/" element={<LoginPage />} />
           <Route path="/home" element={<HomePage />} />
           <Route path="/group/:id" element={<GroupPage />} />
+          <Route path="/create-group" element={<CreateGroupPage />} />
         </Routes>
       </Router>
     </ThemeProvider>
