@@ -88,4 +88,11 @@ def handle_friend_request(request, request_id):
             return Response({'message': 'Friend request rejected'})
             
     except FriendRequest.DoesNotExist:
-        return Response({'error': 'Request not found'}, status=404) 
+        return Response({'error': 'Request not found'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_friends(request):
+    user = request.user
+    friends = user.friends.all()
+    return Response(UserSerializer(friends, many=True).data) 
