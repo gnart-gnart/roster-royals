@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import GroupPage from './pages/GroupPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import CreateGroupPage from './pages/CreateGroupPage';
+import CreateGroupPage from './pages/CreateGroupPage';
 
 const theme = createTheme({
   palette: {
@@ -98,16 +99,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<LoginPage />} />
-          <Route path="/home" element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          } />
-          <Route path="/group/:id" element={
-            <ProtectedRoute>
-              <GroupPage />
-            </ProtectedRoute>
-          } />
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/group/:id" element={<GroupPage />} />
           <Route path="/create-group" element={
             <ProtectedRoute>
               <CreateGroupPage />
