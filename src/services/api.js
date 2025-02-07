@@ -9,7 +9,7 @@ const getHeaders = () => {
 };
 
 export const createGroup = async (groupData) => {
-  const response = await fetch(`${API_URL}/groups/`, {
+  const response = await fetch(`${API_URL}/groups/create/`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(groupData),
@@ -56,6 +56,30 @@ export const handleFriendRequest = async (requestId, action) => {
 
   if (!response.ok) {
     throw new Error('Failed to handle friend request');
+  }
+
+  return response.json();
+};
+
+export const getFriends = async () => {
+  const response = await fetch(`${API_URL}/friends/`, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch friends');
+  }
+
+  return response.json();
+};
+
+export const getGroups = async () => {
+  const response = await fetch(`${API_URL}/groups/`, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch groups');
   }
 
   return response.json();

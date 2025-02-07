@@ -11,7 +11,14 @@ class CreateGroupView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         group = serializer.save(president=self.request.user)
-        group.members.add(self.request.user)
+        group.members.add(self.request.user)  # Add the creator as a member
+        if 'members' in self.request.data:
+            for member_id in self.request.data['members']:
+                try:
+                    user = User.objects.get(id=member_id)
+                    group.members.add(user)
+                except User.DoesNotExist:
+                    pass  # Skip invalid member IDs
         return group
 
 @api_view(['POST'])
@@ -25,4 +32,11 @@ def add_group_member(request, group_id, user_id):
     except BettingGroup.DoesNotExist:
         return Response({'error': 'Group not found or not authorized'}, status=404)
     except User.DoesNotExist:
-        return Response({'error': 'User not found'}, status=404) 
+        return Response({'error': 'User not found'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_groups(request):
+    user = request.user
+    groups = BettingGroup.objects.filter(members=user)
+    return Response(BettingGroupSerializer(groups, many=True).data) 

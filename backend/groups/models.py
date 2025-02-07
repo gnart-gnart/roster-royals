@@ -5,9 +5,9 @@ class BettingGroup(models.Model):
     """Model for betting groups"""
     name = models.CharField(max_length=100)
     sport = models.CharField(max_length=50)
+    president = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='owned_groups')
+    members = models.ManyToManyField('users.User', related_name='betting_groups')
     created_at = models.DateTimeField(auto_now_add=True)
-    president = models.ForeignKey(User, related_name='owned_groups', on_delete=models.CASCADE)
-    members = models.ManyToManyField(User, related_name='joined_groups')
 
 class Bet(models.Model):
     """Model for bets within a group"""

@@ -94,12 +94,22 @@ function GroupPage() {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-        <IconButton 
+        <Button
           onClick={() => navigate('/home')}
-          sx={{ mr: 2, color: 'primary.main' }}
+          startIcon={<ArrowBackIcon />}
+          sx={{
+            mr: 2,
+            backgroundColor: 'rgba(96, 165, 250, 0.1)',
+            border: '1px solid rgba(96, 165, 250, 0.3)',
+            color: '#f8fafc',
+            '&:hover': {
+              backgroundColor: 'rgba(96, 165, 250, 0.2)',
+              border: '1px solid rgba(96, 165, 250, 0.6)',
+            },
+          }}
         >
-          <ArrowBackIcon />
-        </IconButton>
+          Back
+        </Button>
         <Typography variant="h4">
           {groupNames[id] || 'Group Details'}
         </Typography>
@@ -107,51 +117,19 @@ function GroupPage() {
 
       <Grid container spacing={4}>
         {/* Scoreboard */}
-        <Grid item xs={12}>
-          <Typography variant="h5" sx={{ mb: 2 }}>
+        <Grid item xs={12} md={4}>
+          <Typography variant="h5" gutterBottom>
             Leaderboard
           </Typography>
-          <TableContainer component={Paper} sx={{ 
+          <Card sx={{
             backgroundColor: 'rgba(30, 41, 59, 0.7)',
             backdropFilter: 'blur(8px)',
             border: '1px solid rgba(96, 165, 250, 0.2)',
-            '& .MuiTableCell-root': {
-              color: '#f8fafc',
-              borderBottom: '1px solid rgba(96, 165, 250, 0.1)',
-            },
-            '& .MuiTableCell-head': {
-              color: '#cbd5e1',
-              fontWeight: 600,
-            },
           }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Rank</TableCell>
-                  <TableCell>Player</TableCell>
-                  <TableCell align="right">Points</TableCell>
-                  <TableCell align="right">Win Rate</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {mockMembers.map((member, index) => (
-                  <TableRow key={member.name}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar sx={{ width: 24, height: 24, mr: 1, fontSize: '0.8rem' }}>
-                          {member.avatar}
-                        </Avatar>
-                        {member.name}
-                      </Box>
-                    </TableCell>
-                    <TableCell align="right">{member.points}</TableCell>
-                    <TableCell align="right">{member.winRate}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              No members in this group yet.
+            </Box>
+          </Card>
         </Grid>
 
         {/* Available Bets */}
@@ -159,46 +137,15 @@ function GroupPage() {
           <Typography variant="h5" sx={{ mb: 2 }}>
             Available Bets
           </Typography>
-          <Grid container spacing={3}>
-            {mockBets.map((bet) => (
-              <Grid item xs={12} md={6} key={bet.id}>
-                <Card sx={{
-                  backgroundColor: 'rgba(30, 41, 59, 0.7)',
-                  backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(96, 165, 250, 0.2)',
-                }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Box>
-                        <Typography variant="h6">{bet.match}</Typography>
-                        <Typography color="textSecondary">
-                          {bet.date} • {bet.type}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                          Odds: {bet.odds}
-                        </Typography>
-                        <Typography variant="body2" color="primary">
-                          Points: {bet.points}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                        <Chip
-                          label={bet.status}
-                          color={bet.status === 'Open' ? 'success' : 'default'}
-                          sx={{ mb: 1 }}
-                        />
-                        {bet.status === 'Open' && (
-                          <Button variant="contained" color="primary">
-                            Place Bet
-                          </Button>
-                        )}
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+          <Card sx={{
+            backgroundColor: 'rgba(30, 41, 59, 0.7)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(96, 165, 250, 0.2)',
+          }}>
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              No bets available yet.
+            </Box>
+          </Card>
         </Grid>
       </Grid>
     </Container>

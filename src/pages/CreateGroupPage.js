@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { createGroup } from '../services/api';
+import { createGroup, getFriends } from '../services/api';
 
 function CreateGroupPage() {
   const navigate = useNavigate();
@@ -32,15 +32,8 @@ function CreateGroupPage() {
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [selectedSport, setSelectedSport] = useState('');
   const [error, setError] = useState('');
-
-  // Mock data - will be replaced with API calls
-  const mockFriends = [
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' },
-    { id: 3, name: 'Mike Johnson' },
-    { id: 4, name: 'Sarah Wilson' },
-    { id: 5, name: 'David Kim' },
-  ];
+  const [friends, setFriends] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const sports = [
     { id: 'nfl', name: 'NFL Football' },
@@ -49,6 +42,21 @@ function CreateGroupPage() {
   ];
 
   const steps = ['Group Details', 'Sport Selection', 'Review'];
+
+  useEffect(() => {
+    const loadFriends = async () => {
+      try {
+        const friendsData = await getFriends();
+        setFriends(friendsData);
+      } catch (err) {
+        setError('Failed to load friends');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFriends();
+  }, []);
 
   const handleNext = () => {
     setActiveStep((prev) => prev + 1);
@@ -72,7 +80,7 @@ function CreateGroupPage() {
       await createGroup({
         name: groupName,
         sport: selectedSport,
-        members: selectedFriends,
+        members: selectedFriends.length > 0 ? selectedFriends : [],
       });
       navigate('/home');
     } catch (err) {
@@ -96,23 +104,29 @@ function CreateGroupPage() {
               Select Friends
             </Typography>
             <Card sx={{ maxHeight: 300, overflow: 'auto' }}>
-              <List>
-                {mockFriends.map((friend) => (
-                  <ListItem
-                    key={friend.id}
-                    button
-                    onClick={() => handleFriendToggle(friend.id)}
-                  >
-                    <ListItemIcon>
-                      <Checkbox
-                        checked={selectedFriends.includes(friend.id)}
-                        edge="start"
-                      />
-                    </ListItemIcon>
-                    <ListItemText primary={friend.name} />
-                  </ListItem>
-                ))}
-              </List>
+              {loading ? (
+                <Box sx={{ p: 2, textAlign: 'center' }}>Loading friends...</Box>
+              ) : error ? (
+                <Box sx={{ p: 2, color: 'error.main' }}>{error}</Box>
+              ) : (
+                <List>
+                  {friends.map((friend) => (
+                    <ListItem
+                      key={friend.id}
+                      button
+                      onClick={() => handleFriendToggle(friend.id)}
+                    >
+                      <ListItemIcon>
+                        <Checkbox
+                          checked={selectedFriends.includes(friend.id)}
+                          edge="start"
+                        />
+                      </ListItemIcon>
+                      <ListItemText primary={friend.username} />
+                    </ListItem>
+                  ))}
+                </List>
+              )}
             </Card>
           </Box>
         );
@@ -165,7 +179,7 @@ function CreateGroupPage() {
                 {selectedFriends.map(friendId => (
                   <Chip
                     key={friendId}
-                    label={mockFriends.find(f => f.id === friendId)?.name}
+                    label={friends.find(f => f.id === friendId)?.username}
                     variant="outlined"
                   />
                 ))}
@@ -221,7 +235,7 @@ function CreateGroupPage() {
             <Button
               variant="contained"
               onClick={handleCreateGroup}
-              disabled={!groupName || !selectedSport || selectedFriends.length === 0}
+              disabled={!groupName || !selectedSport}
             >
               Create Group
             </Button>
@@ -230,7 +244,7 @@ function CreateGroupPage() {
               variant="contained"
               onClick={handleNext}
               disabled={
-                (activeStep === 0 && (!groupName || selectedFriends.length === 0)) ||
+                (activeStep === 0 && !groupName) ||
                 (activeStep === 1 && !selectedSport)
               }
             >
