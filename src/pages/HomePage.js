@@ -91,6 +91,7 @@ function HomePage() {
               variant="contained"
               startIcon={<AddIcon />}
               size="small"
+              onClick={() => navigate('/create-group')}
               sx={{
                 backgroundColor: 'rgba(96, 165, 250, 0.1)',
                 border: '1px solid rgba(96, 165, 250, 0.3)',
