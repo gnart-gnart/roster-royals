@@ -19,9 +19,11 @@ import {
   Select,
   MenuItem,
   Chip,
+  Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { createGroup } from '../services/api';
 
 function CreateGroupPage() {
   const navigate = useNavigate();
@@ -29,8 +31,9 @@ function CreateGroupPage() {
   const [groupName, setGroupName] = useState('');
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [selectedSport, setSelectedSport] = useState('');
-  const [selectedBets, setSelectedBets] = useState([]);
+  const [error, setError] = useState('');
 
+  // Mock data - will be replaced with API calls
   const mockFriends = [
     { id: 1, name: 'John Doe' },
     { id: 2, name: 'Jane Smith' },
@@ -64,44 +67,17 @@ function CreateGroupPage() {
     });
   };
 
-  const handleSelectAllFriends = () => {
-    if (selectedFriends.length === mockFriends.length) {
-      setSelectedFriends([]);
-    } else {
-      setSelectedFriends(mockFriends.map(friend => friend.id));
+  const handleCreateGroup = async () => {
+    try {
+      await createGroup({
+        name: groupName,
+        sport: selectedSport,
+        members: selectedFriends,
+      });
+      navigate('/home');
+    } catch (err) {
+      setError('Failed to create group. Please try again.');
     }
-  };
-
-  const handleBetToggle = (betId) => {
-    setSelectedBets(prev => {
-      if (prev.includes(betId)) {
-        return prev.filter(id => id !== betId);
-      }
-      return [...prev, betId];
-    });
-  };
-
-  const handleCreateGroup = () => {
-    // TODO: Implement group creation with backend
-    navigate('/home');
-  };
-
-  const sportBets = {
-    nfl: [
-      { id: 'nfl_1', name: 'Week 1 - Chiefs vs Jets', type: 'Spread', points: 100 },
-      { id: 'nfl_2', name: 'Week 1 - Cowboys vs Eagles', type: 'Moneyline', points: 150 },
-      { id: 'nfl_3', name: 'Week 1 - Bills vs Dolphins', type: 'Over/Under', points: 100 },
-    ],
-    nba: [
-      { id: 'nba_1', name: 'Lakers vs Warriors', type: 'Spread', points: 100 },
-      { id: 'nba_2', name: 'Celtics vs Bucks', type: 'Moneyline', points: 150 },
-      { id: 'nba_3', name: 'Heat vs Nuggets', type: 'Over/Under', points: 100 },
-    ],
-    mlb: [
-      { id: 'mlb_1', name: 'Yankees vs Red Sox', type: 'Moneyline', points: 100 },
-      { id: 'mlb_2', name: 'Dodgers vs Giants', type: 'Run Line', points: 150 },
-      { id: 'mlb_3', name: 'Cubs vs Cardinals', type: 'Over/Under', points: 100 },
-    ],
   };
 
   const renderStepContent = (step) => {
@@ -116,23 +92,9 @@ function CreateGroupPage() {
               onChange={(e) => setGroupName(e.target.value)}
               sx={{ mb: 4 }}
             />
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">
-                Select Friends
-              </Typography>
-              <Button
-                size="small"
-                onClick={handleSelectAllFriends}
-                sx={{
-                  color: 'primary.main',
-                  '&:hover': {
-                    backgroundColor: 'rgba(96, 165, 250, 0.1)',
-                  },
-                }}
-              >
-                {selectedFriends.length === mockFriends.length ? 'Deselect All' : 'Select All'}
-              </Button>
-            </Box>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Select Friends
+            </Typography>
             <Card sx={{ maxHeight: 300, overflow: 'auto' }}>
               <List>
                 {mockFriends.map((friend) => (
@@ -162,10 +124,7 @@ function CreateGroupPage() {
               <InputLabel>Select Sport</InputLabel>
               <Select
                 value={selectedSport}
-                onChange={(e) => {
-                  setSelectedSport(e.target.value);
-                  setSelectedBets([]); // Reset selected bets when sport changes
-                }}
+                onChange={(e) => setSelectedSport(e.target.value)}
                 label="Select Sport"
               >
                 {sports.map((sport) => (
@@ -175,40 +134,6 @@ function CreateGroupPage() {
                 ))}
               </Select>
             </FormControl>
-
-            {selectedSport && (
-              <Box sx={{ mt: 4 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  Optional: Select Initial Bets
-                </Typography>
-                <Card sx={{ bgcolor: 'rgba(30, 41, 59, 0.7)' }}>
-                  <List>
-                    {sportBets[selectedSport].map((bet) => (
-                      <ListItem
-                        key={bet.id}
-                        button
-                        onClick={() => handleBetToggle(bet.id)}
-                      >
-                        <ListItemIcon>
-                          <Checkbox
-                            checked={selectedBets.includes(bet.id)}
-                            edge="start"
-                          />
-                        </ListItemIcon>
-                        <ListItemText 
-                          primary={bet.name}
-                          secondary={
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              {bet.type} • {bet.points} points
-                            </Typography>
-                          }
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                </Card>
-              </Box>
-            )}
           </Box>
         );
 
@@ -231,29 +156,6 @@ function CreateGroupPage() {
               <Typography>
                 {sports.find(s => s.id === selectedSport)?.name || 'Not selected'}
               </Typography>
-            </Box>
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle1" color="primary">
-                Initial Bets
-              </Typography>
-              {selectedBets.length > 0 ? (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                  {selectedBets.map(betId => {
-                    const bet = sportBets[selectedSport].find(b => b.id === betId);
-                    return (
-                      <Chip
-                        key={betId}
-                        label={`${bet.name} (${bet.type})`}
-                        variant="outlined"
-                      />
-                    );
-                  })}
-                </Box>
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  No initial bets selected
-                </Typography>
-              )}
             </Box>
             <Box>
               <Typography variant="subtitle1" color="primary">
@@ -291,6 +193,12 @@ function CreateGroupPage() {
           Create New Group
         </Typography>
       </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
 
       <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
         {steps.map((label) => (
@@ -335,4 +243,4 @@ function CreateGroupPage() {
   );
 }
 
-export default CreateGroupPage; 
+export default CreateGroupPage;
