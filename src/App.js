@@ -6,7 +6,6 @@ import HomePage from './pages/HomePage';
 import GroupPage from './pages/GroupPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import CreateGroupPage from './pages/CreateGroupPage';
-import CreateGroupPage from './pages/CreateGroupPage';
 
 const theme = createTheme({
   palette: {
