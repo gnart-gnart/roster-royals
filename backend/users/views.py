@@ -5,7 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from .serializers import UserSerializer, UserRegistrationSerializer
-from .models import User, FriendRequest
+from .models import User, FriendRequest, Notification, Friendship
+from django.db.models import Q
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
@@ -40,13 +41,57 @@ def login_view(request):
 def send_friend_request(request, user_id):
     try:
         to_user = User.objects.get(id=user_id)
-        FriendRequest.objects.create(
+        
+        # Prevent self-friend requests
+        if request.user.id == user_id:
+            return Response(
+                {'error': 'Cannot send friend request to yourself'}, 
+                status=400
+            )
+        
+        # Check if request already exists
+        existing_request = FriendRequest.objects.filter(
             from_user=request.user,
             to_user=to_user
+        ).first()
+        
+        if existing_request:
+            if existing_request.status == 'pending':
+                return Response(
+                    {'error': 'Friend request already sent'}, 
+                    status=400
+                )
+            elif existing_request.status == 'accepted':
+                return Response(
+                    {'error': 'Already friends'}, 
+                    status=400
+                )
+            else:  # If rejected, allow new request
+                existing_request.delete()
+        
+        # Check if they're already friends
+        if request.user.friends.filter(id=user_id).exists():
+            return Response(
+                {'error': 'Already friends'}, 
+                status=400
+            )
+            
+        # Create the friend request
+        FriendRequest.objects.create(
+            from_user=request.user,
+            to_user=to_user,
+            status='pending'
         )
         return Response({'message': 'Friend request sent'})
+        
     except User.DoesNotExist:
         return Response({'error': 'User not found'}, status=404)
+    except Exception as e:
+        print(f"Error in send_friend_request: {str(e)}")  # For debugging
+        return Response(
+            {'error': 'Failed to send friend request'}, 
+            status=500
+        )
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -77,11 +122,23 @@ def handle_friend_request(request, request_id):
         action = request.data.get('action')
         
         if action == 'accept':
+            # Update request status
             friend_request.status = 'accepted'
             friend_request.save()
-            friend_request.from_user.friends.add(request.user)
-            friend_request.to_user.friends.add(friend_request.from_user)
+            
+            # Create friendship records in both directions
+            Friendship.objects.create(user=request.user, friend=friend_request.from_user)
+            Friendship.objects.create(user=friend_request.from_user, friend=request.user)
+            
+            # Create notification for sender
+            Notification.objects.create(
+                user=friend_request.from_user,
+                message=f"{request.user.username} accepted your friend request",
+                notification_type='friend_accepted'
+            )
+            
             return Response({'message': 'Friend request accepted'})
+            
         elif action == 'reject':
             friend_request.status = 'rejected'
             friend_request.save()
@@ -93,6 +150,96 @@ def handle_friend_request(request, request_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_friends(request):
-    user = request.user
-    friends = user.friends.all()
-    return Response(UserSerializer(friends, many=True).data) 
+    # Get friends through the Friendship model
+    friendships = Friendship.objects.filter(user=request.user)
+    friends = [friendship.friend for friendship in friendships]
+    return Response(UserSerializer(friends, many=True).data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def search_users(request):
+    query = request.GET.get('q', '')
+    if len(query) < 2:
+        return Response([])
+    
+    current_user = request.user
+    users = User.objects.filter(username__icontains=query)\
+        .exclude(id=current_user.id)\
+        .exclude(is_superuser=True)
+    
+    results = []
+    for user in users[:10]:  # Limit to 10 results
+        # Check friendship status
+        is_friend = current_user.friends.filter(id=user.id).exists()
+        pending_request = FriendRequest.objects.filter(
+            from_user=current_user,
+            to_user=user,
+            status='pending'
+        ).exists()
+        
+        results.append({
+            'id': user.id,
+            'username': user.username,
+            'points': user.points,
+            'friendStatus': 'friends' if is_friend else 'pending' if pending_request else 'none'
+        })
+    
+    return Response(results)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_notifications(request):
+    notifications = Notification.objects.filter(user=request.user)
+    return Response([{
+        'id': n.id,
+        'message': n.message,
+        'type': n.notification_type,
+        'created_at': n.created_at,
+        'is_read': n.is_read
+    } for n in notifications])
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def mark_notifications_read(request):
+    # Get all unread notifications for the user
+    notifications = Notification.objects.filter(
+        user=request.user,
+        is_read=False
+    )
+    
+    # Mark all as read
+    notifications.update(is_read=True)
+    
+    # Delete non-actionable notifications that are read
+    Notification.objects.filter(
+        user=request.user,
+        is_read=True,
+        requires_action=False
+    ).delete()
+    
+    return Response({'message': 'Notifications updated'})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def remove_friend(request, friend_id):
+    try:
+        friend = User.objects.get(id=friend_id)
+        
+        # Remove the friendship records
+        Friendship.objects.filter(
+            (Q(user=request.user) & Q(friend=friend)) |
+            (Q(user=friend) & Q(friend=request.user))
+        ).delete()
+        
+        # Also remove any existing friend requests
+        FriendRequest.objects.filter(
+            (Q(from_user=request.user) & Q(to_user=friend)) |
+            (Q(from_user=friend) & Q(to_user=request.user))
+        ).delete()
+        
+        # Clear from ManyToMany field (this should happen automatically due to through model)
+        request.user.friends.remove(friend)
+        
+        return Response({'message': 'Friend removed successfully'})
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404) 

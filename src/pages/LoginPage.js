@@ -25,14 +25,26 @@ function LoginPage() {
     setError('');
     
     try {
-      if (isLogin) {
-        await login(formData.username, formData.password);
+      const response = await fetch('http://localhost:8000/api/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: formData.username, password: formData.password }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        console.log('Token saved:', data.token);
+        navigate('/home');
       } else {
-        await register(formData.username, formData.email, formData.password);
+        setError(data.error || 'Login failed');
       }
-      navigate('/home');
     } catch (err) {
-      setError(err.message);
+      setError('Failed to connect to server');
+      console.error('Login error:', err);
     }
   };
 

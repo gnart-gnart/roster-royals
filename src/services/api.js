@@ -2,10 +2,29 @@ const API_URL = 'http://localhost:8000/api';
 
 const getHeaders = () => {
   const token = localStorage.getItem('token');
+  console.log('Using token:', token); // Debug log
   return {
     'Content-Type': 'application/json',
     'Authorization': `Token ${token}`,
   };
+};
+
+const handleResponse = async (response) => {
+  if (response.status === 401) {
+    // Clear invalid token
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/';
+    throw new Error('Please login again');
+  }
+  
+  if (!response.ok) {
+    const text = await response.text();
+    console.error('API Error:', response.status, text);
+    throw new Error(text || 'API request failed');
+  }
+  
+  return response.json();
 };
 
 export const createGroup = async (groupData) => {
@@ -23,13 +42,14 @@ export const createGroup = async (groupData) => {
 };
 
 export const sendFriendRequest = async (userId) => {
-  const response = await fetch(`${API_URL}/friend-request/${userId}/`, {
+  const response = await fetch(`${API_URL}/friend-request/send/${userId}/`, {
     method: 'POST',
     headers: getHeaders(),
   });
 
   if (!response.ok) {
-    throw new Error('Failed to send friend request');
+    const data = await response.json();
+    throw new Error(data.error || 'Failed to send friend request');
   }
 
   return response.json();
@@ -65,12 +85,7 @@ export const getFriends = async () => {
   const response = await fetch(`${API_URL}/friends/`, {
     headers: getHeaders(),
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch friends');
-  }
-
-  return response.json();
+  return handleResponse(response);
 };
 
 export const getGroups = async () => {
@@ -80,6 +95,83 @@ export const getGroups = async () => {
 
   if (!response.ok) {
     throw new Error('Failed to fetch groups');
+  }
+
+  return response.json();
+};
+
+export const searchUsers = async (query) => {
+  const response = await fetch(`${API_URL}/users/search/?q=${encodeURIComponent(query)}`, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to search users');
+  }
+
+  return response.json();
+};
+
+export const getNotifications = async () => {
+  const response = await fetch(`${API_URL}/notifications/`, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch notifications');
+  }
+
+  return response.json();
+};
+
+export const markNotificationsRead = async () => {
+  const response = await fetch(`${API_URL}/notifications/mark-read/`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to mark notifications as read');
+  }
+
+  return response.json();
+};
+
+export const removeFriend = async (friendId) => {
+  const response = await fetch(`${API_URL}/friends/remove/${friendId}/`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to remove friend');
+  }
+
+  return response.json();
+};
+
+export const inviteToGroup = async (groupId, userId) => {
+  const response = await fetch(`${API_URL}/groups/${groupId}/invite/${userId}/`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to send invite');
+  }
+
+  return response.json();
+};
+
+export const handleGroupInvite = async (inviteId, action) => {
+  const response = await fetch(`${API_URL}/group-invites/${inviteId}/handle/`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ action }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to handle invite');
   }
 
   return response.json();

@@ -1,4 +1,3 @@
-
 # Roster Royals
 
 A social sports betting platform where users can create groups, add friends, and compete using a points-based system.
@@ -69,10 +68,20 @@ source venv/bin/activate  # or `venv\Scripts\activate` on Windows
 cd backend
 pip install -r requirements.txt
 
-# Setup database
-python manage.py migrate
+# Setup database (this will reset migrations and apply them)
+./reset_db.sh
+
+# Create superuser (only needed once)
 python manage.py createsuperuser
 ```
+
+### Database Schema
+
+The database schema is documented in detail in [backend/DATABASE_SCHEMA.md](backend/DATABASE_SCHEMA.md). This includes:
+- Table structures and relationships
+- SQL schema details
+- Entity Relationship Diagram (ERD)
+- Indexes and constraints
 
 ### Frontend Setup
 

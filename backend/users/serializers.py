@@ -4,7 +4,7 @@ from .models import User, FriendRequest
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'points', 'friends')
+        fields = ('id', 'username', 'email', 'points')
         read_only_fields = ('points',)
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
