@@ -1,11 +1,19 @@
 from django.db import models
 from users.models import User
 
+class Group(models.Model):
+    """Model for betting groups"""
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    members = models.ManyToManyField(User, related_name='social_groups')
+    president = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_social_groups')
+    created_at = models.DateTimeField(auto_now_add=True)
+
 class BettingGroup(models.Model):
     """Model for betting groups"""
     name = models.CharField(max_length=100)
     sport = models.CharField(max_length=50)
-    president = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='owned_groups')
+    president = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='owned_betting_groups')
     members = models.ManyToManyField('users.User', related_name='betting_groups')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -37,4 +45,17 @@ class UserBet(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'bet') 
+        unique_together = ('user', 'bet')
+
+class GroupInvite(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='invites')
+    to_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_invites')
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=[
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+    ], default='pending')
+
+    class Meta:
+        unique_together = ('group', 'to_user') 
