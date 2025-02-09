@@ -11,9 +11,10 @@ class CreateGroupView(generics.CreateAPIView):
     serializer_class = BettingGroupSerializer
 
     def perform_create(self, serializer):
-        # Only add the creator as president, not as a member
+        # Create group with current user as president
         group = serializer.save(president=self.request.user)
-        # Don't automatically add members - they need to be invited and accept
+        # Add president as first member
+        group.members.add(self.request.user)
         return group
 
 @api_view(['POST'])
@@ -141,4 +142,24 @@ def handle_group_invite(request, invite_id):
             return Response({'message': 'Invite rejected'})
             
     except GroupInvite.DoesNotExist:
-        return Response({'error': 'Invite not found'}, status=404) 
+        return Response({'error': 'Invite not found'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_group(request, group_id):
+    print(f"\nFetching group details:")
+    print(f"- Group ID: {group_id}")
+    print(f"- User: {request.user.username}")
+    
+    try:
+        group = BettingGroup.objects.get(id=group_id)
+        print(f"Found group: {group.name}")
+        serialized_data = BettingGroupSerializer(group).data
+        print(f"Serialized data: {serialized_data}")
+        return Response(serialized_data)
+    except BettingGroup.DoesNotExist:
+        print(f"Group {group_id} not found")
+        return Response({'error': 'Group not found'}, status=404)
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return Response({'error': str(e)}, status=500) 

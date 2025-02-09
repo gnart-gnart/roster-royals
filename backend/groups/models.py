@@ -4,7 +4,8 @@ from users.models import User
 class BettingGroup(models.Model):
     """Model for betting groups"""
     name = models.CharField(max_length=100)
-    sport = models.CharField(max_length=50)
+    description = models.TextField(blank=True, null=True)  # Optional description
+    sports = models.JSONField(default=list, blank=True)  # Store multiple sports as JSON array
     president = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='owned_betting_groups')
     members = models.ManyToManyField('users.User', related_name='betting_groups')
     created_at = models.DateTimeField(auto_now_add=True)

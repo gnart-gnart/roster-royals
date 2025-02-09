@@ -33,7 +33,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SearchIcon from '@mui/icons-material/Search';
 import NavBar from '../components/NavBar';
-import { inviteToGroup, getFriends, getGroups } from '../services/api';
+import { inviteToGroup, getFriends, getGroups, getGroup } from '../services/api';
 
 function GroupPage() {
   const { id } = useParams();
@@ -41,6 +41,8 @@ function GroupPage() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [friends, setFriends] = useState([]);
   const [group, setGroup] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const user = JSON.parse(localStorage.getItem('user'));
   const isPresident = group?.president?.id === user?.id;
   const [members, setMembers] = useState([]);
@@ -117,11 +119,13 @@ function GroupPage() {
   useEffect(() => {
     const loadGroup = async () => {
       try {
-        const groups = await getGroups();
-        const foundGroup = groups.find(g => g.id === parseInt(id));
-        setGroup(foundGroup);
+        const data = await getGroup(id);  // API call to get group details
+        setGroup(data);
       } catch (err) {
-        console.error('Failed to load group:', err);
+        setError('Failed to load group');
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
     loadGroup();
@@ -196,14 +200,18 @@ function GroupPage() {
     friend.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  if (!group) return <div>Group not found</div>;
+
   return (
     <>
       <NavBar />
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <Button
-            onClick={() => navigate('/home')}
             startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/home')}
             sx={{
               mr: 2,
               backgroundColor: 'rgba(96, 165, 250, 0.1)',
@@ -218,9 +226,26 @@ function GroupPage() {
             Back
           </Button>
           <Typography variant="h4">
-            {groupNames[id] || 'Group Details'}
+            {group?.name || 'Loading...'}
           </Typography>
         </Box>
+
+        {group?.description && (
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              mb: 3,
+              color: 'text.secondary',
+              backgroundColor: 'rgba(30, 41, 59, 0.7)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(96, 165, 250, 0.2)',
+              borderRadius: 1,
+              p: 2
+            }}
+          >
+            {group.description}
+          </Typography>
+        )}
 
         {isPresident && (
           <Button

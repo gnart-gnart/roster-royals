@@ -8,8 +8,8 @@ class BettingGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BettingGroup
-        fields = ['id', 'name', 'sport', 'president', 'members', 'created_at']
-        read_only_fields = ['president']
+        fields = ['id', 'name', 'description', 'sports', 'president', 'members', 'created_at']
+        read_only_fields = ['president', 'members', 'created_at']
 
     def create(self, validated_data):
         members = validated_data.pop('members', [])

@@ -27,13 +27,13 @@ import GroupCard from '../components/GroupCard';
 import NavBar from '../components/NavBar';
 
 function HomePage() {
-  const navigate = useNavigate();
   const [showAllFriends, setShowAllFriends] = useState(false);
   const [groups, setGroups] = useState([]);
   const [friends, setFriends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const FRIENDS_DISPLAY_LIMIT = 5;
+  const navigate = useNavigate();
 
   const loadGroups = async () => {
     try {
@@ -136,11 +136,9 @@ function HomePage() {
             ) : (
               <Grid container spacing={2}>
                 {groups.map((group) => (
-                  <Grid item xs={12} key={group.id}>
+                  <Grid item xs={12} sm={6} key={group.id}>
                     <GroupCard
-                      name={group.name}
-                      sport={group.sport}
-                      memberCount={group.members.length}
+                      group={group}
                       onClick={() => navigate(`/group/${group.id}`)}
                     />
                   </Grid>

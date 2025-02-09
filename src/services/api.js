@@ -179,4 +179,16 @@ export const handleGroupInvite = async (inviteId, action) => {
   }
 
   return response.json();
+};
+
+export const getGroup = async (groupId) => {
+  try {
+    const response = await fetch(`${API_URL}/groups/${groupId}/`, {
+      headers: getHeaders(),
+    });
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching group:', error);
+    throw error;
+  }
 }; 

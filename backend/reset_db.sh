@@ -11,7 +11,10 @@ python manage.py makemigrations users
 python manage.py makemigrations groups
 
 echo "Applying migrations..."
-python manage.py migrate
+python manage.py migrate auth
+python manage.py migrate users  # Apply users migrations first
+python manage.py migrate groups  # Then groups
+python manage.py migrate  # Finally any remaining migrations
 
 echo "Creating test users and relationships..."
 python manage.py shell << END
@@ -54,7 +57,8 @@ buddy.save()
 print("Creating test group...")
 test_group = BettingGroup.objects.create(
     name="Test Betting Group",
-    sport="NFL",
+    description="A group for testing various sports betting",
+    sports=["NFL", "NBA"],  # Now supports multiple sports
     president=grant
 )
 test_group.members.add(grant)
