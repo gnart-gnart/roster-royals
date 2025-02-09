@@ -11,9 +11,10 @@ class CreateGroupView(generics.CreateAPIView):
     serializer_class = BettingGroupSerializer
 
     def perform_create(self, serializer):
-        # Only add the creator as president, not as a member
+        # Create group with current user as president
         group = serializer.save(president=self.request.user)
-        # Don't automatically add members - they need to be invited and accept
+        # Add president as first member
+        group.members.add(self.request.user)
         return group
 
 @api_view(['POST'])
@@ -39,37 +40,61 @@ def get_groups(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def invite_to_group(request, group_id, user_id):
+    print(f"\nProcessing group invite:")
+    print(f"- From: {request.user.username}")
+    print(f"- Group ID: {group_id}")
+    print(f"- To User ID: {user_id}")
+    
     try:
         group = BettingGroup.objects.get(id=group_id)
         to_user = User.objects.get(id=user_id)
         
+        print(f"Found group '{group.name}' and user '{to_user.username}'")
+        
         # Check if user is president
         if request.user != group.president:
+            print(f"ERROR: {request.user.username} is not president of this group")
             return Response({'error': 'Only group president can invite members'}, status=403)
-            
-        # Check if user is already a member
-        if group.members.filter(id=user_id).exists():
-            return Response({'error': 'User is already a member'}, status=400)
-            
-        # Check if invite already exists
-        if GroupInvite.objects.filter(group=group, to_user=to_user, status='pending').exists():
-            return Response({'error': 'Invite already sent'}, status=400)
-            
-        # Create invite and notification
-        invite = GroupInvite.objects.create(group=group, to_user=to_user)
-        Notification.objects.create(
-            user=to_user,
-            message=f"You've been invited to join {group.name}",
-            notification_type='group_invite',
-            requires_action=True
+        
+        # Create invite
+        invite = GroupInvite.objects.create(
+            group=group,
+            to_user=to_user,
+            status='pending'
         )
+        print(f"Created GroupInvite with ID: {invite.id}")
+
+        # Create notification
+        notification = Notification.objects.create(
+            user=to_user,
+            message=f"{request.user.username} invited you to join {group.name}",
+            notification_type='group_invite',
+            requires_action=True,
+            reference_id=invite.id
+        )
+        print(f"""
+        Created Notification:
+        - ID: {notification.id}
+        - Type: {notification.notification_type}
+        - For User: {notification.user.username}
+        - Message: {notification.message}
+        - Requires Action: {notification.requires_action}
+        - Reference ID: {notification.reference_id}
+        """)
         
-        return Response({'message': 'Invite sent successfully'})
+        # Verify notification exists
+        verify = Notification.objects.get(id=notification.id)
+        print(f"Verified notification exists with ID {verify.id}")
         
-    except BettingGroup.DoesNotExist:
-        return Response({'error': 'Group not found'}, status=404)
-    except User.DoesNotExist:
-        return Response({'error': 'User not found'}, status=404)
+        return Response({
+            'message': 'Invite sent successfully',
+            'invite_id': invite.id,
+            'notification_id': notification.id
+        })
+        
+    except Exception as e:
+        print(f"ERROR: {str(e)}")
+        return Response({'error': str(e)}, status=500)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -87,7 +112,7 @@ def handle_group_invite(request, invite_id):
             invite.save()
             invite.group.members.add(request.user)
             
-            # Notify group president
+            # Create notification for group president
             Notification.objects.create(
                 user=invite.group.president,
                 message=f"{request.user.username} joined {invite.group.name}",
@@ -117,4 +142,24 @@ def handle_group_invite(request, invite_id):
             return Response({'message': 'Invite rejected'})
             
     except GroupInvite.DoesNotExist:
-        return Response({'error': 'Invite not found'}, status=404) 
+        return Response({'error': 'Invite not found'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_group(request, group_id):
+    print(f"\nFetching group details:")
+    print(f"- Group ID: {group_id}")
+    print(f"- User: {request.user.username}")
+    
+    try:
+        group = BettingGroup.objects.get(id=group_id)
+        print(f"Found group: {group.name}")
+        serialized_data = BettingGroupSerializer(group).data
+        print(f"Serialized data: {serialized_data}")
+        return Response(serialized_data)
+    except BettingGroup.DoesNotExist:
+        print(f"Group {group_id} not found")
+        return Response({'error': 'Group not found'}, status=404)
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return Response({'error': str(e)}, status=500) 

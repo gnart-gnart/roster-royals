@@ -12,38 +12,78 @@ python manage.py makemigrations groups
 
 echo "Applying migrations..."
 python manage.py migrate auth
-python manage.py migrate users
-python manage.py migrate groups
-python manage.py migrate authtoken
-python manage.py migrate
+python manage.py migrate users  # Apply users migrations first
+python manage.py migrate groups  # Then groups
+python manage.py migrate  # Finally any remaining migrations
 
-echo "Creating superuser..."
-DJANGO_SUPERUSER_USERNAME=admin \
-DJANGO_SUPERUSER_EMAIL=admin@example.com \
-DJANGO_SUPERUSER_PASSWORD=admin123 \
-python manage.py createsuperuser --noinput
+echo "Creating test users and relationships..."
+python manage.py shell << END
+from users.models import User, Friendship, Notification
+from groups.models import BettingGroup, GroupInvite
 
-echo "Creating test users and friendships..."
-python manage.py shell -c "
-from users.models import User, Friendship;
+# Create admin superuser
+print("Creating admin superuser...")
+admin = User.objects.create_superuser(
+    username='admin',
+    email='admin@example.com',
+    password='admin',
+    is_staff=True,
+    is_superuser=True
+)
 
-# Create users
-judy = User.objects.create_user(username='judy', email='judy@example.com', password='judy');
-grant = User.objects.create_user(username='grant', email='grant@example.com', password='grant');
-buddy = User.objects.create_user(username='buddy', email='buddy@example.com', password='buddy');
+# Create test users
+print("Creating test users...")
+judy = User.objects.create_user(username='judy', email='judy@example.com', password='judy')
+grant = User.objects.create_user(username='grant', email='grant@example.com', password='grant')
+buddy = User.objects.create_user(username='buddy', email='buddy@example.com', password='buddy')
 
-# Create friendships (both directions needed)
-Friendship.objects.create(user=judy, friend=grant);
-Friendship.objects.create(user=grant, friend=judy);
-Friendship.objects.create(user=buddy, friend=grant);
-Friendship.objects.create(user=grant, friend=buddy);
-"
+# Create friendships
+print("Creating friendships...")
+Friendship.objects.create(user=judy, friend=grant)
+Friendship.objects.create(user=grant, friend=judy)
+Friendship.objects.create(user=buddy, friend=grant)
+Friendship.objects.create(user=grant, friend=buddy)
+
+# Update points
+print("Setting user points...")
+judy.points = 1200
+grant.points = 1500
+buddy.points = 1100
+judy.save()
+grant.save()
+buddy.save()
+
+# Create a test group
+print("Creating test group...")
+test_group = BettingGroup.objects.create(
+    name="Test Betting Group",
+    description="A group for testing various sports betting",
+    sports=["NFL", "NBA"],  # Now supports multiple sports
+    president=grant
+)
+test_group.members.add(grant)
+
+# Test notification
+print("Creating test notification...")
+Notification.objects.create(
+    user=judy,
+    message="Test notification",
+    notification_type='info',
+    is_read=False
+)
+
+print("Database setup complete!")
+END
 
 echo "Database reset complete!"
 echo "You can now login with:"
-echo "Admin - username: admin, password: admin123"
+echo "Admin interface (http://localhost:8000/admin):"
+echo "- username: admin, password: admin"
+echo ""
 echo "Test Users:"
-echo "- username: judy, password: judy"
-echo "- username: grant, password: grant"
-echo "- username: buddy, password: buddy"
+echo "- username: judy, password: judy (1200 points)"
+echo "- username: grant, password: grant (1500 points)"
+echo "- username: buddy, password: buddy (1100 points)"
 echo "Friendships created: judy-grant, buddy-grant"
+echo "Test group created with grant as president"
+echo "Test notification created for judy"

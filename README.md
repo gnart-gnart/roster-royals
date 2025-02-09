@@ -229,6 +229,26 @@ roster-royals/
   - GET /api/notifications/
   - POST /api/notifications/mark-read/
 
+## Database Models
+
+### Users
+- User: Extended Django user model with points system
+- Friendship: Manages user friend relationships
+- FriendRequest: Handles friend request flow
+- Notification: System notifications and alerts
+
+### Groups
+- BettingGroup: Main group model for betting functionality
+- GroupInvite: Manages group invitations
+- Bet: Individual bets within a group
+- UserBet: User's bets and results
+
+### System Tables
+- Group: Django's built-in auth group model (not used in application, but required by Django's authentication system)
+- Other Django system tables (auth, sessions, etc.)
+
+Note: While the Django Group model exists in the database for authentication purposes, our application uses the custom BettingGroup model for all betting group functionality.
+
 ---
 
 This README provides a comprehensive overview of the Roster Royals application, including setup instructions and component documentation. For further details, please refer to the source code and comments within the project.

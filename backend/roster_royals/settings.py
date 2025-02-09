@@ -103,4 +103,7 @@ REST_FRAMEWORK = {
 }
 
 # Custom user model
-AUTH_USER_MODEL = 'users.User' 
+AUTH_USER_MODEL = 'users.User'
+
+# Disable default group model
+# DJANGO_AUTH_NO_GROUP = True 

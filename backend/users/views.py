@@ -165,6 +165,7 @@ def search_users(request):
     current_user = request.user
     users = User.objects.filter(username__icontains=query)\
         .exclude(id=current_user.id)\
+        .exclude(is_staff=True)\
         .exclude(is_superuser=True)
     
     results = []
@@ -189,14 +190,34 @@ def search_users(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_notifications(request):
+    print(f"\nGetting notifications for user: {request.user.username}")
     notifications = Notification.objects.filter(user=request.user)
-    return Response([{
+    print(f"Found {notifications.count()} notifications")
+    
+    # Debug: Print all notifications in detail
+    for n in notifications:
+        print(f"""
+        Notification details:
+        - ID: {n.id}
+        - Type: {n.notification_type}
+        - Message: {n.message}
+        - Is Read: {n.is_read}
+        - Requires Action: {n.requires_action}
+        - Reference ID: {n.reference_id}
+        - Created At: {n.created_at}
+        """)
+    
+    response_data = [{
         'id': n.id,
         'message': n.message,
         'type': n.notification_type,
         'created_at': n.created_at,
-        'is_read': n.is_read
-    } for n in notifications])
+        'is_read': n.is_read,
+        'requires_action': n.requires_action,
+        'reference_id': n.reference_id
+    } for n in notifications]
+    
+    return Response(response_data)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

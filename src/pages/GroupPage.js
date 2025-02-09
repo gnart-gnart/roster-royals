@@ -19,14 +19,21 @@ import {
   Avatar,
   Dialog,
   DialogTitle,
+  DialogContent,
+  DialogActions,
   List,
   ListItem,
+  ListItemIcon,
   ListItemText,
+  Checkbox,
+  TextField,
+  FormControlLabel,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import SearchIcon from '@mui/icons-material/Search';
 import NavBar from '../components/NavBar';
-import { inviteToGroup, getFriends, getGroups } from '../services/api';
+import { inviteToGroup, getFriends, getGroups, getGroup } from '../services/api';
 
 function GroupPage() {
   const { id } = useParams();
@@ -34,9 +41,14 @@ function GroupPage() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [friends, setFriends] = useState([]);
   const [group, setGroup] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const user = JSON.parse(localStorage.getItem('user'));
   const isPresident = group?.president?.id === user?.id;
   const [members, setMembers] = useState([]);
+  const [selectedFriends, setSelectedFriends] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectAll, setSelectAll] = useState(false);
 
   // Mock data mapping group IDs to names
   const groupNames = {
@@ -107,33 +119,35 @@ function GroupPage() {
   useEffect(() => {
     const loadGroup = async () => {
       try {
-        const groups = await getGroups();
-        const foundGroup = groups.find(g => g.id === parseInt(id));
-        setGroup(foundGroup);
+        const data = await getGroup(id);  // API call to get group details
+        setGroup(data);
       } catch (err) {
-        console.error('Failed to load group:', err);
+        setError('Failed to load group');
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
     loadGroup();
   }, [id]);
 
   useEffect(() => {
-    const loadFriends = async () => {
-      try {
-        const friendsList = await getFriends();
-        // Filter out friends who are already members
-        setFriends(friendsList.filter(
-          friend => !group.members.some(member => member.id === friend.id)
-        ));
-      } catch (err) {
-        console.error('Failed to load friends:', err);
-      }
-    };
-
-    if (group && isPresident) {
+    if (inviteDialogOpen) {
       loadFriends();
     }
-  }, [group, isPresident]);
+  }, [inviteDialogOpen]);
+
+  const loadFriends = async () => {
+    try {
+      const friendsList = await getFriends();
+      // Filter out friends who are already members
+      setFriends(friendsList.filter(
+        friend => !group.members.some(member => member.id === friend.id)
+      ));
+    } catch (err) {
+      console.error('Failed to load friends:', err);
+    }
+  };
 
   useEffect(() => {
     if (group) {
@@ -142,23 +156,62 @@ function GroupPage() {
     }
   }, [group]);
 
-  const handleInvite = async (friendId) => {
+  const handleToggleFriend = (friendId) => {
+    setSelectedFriends(prev => {
+      if (prev.includes(friendId)) {
+        return prev.filter(id => id !== friendId);
+      }
+      return [...prev, friendId];
+    });
+  };
+
+  const handleToggleAll = () => {
+    if (selectAll) {
+      setSelectedFriends([]);
+    } else {
+      setSelectedFriends(friends.map(friend => friend.id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const handleInviteSelected = async () => {
     try {
-      await inviteToGroup(group.id, friendId);
-      setInviteDialogOpen(false);
+      console.log('Sending invites for group:', group.id, 'to users:', selectedFriends);
+      for (const friendId of selectedFriends) {
+        try {
+          const response = await inviteToGroup(group.id, friendId);
+          console.log(`Invite sent to user ${friendId}:`, response);
+        } catch (err) {
+          console.error(`Failed to invite user ${friendId}:`, err);
+        }
+      }
     } catch (err) {
-      console.error('Failed to invite member:', err);
+      console.error('Failed to invite friends:', err);
+    } finally {
+      setInviteDialogOpen(false);
+      setSelectedFriends([]);
+      setSearchQuery('');
+      setSelectAll(false);
     }
   };
+
+  // Filter friends based on search query
+  const filteredFriends = friends.filter(friend =>
+    friend.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  if (!group) return <div>Group not found</div>;
 
   return (
     <>
       <NavBar />
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <Button
-            onClick={() => navigate('/home')}
             startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/home')}
             sx={{
               mr: 2,
               backgroundColor: 'rgba(96, 165, 250, 0.1)',
@@ -173,9 +226,26 @@ function GroupPage() {
             Back
           </Button>
           <Typography variant="h4">
-            {groupNames[id] || 'Group Details'}
+            {group?.name || 'Loading...'}
           </Typography>
         </Box>
+
+        {group?.description && (
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              mb: 3,
+              color: 'text.secondary',
+              backgroundColor: 'rgba(30, 41, 59, 0.7)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(96, 165, 250, 0.2)',
+              borderRadius: 1,
+              p: 2
+            }}
+          >
+            {group.description}
+          </Typography>
+        )}
 
         {isPresident && (
           <Button
@@ -190,24 +260,71 @@ function GroupPage() {
         <Dialog
           open={inviteDialogOpen}
           onClose={() => setInviteDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
         >
           <DialogTitle>Invite Friends to Group</DialogTitle>
-          <List>
-            {friends.map(friend => (
-              <ListItem
-                key={friend.id}
-                button
-                onClick={() => handleInvite(friend.id)}
-              >
-                <ListItemText primary={friend.username} />
-              </ListItem>
-            ))}
-            {friends.length === 0 && (
-              <ListItem>
-                <ListItemText primary="No friends to invite" />
-              </ListItem>
-            )}
-          </List>
+          <DialogContent>
+            <Box sx={{ mb: 2, mt: 1 }}>
+              <TextField
+                fullWidth
+                placeholder="Search friends..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                }}
+              />
+            </Box>
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectAll}
+                  onChange={handleToggleAll}
+                  indeterminate={selectedFriends.length > 0 && selectedFriends.length < filteredFriends.length}
+                />
+              }
+              label="Select All"
+              sx={{ mb: 1 }}
+            />
+
+            <List sx={{ maxHeight: 300, overflow: 'auto' }}>
+              {filteredFriends.map(friend => (
+                <ListItem key={friend.id} dense button onClick={() => handleToggleFriend(friend.id)}>
+                  <ListItemIcon>
+                    <Checkbox
+                      edge="start"
+                      checked={selectedFriends.includes(friend.id)}
+                      tabIndex={-1}
+                      disableRipple
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary={friend.username} />
+                </ListItem>
+              ))}
+              {filteredFriends.length === 0 && (
+                <ListItem>
+                  <ListItemText 
+                    primary={friends.length === 0 ? "No friends to invite" : "No matches found"} 
+                    sx={{ textAlign: 'center', color: 'text.secondary' }}
+                  />
+                </ListItem>
+              )}
+            </List>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setInviteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              onClick={handleInviteSelected}
+              disabled={selectedFriends.length === 0}
+            >
+              Invite ({selectedFriends.length})
+            </Button>
+          </DialogActions>
         </Dialog>
 
         <Grid container spacing={4}>

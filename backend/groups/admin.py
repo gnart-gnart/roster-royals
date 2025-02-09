@@ -1,8 +1,8 @@
 from django.contrib import admin
-from .models import BettingGroup, Bet, UserBet
+from .models import BettingGroup, Bet, UserBet, GroupInvite
 
 class BettingGroupAdmin(admin.ModelAdmin):
-    list_display = ('name', 'sport', 'president', 'created_at')
+    list_display = ('name', 'sports', 'president', 'created_at')
     search_fields = ('name', 'president__username')
     filter_horizontal = ('members',)
 
@@ -18,4 +18,5 @@ class UserBetAdmin(admin.ModelAdmin):
 
 admin.site.register(BettingGroup, BettingGroupAdmin)
 admin.site.register(Bet, BetAdmin)
-admin.site.register(UserBet, UserBetAdmin) 
+admin.site.register(UserBet, UserBetAdmin)
+admin.site.register(GroupInvite) 
