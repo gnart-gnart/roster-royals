@@ -151,16 +151,20 @@ export const removeFriend = async (friendId) => {
 };
 
 export const inviteToGroup = async (groupId, userId) => {
+  console.log(`Sending invite for group ${groupId} to user ${userId}`);
   const response = await fetch(`${API_URL}/groups/${groupId}/invite/${userId}/`, {
     method: 'POST',
     headers: getHeaders(),
   });
 
+  const data = await response.json();
   if (!response.ok) {
-    throw new Error('Failed to send invite');
+    console.error('Invite failed:', data);
+    throw new Error(data.error || 'Failed to send invite');
   }
 
-  return response.json();
+  console.log('Invite response:', data);
+  return data;
 };
 
 export const handleGroupInvite = async (inviteId, action) => {

@@ -15,11 +15,13 @@ import {
   ListItemAvatar,
   Avatar,
   Button,
+  Tooltip,
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
   AccountCircle,
   Settings as SettingsIcon,
+  Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -32,7 +34,6 @@ import {
 
 function NavBar() {
   const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = useState(null);
   const [notifAnchorEl, setNotifAnchorEl] = useState(null);
   const [friendRequests, setFriendRequests] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -41,6 +42,15 @@ function NavBar() {
   useEffect(() => {
     loadFriendRequests();
     loadNotifications();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadNotifications();
+      loadFriendRequests();
+    }, 10000); // Check every 10 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   const loadFriendRequests = async () => {
@@ -107,13 +117,16 @@ function NavBar() {
     loadNotifications();
   };
 
-  const handleGroupInvite = async (inviteId, action) => {
+  const handleGroupInvite = async (notificationId, inviteId, action) => {
     try {
+      console.log('Handling group invite:', { notificationId, inviteId, action });  // Debug log
       await handleGroupInviteAPI(inviteId, action);
+      
       // Remove the notification from the list
       setNotifications(prev => 
-        prev.filter(n => !(n.type === 'group_invite' && n.id === inviteId))
+        prev.filter(n => n.id !== notificationId)
       );
+      
       // Refresh groups list if accepted
       if (action === 'accept') {
         window.dispatchEvent(new Event('groupsUpdated'));
@@ -124,13 +137,21 @@ function NavBar() {
   };
 
   return (
-    <AppBar position="static" sx={{ backgroundColor: 'rgba(30, 41, 59, 0.7)', backdropFilter: 'blur(8px)' }}>
+    <AppBar position="static" sx={{ 
+      backgroundColor: 'rgba(17, 24, 39, 0.95)',
+      backdropFilter: 'blur(8px)',
+      borderBottom: '1px solid rgba(55, 65, 81, 0.5)',
+    }}>
       <Toolbar>
-        <Typography variant="h6" sx={{ flexGrow: 1, cursor: 'pointer' }} onClick={() => navigate('/home')}>
+        <Typography 
+          variant="h6" 
+          sx={{ flexGrow: 1, cursor: 'pointer' }} 
+          onClick={() => navigate('/home')}
+        >
           Roster Royals
         </Typography>
 
-        <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <IconButton
             color="inherit"
             onClick={handleNotificationsOpen}
@@ -140,12 +161,57 @@ function NavBar() {
             </Badge>
           </IconButton>
 
-          <IconButton
-            color="inherit"
-            onClick={(e) => setAnchorEl(e.currentTarget)}
+          {/* Settings Button */}
+          <Tooltip title="Settings">
+            <IconButton
+              color="inherit"
+              onClick={() => navigate('/settings')}
+              sx={{
+                '&:hover': {
+                  backgroundColor: 'rgba(55, 65, 81, 0.3)',
+                },
+              }}
+            >
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* Profile Section */}
+          <Box
+            onClick={() => navigate('/profile')}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              cursor: 'pointer',
+              '&:hover': {
+                opacity: 0.8,
+              },
+              padding: '4px 4px',
+              borderRadius: 1,
+              transition: 'all 0.2s',
+            }}
           >
             <AccountCircle />
-          </IconButton>
+            <Typography variant="body1" sx={{ color: 'white' }}>
+              {user?.username || 'Profile'}
+            </Typography>
+          </Box>
+
+          {/* Logout Button */}
+          <Tooltip title="Logout">
+            <IconButton
+              color="inherit"
+              onClick={handleLogout}
+              sx={{
+                '&:hover': {
+                  backgroundColor: 'rgba(55, 65, 81, 0.3)',
+                },
+              }}
+            >
+              <LogoutIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
 
         {/* Notifications Menu */}
@@ -155,13 +221,14 @@ function NavBar() {
           onClose={handleNotificationsClose}
           PaperProps={{
             sx: {
-              backgroundColor: 'rgba(30, 41, 59, 0.95)',
+              backgroundColor: 'rgba(17, 24, 39, 0.98)',
               backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(96, 165, 250, 0.2)',
+              border: '1px solid rgba(55, 65, 81, 0.5)',
               color: '#f8fafc',
               minWidth: '300px',
               maxHeight: '80vh',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
             }
           }}
         >
@@ -229,7 +296,7 @@ function NavBar() {
                             <Button
                               size="small"
                               variant="contained"
-                              onClick={() => handleGroupInvite(notification.id, 'accept')}
+                              onClick={() => handleGroupInvite(notification.id, notification.reference_id, 'accept')}
                               sx={{ mr: 1 }}
                             >
                               Accept
@@ -237,7 +304,7 @@ function NavBar() {
                             <Button
                               size="small"
                               variant="outlined"
-                              onClick={() => handleGroupInvite(notification.id, 'reject')}
+                              onClick={() => handleGroupInvite(notification.id, notification.reference_id, 'reject')}
                             >
                               Reject
                             </Button>
@@ -256,32 +323,6 @@ function NavBar() {
               No new notifications
             </Typography>
           )}
-        </Menu>
-
-        {/* User Menu */}
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={() => setAnchorEl(null)}
-          PaperProps={{
-            sx: {
-              backgroundColor: 'rgba(30, 41, 59, 0.95)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(96, 165, 250, 0.2)',
-              color: '#f8fafc',
-            }
-          }}
-        >
-          <MenuItem onClick={() => navigate('/profile')}>
-            <AccountCircle sx={{ mr: 1 }} />
-            Profile
-          </MenuItem>
-          <MenuItem onClick={() => navigate('/settings')}>
-            <SettingsIcon sx={{ mr: 1 }} />
-            Settings
-          </MenuItem>
-          <Divider />
-          <MenuItem onClick={handleLogout}>Logout</MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>
