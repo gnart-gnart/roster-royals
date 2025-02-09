@@ -35,6 +35,15 @@ function HomePage() {
   const [error, setError] = useState('');
   const FRIENDS_DISPLAY_LIMIT = 5;
 
+  const loadGroups = async () => {
+    try {
+      const data = await getGroups();
+      setGroups(data);
+    } catch (err) {
+      console.error('Failed to load groups:', err);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -60,9 +69,13 @@ function HomePage() {
 
     window.addEventListener('friendsUpdated', handleFriendsUpdate);
 
+    // Listen for group updates
+    window.addEventListener('groupsUpdated', loadGroups);
+
     // Cleanup
     return () => {
       window.removeEventListener('friendsUpdated', handleFriendsUpdate);
+      window.removeEventListener('groupsUpdated', loadGroups);
     };
   }, []);
 

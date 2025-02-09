@@ -29,7 +29,8 @@ import {
   handleFriendRequest, 
   getNotifications,
   markNotificationsRead,
-  handleGroupInvite as handleGroupInviteAPI
+  handleGroupInvite as handleGroupInviteAPI,
+  getGroups,
 } from '../services/api';
 
 function NavBar() {
@@ -39,18 +40,29 @@ function NavBar() {
   const [notifications, setNotifications] = useState([]);
   const user = JSON.parse(localStorage.getItem('user'));
 
+  // Add groups state and loading function
+  const [groups, setGroups] = useState([]);
+
+  const loadGroups = async () => {
+    try {
+      const data = await getGroups();
+      setGroups(data);
+    } catch (err) {
+      console.error('Failed to load groups:', err);
+    }
+  };
+
   useEffect(() => {
     loadFriendRequests();
     loadNotifications();
-  }, []);
+    loadGroups();  // Initial load
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      loadNotifications();
-      loadFriendRequests();
-    }, 10000); // Check every 10 seconds
+    // Listen for groups update events
+    window.addEventListener('groupsUpdated', loadGroups);
 
-    return () => clearInterval(interval);
+    return () => {
+      window.removeEventListener('groupsUpdated', loadGroups);
+    };
   }, []);
 
   const loadFriendRequests = async () => {
@@ -119,7 +131,6 @@ function NavBar() {
 
   const handleGroupInvite = async (notificationId, inviteId, action) => {
     try {
-      console.log('Handling group invite:', { notificationId, inviteId, action });  // Debug log
       await handleGroupInviteAPI(inviteId, action);
       
       // Remove the notification from the list
@@ -129,7 +140,12 @@ function NavBar() {
       
       // Refresh groups list if accepted
       if (action === 'accept') {
+        // Dispatch event before loading groups to ensure all listeners are notified
         window.dispatchEvent(new Event('groupsUpdated'));
+        await loadGroups();
+        
+        // Navigate to home page to see updated groups
+        navigate('/home');
       }
     } catch (err) {
       console.error('Failed to handle group invite:', err);
