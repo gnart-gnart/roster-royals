@@ -1,0 +1,15 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('register/', views.RegisterView.as_view()),
+    path('login/', views.login_view),
+    path('friends/', views.get_friends),
+    path('users/search/', views.search_users, name='search-users'),
+    path('friend-requests/', views.get_friend_requests),
+    path('friend-request/<int:request_id>/handle/', views.handle_friend_request),
+    path('friend-request/send/<int:user_id>/', views.send_friend_request),
+    path('notifications/', views.get_notifications),
+    path('notifications/mark-read/', views.mark_notifications_read),
+    path('friends/remove/<int:friend_id>/', views.remove_friend),
+] 
