@@ -1,14 +1,6 @@
 from django.db import models
 from users.models import User
 
-# class Group(models.Model):
-#     """Model for betting groups"""
-#     name = models.CharField(max_length=100)
-#     description = models.TextField(blank=True)
-#     members = models.ManyToManyField(User, related_name='social_groups')
-#     president = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_social_groups')
-#     created_at = models.DateTimeField(auto_now_add=True)
-
 class BettingGroup(models.Model):
     """Model for betting groups"""
     name = models.CharField(max_length=100)

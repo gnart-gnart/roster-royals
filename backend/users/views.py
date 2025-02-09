@@ -165,6 +165,7 @@ def search_users(request):
     current_user = request.user
     users = User.objects.filter(username__icontains=query)\
         .exclude(id=current_user.id)\
+        .exclude(is_staff=True)\
         .exclude(is_superuser=True)
     
     results = []

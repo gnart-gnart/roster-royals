@@ -18,15 +18,21 @@ python manage.py shell << END
 from users.models import User, Friendship, Notification
 from groups.models import BettingGroup, GroupInvite
 
+# Create admin superuser
+print("Creating admin superuser...")
+admin = User.objects.create_superuser(
+    username='admin',
+    email='admin@example.com',
+    password='admin',
+    is_staff=True,
+    is_superuser=True
+)
+
 # Create test users
 print("Creating test users...")
 judy = User.objects.create_user(username='judy', email='judy@example.com', password='judy')
 grant = User.objects.create_user(username='grant', email='grant@example.com', password='grant')
 buddy = User.objects.create_user(username='buddy', email='buddy@example.com', password='buddy')
-
-# Create admin user
-print("Creating admin user...")
-User.objects.create_superuser(username='admin', email='admin@example.com', password='admin123')
 
 # Create friendships
 print("Creating friendships...")
@@ -67,7 +73,9 @@ END
 
 echo "Database reset complete!"
 echo "You can now login with:"
-echo "Admin - username: admin, password: admin123"
+echo "Admin interface (http://localhost:8000/admin):"
+echo "- username: admin, password: admin"
+echo ""
 echo "Test Users:"
 echo "- username: judy, password: judy (1200 points)"
 echo "- username: grant, password: grant (1500 points)"
