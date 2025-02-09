@@ -1,152 +1,234 @@
 # Roster Royals
 
-A social sports betting platform where users can create groups, add friends, and compete using a points-based system.
+## Overview
+Roster Royals is a social sports betting platform where users can:
+- Create and join betting groups with friends
+- Track points and compete on leaderboards
+- Send and accept friend requests
+- Receive notifications for friend requests and group invites
 
-## Project Structure
+## Tech Stack
+- **Frontend**: React.js with Material-UI
+- **Backend**: Django REST Framework
+- **Database**: SQLite (development)
+- **Authentication**: Token-based authentication
 
-The project follows this directory structure:
-
-```bash
-roster-royals/
-├── backend/                 # Django backend
-│   ├── roster_royals/      # Main Django project
-│   ├── users/              # User authentication and friends
-│   ├── groups/             # Betting groups and bets
-│   └── manage.py           # Django management script
-└── src/                    # React frontend
-    ├── components/         # Reusable UI components
-    ├── pages/              # Page components
-    └── services/           # API integration
-```
-
-## Backend (Django)
-
-### Key Models
-
-- **User**: Extended Django user model with points and friends
-- **FriendRequest**: Manages friend connections between users
-- **BettingGroup**: Groups where users can create and participate in bets
-- **Bet**: Individual betting opportunities within a group
-- **UserBet**: Records of users' bets and their outcomes
-
-### API Endpoints
-
-```bash
-POST /api/register/              # Create new user account
-POST /api/login/                 # Authenticate user
-GET  /api/friends/               # Get user's friends
-POST /api/friend-request/<id>/   # Send friend request
-GET  /api/groups/                # Get user's groups
-POST /api/groups/create/         # Create new betting group
-```
-
-## Frontend (React)
-
-### Key Components
-
-- **HomePage**: Dashboard showing user's groups and friends
-- **GroupPage**: Group details, available bets, and leaderboard
-- **CreateGroupPage**: Multi-step form for creating new groups
-- **GroupCard**: Reusable component for displaying group information
-
-### State Management
-
-- Uses React's built-in state management with useState and useEffect
-- JWT tokens stored in localStorage for authentication
-- API service layer in `services/api.js` handles all backend communication
+Roster Royals is a sports betting application that allows users to join groups, place bets, and track their performance. This README provides instructions for setting up the project locally and documentation for the app's components and structure.
 
 ## Getting Started
 
-### Backend Setup
+### Prerequisites
 
-```bash
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+- **Node.js**: Ensure you have Node.js installed. You can download it from [nodejs.org](https://nodejs.org/).
+- **npm**: npm is included with Node.js. Verify installation by running `npm -v` in your terminal.
+- **Python**: Python 3.8 or higher is required for the backend
+- **pip**: Python package manager
+- **virtualenv**: For creating Python virtual environments
 
-# Install dependencies
-cd backend
-pip install -r requirements.txt
+### Installation
 
-# Setup database (this will reset migrations and apply them)
-./reset_db.sh
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/yourusername/roster-royals.git
+   cd roster-royals
+   ```
 
-# Create superuser (only needed once)
-python manage.py createsuperuser
+2. **Environment Setup**:
+   Create a `.env` file in the frontend directory:
+   ```bash
+   cd frontend
+   echo "REACT_APP_API_URL=http://localhost:8000/api" > .env
+   cd ..
+   ```
+
+3. **Install Dependencies**:
+   Backend Setup:
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+   pip install -r requirements.txt
+   ./reset_db.sh  # This will create test users: judy, grant, and buddy
+   ```
+
+   Frontend Setup:
+   ```bash
+   cd ../
+   npm install
+   ```
+
+4. **Run the Application**:
+   Start the backend server:
+   ```bash
+   cd backend
+   python manage.py runserver
+   ```
+
+   In a new terminal, start the frontend:
+   ```bash
+   npm start
+   ```
+
+   This will start the development server and open the app in your default web browser at `http://localhost:3000`.
+
+### Test Users
+After running reset_db.sh, you can log in with these test accounts:
+- username: judy, password: judy
+- username: grant, password: grant
+- username: buddy, password: buddy
+- Admin account: username: admin, password: admin123
+
+## App Structure
+
+- **public/**: Contains static files like `index.html`.
+- **src/**: Contains all the source code for the application.
+  - **components/**: Reusable React components.
+  - **pages/**: Page components for different routes.
+  - **services/**: API service functions for interacting with the backend.
+  - **App.js**: Main application component that sets up routing and theming.
+  - **index.js**: Entry point of the application.
+
+## Pages
+
+### LoginPage
+
+- **Path**: `/`
+- **Description**: Allows users to log in or register. Utilizes Google authentication.
+- **Components Used**: `TextField`, `Button`, `Alert`, `Typography`.
+
+### HomePage
+
+- **Path**: `/home`
+- **Description**: Displays user's groups and friends. Allows creating new groups and adding friends.
+- **Components Used**: `GroupCard`, `NavBar`, `List`, `Button`.
+
+### GroupPage
+
+- **Path**: `/group/:id`
+- **Description**: Shows details of a specific group, including members and available bets.
+- **Components Used**: `Table`, `Dialog`, `Button`, `NavBar`.
+
+### CreateGroupPage
+
+- **Path**: `/create-group`
+- **Description**: Allows users to create a new group.
+- **Components Used**: `TextField`, `Button`, `Stepper`, `Card`.
+
+### AddFriendPage
+
+- **Path**: `/add-friend`
+- **Description**: Enables users to add new friends to their list.
+- **Components Used**: `TextField`, `Button`, `List`, `Card`.
+
+## Components
+
+### NavBar
+
+- **Description**: Navigation bar that appears on all pages.
+- **Props**: None.
+
+### GroupCard
+
+- **Description**: Displays a summary of a group, including its name, sport, and member count.
+- **Props**: `name`, `sport`, `memberCount`, `onClick`.
+
+### FriendsList
+
+- **Description**: Displays a list of friends with options to invite to groups or remove.
+- **Props**: `friends`, `groups`, `onFriendRemoved`.
+
+### ProtectedRoute
+
+- **Description**: A higher-order component that protects routes from unauthorized access.
+- **Props**: `children`.
+
+## API Endpoints
+
+#### Authentication
+
+- **POST** `/api/login/`: Log in a user.
+- **POST** `/api/register/`: Register a new user.
+
+#### Friends
+
+- **GET** `/api/friends/`: Retrieve a list of friends.
+- **POST** `/api/friend-request/send/:userId/`: Send a friend request.
+- **GET** `/api/friend-requests/`: Retrieve friend requests.
+- **POST** `/api/friend-request/:requestId/handle/`: Handle a friend request (accept/reject).
+- **POST** `/api/friends/remove/:friendId/`: Remove a friend.
+
+#### Groups
+
+- **POST** `/api/groups/create/`: Create a new group.
+- **POST** `/api/groups/:groupId/add-member/:userId/`: Add a member to a group.
+- **GET** `/api/groups/`: Retrieve a list of groups the user is a member of.
+- **POST** `/api/groups/:groupId/invite/:userId/`: Invite a user to a group.
+- **POST** `/api/group-invites/:inviteId/handle/`: Handle a group invite (accept/reject).
+
+#### Users
+
+- **GET** `/api/users/search/`: Search for users.
+
+#### Notifications
+
+- **GET** `/api/notifications/`: Retrieve notifications.
+- **POST** `/api/notifications/mark-read/`: Mark notifications as read.
+
+## Database Schema
+
+For detailed information on the database schema, please refer to the [Database Schema Documentation](backend/DATABASE_SCHEMA.md).
+
+### Common Issues
+1. **Database Errors**:
+   If you encounter database errors, try resetting it:
+   ```bash
+   cd backend
+   ./reset_db.sh
+   ```
+
+2. **Token Authentication Errors**:
+   - Make sure you're logged in
+   - Check if token exists in localStorage
+   - Try logging out and back in
+
+3. **CORS Issues**:
+   Backend is configured to accept requests from `localhost:3000`
+
+### Project Structure
+```
+roster-royals/
+├── backend/
+│   ├── users/           # User management, authentication, friendships
+│   ├── groups/          # Betting groups and invitations
+│   └── roster_royals/   # Django project settings
+│
+└── frontend/
+    ├── src/
+    │   ├── components/  # Reusable UI components
+    │   ├── pages/       # Page components
+    │   └── services/    # API integration
+    └── public/          # Static assets
 ```
 
-### Database Schema
+### API Endpoints
+- Authentication:
+  - POST /api/login/
+  - POST /api/register/
 
-The database schema is documented in detail in [backend/DATABASE_SCHEMA.md](backend/DATABASE_SCHEMA.md). This includes:
-- Table structures and relationships
-- SQL schema details
-- Entity Relationship Diagram (ERD)
-- Indexes and constraints
+- Users & Friends:
+  - GET /api/friends/
+  - POST /api/friend-request/send/{user_id}/
+  - POST /api/friend-request/{request_id}/handle/
 
-### Frontend Setup
+- Groups:
+  - GET /api/groups/
+  - POST /api/groups/create/
+  - POST /api/groups/{group_id}/invite/{user_id}/
 
-```bash
-# Install dependencies
-npm install
+- Notifications:
+  - GET /api/notifications/
+  - POST /api/notifications/mark-read/
 
-# Start development server
-npm start
-```
+---
 
-### Running the Application
-
-1. Start the Django server:
-```bash
-cd backend
-python manage.py runserver
-```
-
-2. Start the React development server (in another terminal):
-```bash
-npm start
-```
-
-3. Access the application:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000/api/
-- Admin interface: http://localhost:8000/admin/
-
-## Development Workflow
-
-1. **Authentication**
-   - Register or login to access the platform
-   - Authentication handled via Django Token authentication
-
-2. **Groups**
-   - Create betting groups for specific sports
-   - Add friends as group members
-   - View group leaderboard and available bets
-
-3. **Friends**
-   - Send and accept friend requests
-   - View friends list
-   - Add friends to betting groups
-
-## Environment Setup
-
-Create a `.env` file in the backend directory:
-
-```bash
-SECRET_KEY=your-secret-key
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-```
-
-## Contributing
-
-1. Create a new branch for your feature
-2. Make your changes
-3. Test your changes
-4. Submit a pull request
-
-## Tech Stack
-
-- **Frontend**: React, Material-UI
-- **Backend**: Django, Django REST Framework
-- **Database**: SQLite (development)
-- **Authentication**: Token-based authentication
+This README provides a comprehensive overview of the Roster Royals application, including setup instructions and component documentation. For further details, please refer to the source code and comments within the project.
