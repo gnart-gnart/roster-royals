@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import BettingGroup, User, GroupInvite
 from users.models import Notification  # Import from users app instead
 from .serializers import BettingGroupSerializer
+from .cloudbet import CloudbetClient
 
 class CreateGroupView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -162,4 +163,19 @@ def get_group(request, group_id):
         return Response({'error': 'Group not found'}, status=404)
     except Exception as e:
         print(f"Error: {str(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_available_bets(request, sport=None):
+    try:
+        client = CloudbetClient()
+        if sport:
+            events = client.get_events(sport)
+            return Response(events)
+        else:
+            sports = client.get_sports()
+            return Response(sports)
+    except Exception as e:
+        print(f"Cloudbet API error: {str(e)}")
         return Response({'error': str(e)}, status=500) 
