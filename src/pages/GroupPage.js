@@ -247,14 +247,31 @@ function GroupPage() {
           </Typography>
         )}
 
+        {/* President controls */}
         {isPresident && (
-          <Button
-            variant="contained"
-            onClick={() => setInviteDialogOpen(true)}
-            sx={{ mb: 2 }}
-          >
-            Invite Members
-          </Button>
+          <Box sx={{ mb: 2, display: 'flex', gap: 2 }}>
+            <Button
+              variant="contained"
+              onClick={() => setInviteDialogOpen(true)}
+            >
+              Invite Members
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => navigate(`/group/${id}/choose-bets`)}
+              sx={{
+                backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                border: '1px solid rgba(96, 165, 250, 0.3)',
+                color: '#f8fafc',
+                '&:hover': {
+                  backgroundColor: 'rgba(96, 165, 250, 0.2)',
+                  border: '1px solid rgba(96, 165, 250, 0.6)',
+                },
+              }}
+            >
+              Choose Bets
+            </Button>
+          </Box>
         )}
 
         <Dialog

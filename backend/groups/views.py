@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import BettingGroup, User, GroupInvite
 from users.models import Notification  # Import from users app instead
 from .serializers import BettingGroupSerializer
+from .cloudbet import CloudbetClient
 
 class CreateGroupView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -162,4 +163,34 @@ def get_group(request, group_id):
         return Response({'error': 'Group not found'}, status=404)
     except Exception as e:
         print(f"Error: {str(e)}")
-        return Response({'error': str(e)}, status=500) 
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_available_bets(request, sport=None):
+    try:
+        print("\nDEBUG: Fetching bets")
+        print(f"Sport param: {sport}")
+        
+        client = CloudbetClient()
+        if sport:
+            print(f"Fetching events for sport: {sport}")
+            events = client.get_events(sport)
+            print(f"Events response: {events}")
+            return Response(events)
+        else:
+            print("Fetching all sports")
+            sports = client.get_sports()
+            print(f"Sports response: {sports}")
+            return Response(sports)
+            
+    except Exception as e:
+        print(f"ERROR in get_available_bets: {str(e)}")
+        print(f"Error type: {type(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def test_bets_endpoint(request):
+    print("Test endpoint hit!")
+    return Response({"message": "Test endpoint working"}) 

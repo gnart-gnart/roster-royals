@@ -191,4 +191,11 @@ export const getGroup = async (groupId) => {
     console.error('Error fetching group:', error);
     throw error;
   }
+};
+
+export const getAvailableSports = async () => {
+  const response = await fetch(`${API_URL}/groups/bets/`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
 }; 
