@@ -4,9 +4,6 @@ import {
   Typography,
   Box,
   Button,
-  Card,
-  CardContent,
-  Grid,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -15,29 +12,8 @@ import NavBar from '../components/NavBar';
 function SportEventsPage() {
   const { groupId, sportKey } = useParams();
   const navigate = useNavigate();
-  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    const loadEvents = async () => {
-      try {
-        const response = await fetch(`/api/bets/${sportKey}`, {
-          headers: {
-            'Authorization': `Token ${localStorage.getItem('auth_token')}`
-          }
-        });
-        const data = await response.json();
-        setEvents(data);
-      } catch (err) {
-        setError('Failed to load events');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadEvents();
-  }, [sportKey]);
 
   return (
     <>
@@ -61,7 +37,7 @@ function SportEventsPage() {
             Back
           </Button>
           <Typography variant="h4">
-            Available Events
+            {sportKey.charAt(0).toUpperCase() + sportKey.slice(1)} Events
           </Typography>
         </Box>
 
@@ -70,10 +46,7 @@ function SportEventsPage() {
         ) : error ? (
           <Typography color="error">{error}</Typography>
         ) : (
-          <Grid container spacing={2}>
-            {/* We'll add event cards here once we see the event data structure */}
-            <Typography>Events will be displayed here</Typography>
-          </Grid>
+          <Typography>Events will be displayed here</Typography>
         )}
       </Container>
     </>
