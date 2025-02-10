@@ -7,6 +7,8 @@ import GroupPage from './pages/GroupPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import CreateGroupPage from './pages/CreateGroupPage';
 import AddFriendPage from './pages/AddFriendPage';
+import ChooseBetsPage from './pages/ChooseBetsPage';
+import SportEventsPage from './pages/SportEventsPage';
 
 const theme = createTheme({
   palette: {
@@ -115,6 +117,22 @@ function App() {
               <AddFriendPage />
             </ProtectedRoute>
           } />
+          <Route 
+            path="/group/:groupId/choose-bets" 
+            element={
+              <ProtectedRoute>
+                <ChooseBetsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/group/:groupId/choose-bets/:sportKey" 
+            element={
+              <ProtectedRoute>
+                <SportEventsPage />
+              </ProtectedRoute>
+            } 
+          />
         </Routes>
       </Router>
     </ThemeProvider>

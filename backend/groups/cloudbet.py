@@ -7,8 +7,16 @@ from django.conf import settings
 load_dotenv()
 
 class CloudbetClient:
+    SUPPORTED_SPORTS = {
+        'american-football': 'NFL',
+        'basketball': 'NBA',
+        'baseball': 'MLB',
+        'soccer': 'Soccer',
+        'ice-hockey': 'NHL'
+    }
+
     def __init__(self):
-        self.base_url = 'https://sports-api.cloudbet.com/pub/v2/odds'
+        self.base_url = settings.CLOUDBET_API_BASE_URL.rstrip('/')
         api_key = os.getenv('CLOUDBET_API_KEY') or settings.CLOUDBET_API_KEY
         self.headers = {
             'X-API-Key': api_key,
@@ -18,7 +26,7 @@ class CloudbetClient:
 
     def get_sports(self):
         """Get list of available sports"""
-        url = f'{self.base_url}/sports'
+        url = f'{self.base_url}/odds/sports'
         print("\nDEBUG Cloudbet API Request:")
         print(f"URL: {url}")
         print(f"API Key (first 20 chars): {self.headers['X-API-Key'][:20]}...")
@@ -32,12 +40,17 @@ class CloudbetClient:
         
         if response.ok:
             data = response.json()
-            return data.get('sports', [])
+            # Filter for only our supported sports with events
+            return [
+                sport for sport in data.get('sports', [])
+                if sport['key'] in self.SUPPORTED_SPORTS 
+                and sport['eventCount'] > 0
+            ]
         response.raise_for_status()
 
     def get_events(self, sport):
         """Get events for a specific sport"""
-        url = f'{self.base_url}/sports/{sport}'
+        url = f'{self.base_url}/odds/sports/{sport}'
         response = requests.get(url, headers=self.headers)
         response.raise_for_status()
         return response.json() 

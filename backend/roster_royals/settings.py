@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'users.apps.UsersConfig',
     'groups.apps.GroupsConfig',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -110,4 +111,4 @@ AUTH_USER_MODEL = 'users.User'
 
 # Cloudbet API settings
 CLOUDBET_API_KEY = os.environ.get('CLOUDBET_API_KEY')
-CLOUDBET_API_BASE_URL = 'https://sports-api.cloudbet.com/pub/'  # Removed pub/v2/ 
+CLOUDBET_API_BASE_URL = 'https://sports-api.cloudbet.com/pub/v2/'  # Include complete path 

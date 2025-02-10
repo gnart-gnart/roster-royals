@@ -169,13 +169,28 @@ def get_group(request, group_id):
 @permission_classes([IsAuthenticated])
 def get_available_bets(request, sport=None):
     try:
+        print("\nDEBUG: Fetching bets")
+        print(f"Sport param: {sport}")
+        
         client = CloudbetClient()
         if sport:
+            print(f"Fetching events for sport: {sport}")
             events = client.get_events(sport)
+            print(f"Events response: {events}")
             return Response(events)
         else:
+            print("Fetching all sports")
             sports = client.get_sports()
+            print(f"Sports response: {sports}")
             return Response(sports)
+            
     except Exception as e:
-        print(f"Cloudbet API error: {str(e)}")
-        return Response({'error': str(e)}, status=500) 
+        print(f"ERROR in get_available_bets: {str(e)}")
+        print(f"Error type: {type(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def test_bets_endpoint(request):
+    print("Test endpoint hit!")
+    return Response({"message": "Test endpoint working"}) 
