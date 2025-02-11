@@ -34,12 +34,13 @@ Roster Royals is a sports betting application that allows users to join groups, 
    ```
 
 2. **Environment Setup**:
-   Create a `.env` file in the frontend directory:
+   Create a `.env` file in the backend directory:
    ```bash
-   cd frontend
-   echo "REACT_APP_API_URL=http://localhost:8000/api" > .env
+   cd backend
+   echo "CLOUDBET_API_KEY=<your_api_key_here>" > .env
    cd ..
    ```
+   You must get your own API key.
 
 3. **Install Dependencies**:
    Backend Setup:
