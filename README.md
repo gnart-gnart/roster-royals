@@ -77,7 +77,7 @@ After running reset_db.sh, you can log in with these test accounts:
 - username: judy, password: judy
 - username: grant, password: grant
 - username: buddy, password: buddy
-- Admin account: username: admin, password: admin123
+- Admin account: username: admin, password: admin
 
 ## App Structure
 
