@@ -1,1 +1,9 @@
-requests==2.31.0 
+Django==5.0.2
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+python-dotenv==1.0.1
+requests==2.31.0
+django-extensions==3.2.3
+# For development/debugging
+ipython==8.21.0
+django-debug-toolbar==4.3.0 
