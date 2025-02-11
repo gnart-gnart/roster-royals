@@ -201,14 +201,14 @@ roster-royals/
 ├── backend/
 │   ├── users/           # User management, authentication, friendships
 │   ├── groups/          # Betting groups and invitations
-│   └── roster_royals/   # Django project settings
-│
-└── frontend/
-    ├── src/
-    │   ├── components/  # Reusable UI components
-    │   ├── pages/       # Page components
-    │   └── services/    # API integration
-    └── public/          # Static assets
+│   ├── roster_royals/   # Django project settings
+│   └── requirements.txt # Python dependencies
+├── src/                 # React frontend source code
+│   ├── components/      # Reusable UI components
+│   ├── pages/          # Page components
+│   └── services/       # API integration
+├── public/             # Static assets
+└── package.json        # Node.js dependencies
 ```
 
 ### API Endpoints
