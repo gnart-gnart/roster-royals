@@ -8,8 +8,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-1234567890abcdefghijklmnopqrstuvwxyz'  # Development only
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+DEBUG = False
+ALLOWED_HOSTS = ['165.22.187.23', 'rosterroyals.com']
 
 # Templates configuration
 TEMPLATES = [
