@@ -9,11 +9,13 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { login, register } from '../services/auth';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 function LoginPage() {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
+  const [googleEmail, setGoogleEmail] = useState(null);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -25,26 +27,87 @@ function LoginPage() {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:8000/api/login/', {
+      if (isLogin) {
+        // Regular login logic
+        const response = await fetch('http://localhost:8000/api/login/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username: formData.username, password: formData.password }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          console.log('Token saved:', data.token);
+          navigate('/home');
+        } else {
+          setError(data.error || 'Login failed');
+        }
+      } else {
+        // Registration logic
+        const response = await fetch('http://localhost:8000/api/register/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          navigate('/home');
+        } else {
+          setError(data.error || 'Registration failed');
+        }
+      }
+    } catch (err) {
+      console.error('Form submission error:', err);
+      setError('Failed to connect to server');
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      console.log('Sending Google token to backend...');
+      const response = await fetch('http://localhost:8000/api/google-auth/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username: formData.username, password: formData.password }),
+        body: JSON.stringify({ token: credentialResponse.credential }),
       });
 
       const data = await response.json();
+      console.log('Backend response:', data);
+
       if (response.ok) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        console.log('Token saved:', data.token);
-        navigate('/home');
+        if (data.exists) {
+          // User exists, proceed with login
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          navigate('/home');
+        } else {
+          // User doesn't exist, prepare for registration
+          console.log('New user, setting up registration...');
+          setGoogleEmail(data.email);
+          setFormData(prev => ({
+            ...prev,
+            email: data.email,
+            username: data.suggested_username || '' // Use suggested username if provided
+          }));
+          setIsLogin(false);
+        }
       } else {
-        setError(data.error || 'Login failed');
+        setError(data.error || 'Google authentication failed');
       }
     } catch (err) {
-      setError('Failed to connect to server');
-      console.error('Login error:', err);
+      console.error('Google auth error:', err);
+      setError(`Authentication error: ${err.message}`);
     }
   };
 
@@ -80,7 +143,7 @@ function LoginPage() {
             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
           />
           
-          {!isLogin && (
+          {(!isLogin || googleEmail) && (
             <TextField
               margin="normal"
               required
@@ -89,6 +152,10 @@ function LoginPage() {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              disabled={!!googleEmail}
+              InputProps={{
+                sx: { backgroundColor: googleEmail ? 'rgba(0, 0, 0, 0.1)' : 'inherit' }
+              }}
             />
           )}
           
@@ -102,6 +169,21 @@ function LoginPage() {
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           />
           
+          {isLogin && !googleEmail && (
+            <Box sx={{ mt: 2, width: '100%' }}>
+              <GoogleOAuthProvider clientId="1065387003454-mrilapnplql4coaj3ebvv4jcut0a1rr3.apps.googleusercontent.com">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError('Google login failed')}
+                  theme="filled_black"
+                  size="large"
+                  width="100%"
+                  text="Sign in with Google"
+                />
+              </GoogleOAuthProvider>
+            </Box>
+          )}
+          
           <Button
             type="submit"
             fullWidth
@@ -111,13 +193,18 @@ function LoginPage() {
             {isLogin ? 'Sign In' : 'Register'}
           </Button>
           
-          <Button
-            fullWidth
-            onClick={() => setIsLogin(!isLogin)}
-            sx={{ textAlign: 'center' }}
-          >
-            {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
-          </Button>
+          {!googleEmail && (
+            <Button
+              fullWidth
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setFormData({ username: '', email: '', password: '' });
+              }}
+              sx={{ textAlign: 'center' }}
+            >
+              {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+            </Button>
+          )}
         </Box>
       </Box>
     </Container>

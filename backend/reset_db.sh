@@ -4,20 +4,22 @@ echo "Removing database..."
 rm -f db.sqlite3
 
 echo "Removing old migrations..."
-find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+#find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+find users/migrations -name "*.py" -not -name "__init__.py" -delete
+find groups/migrations -name "*.py" -not -name "__init__.py" -delete
 
 echo "Making new migrations..."
-python manage.py makemigrations users
-python manage.py makemigrations groups
+python3 manage.py makemigrations users
+python3 manage.py makemigrations groups
 
 echo "Applying migrations..."
-python manage.py migrate auth
-python manage.py migrate users  # Apply users migrations first
-python manage.py migrate groups  # Then groups
-python manage.py migrate  # Finally any remaining migrations
+python3 manage.py migrate auth
+python3 manage.py migrate users  # Apply users migrations first
+python3 manage.py migrate groups  # Then groups
+python3 manage.py migrate  # Finally any remaining migrations
 
 echo "Creating test users and relationships..."
-python manage.py shell << END
+python3 manage.py shell << END
 from users.models import User, Friendship, Notification
 from groups.models import BettingGroup, GroupInvite
 

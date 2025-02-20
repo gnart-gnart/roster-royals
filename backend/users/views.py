@@ -7,6 +7,9 @@ from rest_framework.authtoken.models import Token
 from .serializers import UserSerializer, UserRegistrationSerializer
 from .models import User, FriendRequest, Notification, Friendship
 from django.db.models import Q
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from django.conf import settings
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
@@ -263,4 +266,66 @@ def remove_friend(request, friend_id):
         
         return Response({'message': 'Friend removed successfully'})
     except User.DoesNotExist:
-        return Response({'error': 'User not found'}, status=404) 
+        return Response({'error': 'User not found'}, status=404)
+
+@api_view(['POST'])
+def google_auth(request):
+    try:
+        token = request.data.get('token')
+        if not token:
+            return Response({'error': 'No token provided'}, status=400)
+
+        # Verify the Google token
+        try:
+            idinfo = id_token.verify_oauth2_token(
+                token,
+                requests.Request(),
+                settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
+                clock_skew_in_seconds=10  # Add some tolerance for clock skew
+            )
+
+            if not idinfo.get('email'):
+                print("No email in token info")
+                return Response({'error': 'No email in token'}, status=400)
+
+            # Get email from verified token
+            email = idinfo['email']
+            print(f"Processing Google auth for email: {email}")  # Debug log
+            
+            # Check if user exists
+            try:
+                user = User.objects.get(email=email)
+                print(f"Found existing user: {user.username}")  # Debug log
+                
+                # Generate new token
+                Token.objects.filter(user=user).delete()
+                token = Token.objects.create(user=user)
+                
+                return Response({
+                    'exists': True,
+                    'token': token.key,
+                    'user': UserSerializer(user).data
+                })
+            except User.DoesNotExist:
+                print(f"No user found for email: {email}")  # Debug log
+                return Response({
+                    'exists': False,
+                    'email': email,
+                    'suggested_username': email.split('@')[0]
+                })
+                
+        except ValueError as ve:
+            print(f"Token verification failed: {str(ve)}")
+            return Response({
+                'error': 'Invalid token',
+                'details': str(ve)
+            }, status=400)
+            
+    except Exception as e:
+        print(f"Unexpected error in google_auth: {str(e)}")
+        import traceback
+        traceback.print_exc()  # Print full stack trace
+        return Response({
+            'error': 'Authentication failed',
+            'details': str(e)
+        }, status=500) 

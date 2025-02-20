@@ -113,4 +113,11 @@ AUTH_USER_MODEL = 'users.User'
 
 # Cloudbet API settings
 CLOUDBET_API_KEY = os.environ.get('CLOUDBET_API_KEY')
-CLOUDBET_API_BASE_URL = 'https://sports-api.cloudbet.com/pub/v2/'  # Include complete path 
+CLOUDBET_API_BASE_URL = 'https://sports-api.cloudbet.com/pub/v2/'  # Include complete path
+
+# Add to your existing settings
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_OAUTH2_CLIENT_ID')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('GOOGLE_OAUTH2_CLIENT_SECRET')
+
+# For development, you might want to add this for better error visibility
+DEBUG = True 
