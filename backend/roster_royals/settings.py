@@ -5,12 +5,16 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1234567890abcdefghijklmnopqrstuvwxyz'  # Development only
+SECRET_KEY = "django-insecure-1234567890abcdefghijklmnopqrstuvwxyz" # Development only
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-ALLOWED_HOSTS = ['165.22.187.23', 'rosterroyals.com']
+ALLOWED_HOSTS = ['*']
+#ALLOWED_HOSTS = ['165.22.187.23', 'rosterroyals.com']
+
+# For development, you might want to add this for better error visibility
+DEBUG = True 
 
 # Templates configuration
 TEMPLATES = [
@@ -30,19 +34,35 @@ TEMPLATES = [
 ]
 
 # Database configuration (using default SQLite)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('POSTGRES_DB',),
+        'USER': os.environ.get('POSTGRES_USER',),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD',),
+        'HOST': os.environ.get('POSTGRES_HOST',),  # Match the service name in docker-compose
+        'PORT': os.environ.get('POSTGRES_PORT',),
     }
 }
+
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Static files configuration
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / "static"]  # Optional, used if static files exist in the project folder
+STATIC_ROOT = BASE_DIR / "staticfiles"  # WhiteNoise will serve files from here
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 # Other required settings
 ROOT_URLCONF = 'roster_royals.urls'
@@ -69,9 +89,11 @@ INSTALLED_APPS = [
     'django_extensions',
 ]
 
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Must come before other middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -79,6 +101,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 
 # During development only
 CORS_ALLOW_ALL_ORIGINS = True
@@ -119,5 +142,3 @@ CLOUDBET_API_BASE_URL = 'https://sports-api.cloudbet.com/pub/v2/'  # Include com
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_OAUTH2_CLIENT_ID')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('GOOGLE_OAUTH2_CLIENT_SECRET')
 
-# For development, you might want to add this for better error visibility
-DEBUG = True 

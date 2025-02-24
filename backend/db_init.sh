@@ -4,7 +4,6 @@ echo "Removing database..."
 rm -f db.sqlite3
 
 echo "Removing old migrations..."
-#find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
 find users/migrations -name "*.py" -not -name "__init__.py" -delete
 find groups/migrations -name "*.py" -not -name "__init__.py" -delete
 
@@ -17,6 +16,9 @@ python3 manage.py migrate auth
 python3 manage.py migrate users  # Apply users migrations first
 python3 manage.py migrate groups  # Then groups
 python3 manage.py migrate  # Finally any remaining migrations
+
+echo "Collecting static files..."
+python3 manage.py collectstatic --noinput
 
 echo "Creating test users and relationships..."
 python3 manage.py shell << END
