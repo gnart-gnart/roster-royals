@@ -8,6 +8,7 @@ import {
   Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { login, register } from '../services/auth';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 function LoginPage() {
@@ -20,40 +21,34 @@ function LoginPage() {
     email: '',
     password: '',
   });
-  
-  // Get the API base URL from the environment variables
-  const API_URL = process.env.REACT_APP_API_URL;
 
-  console.log('API URL:', API_URL);
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
     try {
       if (isLogin) {
-        // Regular login logic using env variable for API URL
-        const response = await fetch(`${API_URL}/login/`, {
+        // Regular login logic
+        const response = await fetch('http://157.230.87.36:8000/api/login/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ 
-            username: formData.username, 
-            password: formData.password 
-          }),
+          body: JSON.stringify({ username: formData.username, password: formData.password }),
         });
 
         const data = await response.json();
         if (response.ok) {
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
+          console.log('Token saved:', data.token);
           navigate('/home');
         } else {
           setError(data.error || 'Login failed');
         }
       } else {
-        // Registration logic using env variable for API URL
-        const response = await fetch(`${API_URL}/register/`, {
+        // Registration logic
+        const response = await fetch('http://157.230.87.36:8000/api/register/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -79,8 +74,7 @@ function LoginPage() {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       console.log('Sending Google token to backend...');
-      // Using the env variable for the Google authentication endpoint
-      const response = await fetch(`${API_URL}/google-auth/`, {
+      const response = await fetch('http://157.230.87.36:8000/api/google-auth/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,11 +93,12 @@ function LoginPage() {
           navigate('/home');
         } else {
           // User doesn't exist, prepare for registration
+          console.log('New user, setting up registration...');
           setGoogleEmail(data.email);
           setFormData(prev => ({
             ...prev,
             email: data.email,
-            username: data.suggested_username || ''
+            username: data.suggested_username || '' // Use suggested username if provided
           }));
           setIsLogin(false);
         }
@@ -216,4 +211,4 @@ function LoginPage() {
   );
 }
 
-export default LoginPage;
+export default LoginPage; 
