@@ -22,6 +22,10 @@ function LoginPage() {
     password: '',
   });
 
+
+  // Get the API base URL from the environment variables
+  const API_URL = process.env.REACT_APP_API_URL;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -29,7 +33,7 @@ function LoginPage() {
     try {
       if (isLogin) {
         // Regular login logic
-        const response = await fetch('http://localhost:8000/api/login/', {
+        const response = await fetch(`${API_URL}/login/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -48,7 +52,7 @@ function LoginPage() {
         }
       } else {
         // Registration logic
-        const response = await fetch('http://localhost:8000/api/register/', {
+        const response = await fetch(`${API_URL}/register/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -74,7 +78,7 @@ function LoginPage() {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       console.log('Sending Google token to backend...');
-      const response = await fetch('http://localhost:8000/api/google-auth/', {
+      const response = await fetch(`${API_URL}/google-auth/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

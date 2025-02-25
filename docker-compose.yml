@@ -1,0 +1,88 @@
+services:
+
+  pgdb:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_CONTAINER_PORT}"
+    env_file:
+      - .env
+    networks:
+      - app_network
+      
+
+  django-web:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - pgdb
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./backend:/app
+    ports:
+      - "${DJANGO_PORT}:${DJANGO_CONTAINER_PORT}"
+    env_file:
+      - .env
+    networks:
+      - app_network
+
+  react-app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - django-web
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      
+    env_file:
+      - .env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "${REACT_PORT}:${REACT_CONTAINER_PORT}"
+    stdin_open: true
+    tty: true
+    networks:
+      - app_network
+  
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template  # Use template file
+    environment:
+      - SERVER_IP=${SERVER_IP}  # ✅ Pass IP from .env file
+    command: /bin/sh -c "envsubst '$$SERVER_IP' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"  # ✅ Replace variables before running Nginx
+    depends_on:
+      - react-app
+      - django-web
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge
+
