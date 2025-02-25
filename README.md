@@ -1,255 +1,68 @@
 # Roster Royals
 
-## Overview
-Roster Royals is a social sports betting platform where users can:
-- Create and join betting groups with friends
-- Track points and compete on leaderboards
-- Send and accept friend requests
-- Receive notifications for friend requests and group invites
+Roster Royals is a web application that allows users to create and manage betting groups. This README provides instructions for setting up the development environment and running the application locally.
 
-## Tech Stack
-- **Frontend**: React.js with Material-UI
-- **Backend**: Django REST Framework
-- **Database**: SQLite (development)
-- **Authentication**: Token-based authentication
+## Prerequisites
 
-Roster Royals is a sports betting application that allows users to join groups, place bets, and track their performance. This README provides instructions for setting up the project locally and documentation for the app's components and structure.
+Before you begin, ensure you have the following installed on your machine:
+
+- **Docker**: Install the latest version from [Docker's official site](https://www.docker.com/products/docker-desktop).
+- **Docker Compose**: This is included with Docker Desktop, but ensure it's up to date.
 
 ## Getting Started
 
-### Prerequisites
+1. **Clone the Repository**
 
-- **Node.js**: Ensure you have Node.js installed. You can download it from [nodejs.org](https://nodejs.org/).
-- **npm**: npm is included with Node.js. Verify installation by running `npm -v` in your terminal.
-- **Python**: Python 3.8 or higher is required for the backend
-- **pip**: Python package manager
-- **virtualenv**: For creating Python virtual environments
+   Clone the repository to your local machine:
 
-### Installation
-
-1. **Clone the Repository**:
    ```bash
    git clone https://github.com/yourusername/roster-royals.git
    cd roster-royals
    ```
 
-2. **Environment Setup**:
-   Create a `.env` file in the backend directory:
-   ```bash
-   cd backend
-   echo "CLOUDBET_API_KEY=<your_api_key_here>" > .env
-   cd ..
-   ```
-   You must get your own API key.
+2. **Environment Configuration**
 
-3. **Install Dependencies**:
-   Backend Setup:
+   You will need a `.env` file with the necessary environment variables. This file is not included in the repository for security reasons. Please contact the project maintainer to obtain it.
+
+3. **Build and Run the Application**
+
+   Use Docker Compose to build and run the application:
+
    ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # or `venv\Scripts\activate` on Windows
-   pip install -r requirements.txt
-   ./reset_db.sh  # This will create test users: judy, grant, and buddy
+   docker compose up --build
    ```
 
-   Frontend Setup:
-   ```bash
-   cd ../
-   npm install
-   ```
+   This command will build the Docker images and start the containers for the backend (Django), frontend (React), and Nginx proxy.
 
-4. **Run the Application**:
-   Start the backend server:
-   ```bash
-   cd backend
-   python manage.py runserver
-   ```
+4. **Access the Application**
 
-   In a new terminal, start the frontend:
-   ```bash
-   npm start
-   ```
+   Once the containers are running, you can access the application in your web browser at:
 
-   This will start the development server and open the app in your default web browser at `http://localhost:3000`.
+   - Frontend: [http://localhost:3000](http://localhost:3000)
+   - Backend API: [http://localhost:8000/api](http://localhost:8000/api)
 
-### Test Users
-After running reset_db.sh, you can log in with these test accounts:
-- username: judy, password: judy
-- username: grant, password: grant
-- username: buddy, password: buddy
-- Admin account: username: admin, password: admin
+## Development Workflow
 
-## App Structure
+- **Frontend (React)**: The React application is located in the `frontend` directory. You can add new components, pages, and services here. The application will automatically reload when you make changes.
 
-- **public/**: Contains static files like `index.html`.
-- **src/**: Contains all the source code for the application.
-  - **components/**: Reusable React components.
-  - **pages/**: Page components for different routes.
-  - **services/**: API service functions for interacting with the backend.
-  - **App.js**: Main application component that sets up routing and theming.
-  - **index.js**: Entry point of the application.
+- **Backend (Django)**: The Django application is located in the `backend` directory. You can add new models, views, and serializers here. Use Django's management commands to apply migrations and manage the database.
 
-## Pages
+## Testing
 
-### LoginPage
+- **Frontend Testing**: Use React's built-in testing library to write and run tests for your components.
 
-- **Path**: `/`
-- **Description**: Allows users to log in or register. Utilizes Google authentication.
-- **Components Used**: `TextField`, `Button`, `Alert`, `Typography`.
+- **Backend Testing**: Use Django's testing framework to write and run tests for your views and models.
 
-### HomePage
+## Troubleshooting
 
-- **Path**: `/home`
-- **Description**: Displays user's groups and friends. Allows creating new groups and adding friends.
-- **Components Used**: `GroupCard`, `NavBar`, `List`, `Button`.
+- If you encounter issues with Docker, try restarting Docker Desktop or running `docker system prune` to clean up unused resources.
 
-### GroupPage
+- For CORS issues, ensure your `.env` file is correctly configured with the appropriate API URL.
 
-- **Path**: `/group/:id`
-- **Description**: Shows details of a specific group, including members and available bets.
-- **Components Used**: `Table`, `Dialog`, `Button`, `NavBar`.
+## Contributing
 
-### CreateGroupPage
+Please follow this workflow:
 
-- **Path**: `/create-group`
-- **Description**: Allows users to create a new group.
-- **Components Used**: `TextField`, `Button`, `Stepper`, `Card`.
-
-### AddFriendPage
-
-- **Path**: `/add-friend`
-- **Description**: Enables users to add new friends to their list.
-- **Components Used**: `TextField`, `Button`, `List`, `Card`.
-
-## Components
-
-### NavBar
-
-- **Description**: Navigation bar that appears on all pages.
-- **Props**: None.
-
-### GroupCard
-
-- **Description**: Displays a summary of a group, including its name, sport, and member count.
-- **Props**: `name`, `sport`, `memberCount`, `onClick`.
-
-### FriendsList
-
-- **Description**: Displays a list of friends with options to invite to groups or remove.
-- **Props**: `friends`, `groups`, `onFriendRemoved`.
-
-### ProtectedRoute
-
-- **Description**: A higher-order component that protects routes from unauthorized access.
-- **Props**: `children`.
-
-## API Endpoints
-
-#### Authentication
-
-- **POST** `/api/login/`: Log in a user.
-- **POST** `/api/register/`: Register a new user.
-
-#### Friends
-
-- **GET** `/api/friends/`: Retrieve a list of friends.
-- **POST** `/api/friend-request/send/:userId/`: Send a friend request.
-- **GET** `/api/friend-requests/`: Retrieve friend requests.
-- **POST** `/api/friend-request/:requestId/handle/`: Handle a friend request (accept/reject).
-- **POST** `/api/friends/remove/:friendId/`: Remove a friend.
-
-#### Groups
-
-- **POST** `/api/groups/create/`: Create a new group.
-- **POST** `/api/groups/:groupId/add-member/:userId/`: Add a member to a group.
-- **GET** `/api/groups/`: Retrieve a list of groups the user is a member of.
-- **POST** `/api/groups/:groupId/invite/:userId/`: Invite a user to a group.
-- **POST** `/api/group-invites/:inviteId/handle/`: Handle a group invite (accept/reject).
-
-#### Users
-
-- **GET** `/api/users/search/`: Search for users.
-
-#### Notifications
-
-- **GET** `/api/notifications/`: Retrieve notifications.
-- **POST** `/api/notifications/mark-read/`: Mark notifications as read.
-
-## Database Schema
-
-For detailed information on the database schema, please refer to the [Database Schema Documentation](backend/DATABASE_SCHEMA.md).
-
-### Common Issues
-1. **Database Errors**:
-   If you encounter database errors, try resetting it:
-   ```bash
-   cd backend
-   ./reset_db.sh
-   ```
-
-2. **Token Authentication Errors**:
-   - Make sure you're logged in
-   - Check if token exists in localStorage
-   - Try logging out and back in
-
-3. **CORS Issues**:
-   Backend is configured to accept requests from `localhost:3000`
-
-### Project Structure
-```
-roster-royals/
-├── backend/
-│   ├── users/           # User management, authentication, friendships
-│   ├── groups/          # Betting groups and invitations
-│   ├── roster_royals/   # Django project settings
-│   └── requirements.txt # Python dependencies
-├── src/                 # React frontend source code
-│   ├── components/      # Reusable UI components
-│   ├── pages/          # Page components
-│   └── services/       # API integration
-├── public/             # Static assets
-└── package.json        # Node.js dependencies
-```
-
-### API Endpoints
-- Authentication:
-  - POST /api/login/
-  - POST /api/register/
-
-- Users & Friends:
-  - GET /api/friends/
-  - POST /api/friend-request/send/{user_id}/
-  - POST /api/friend-request/{request_id}/handle/
-
-- Groups:
-  - GET /api/groups/
-  - POST /api/groups/create/
-  - POST /api/groups/{group_id}/invite/{user_id}/
-
-- Notifications:
-  - GET /api/notifications/
-  - POST /api/notifications/mark-read/
-
-## Database Models
-
-### Users
-- User: Extended Django user model with points system
-- Friendship: Manages user friend relationships
-- FriendRequest: Handles friend request flow
-- Notification: System notifications and alerts
-
-### Groups
-- BettingGroup: Main group model for betting functionality
-- GroupInvite: Manages group invitations
-- Bet: Individual bets within a group
-- UserBet: User's bets and results
-
-### System Tables
-- Group: Django's built-in auth group model (not used in application, but required by Django's authentication system)
-- Other Django system tables (auth, sessions, etc.)
-
-Note: While the Django Group model exists in the database for authentication purposes, our application uses the custom BettingGroup model for all betting group functionality.
-
----
-
-This README provides a comprehensive overview of the Roster Royals application, including setup instructions and component documentation. For further details, please refer to the source code and comments within the project.
+1. Create a new branch for your feature or bugfix.
+2. Commit your changes and push to your branch.
+3. Submit a pull request with a description of your changes.
