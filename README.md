@@ -24,6 +24,8 @@ Before you begin, ensure you have the following installed on your machine:
 
    You will need a `.env` file with the necessary environment variables. This file is not included in the repository for security reasons. Please contact the project maintainer to obtain it.
 
+   **Note**: In the `.env` file, there are a couple of places to change URLs depending on whether you are testing locally or on the DigitalOcean droplet. For most people, testing locally will be the default, so you don't need to worry about this unless deploying to production.
+
 3. **Build and Run the Application**
 
    Use Docker Compose to build and run the application:
@@ -66,3 +68,5 @@ Please follow this workflow:
 1. Create a new branch for your feature or bugfix.
 2. Commit your changes and push to your branch.
 3. Submit a pull request with a description of your changes.
+
+**Note**: If you are contributing by adding a feature, you can create issues on the project page here: https://github.com/users/gnart-gnart/projects/1.
