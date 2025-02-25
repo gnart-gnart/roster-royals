@@ -13,17 +13,9 @@ services:
       - "${POSTGRES_PORT}:${POSTGRES_CONTAINER_PORT}"
     env_file:
       - .env
-
-  # pgadmin:
-  #   image: dpage/pgadmin4
-  #   restart: always
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-  #   ports:
-  #     - "${PGADMIN_PORT}:${PGADMIN_CONTAINER_PORT}"
-  #   env_file:
-  #     - .env
+    networks:
+      - app_network
+      
 
   django-web:
     build: 
@@ -45,6 +37,8 @@ services:
       - "${DJANGO_PORT}:${DJANGO_CONTAINER_PORT}"
     env_file:
       - .env
+    networks:
+      - app_network
 
   react-app:
     build:
@@ -65,7 +59,27 @@ services:
       - "${REACT_PORT}:${REACT_CONTAINER_PORT}"
     stdin_open: true
     tty: true
+    networks:
+      - app_network
+  
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    restart: always
+    ports:
+      - "80:80"  # Exposing port 80 for external access
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # Mount the config file
+    depends_on:
+      - react-app
+      - django-web
+    networks:
+      - app_network
 
 volumes:
   postgres_data:
+
+networks:
+  app_network:
+    driver: bridge
 
