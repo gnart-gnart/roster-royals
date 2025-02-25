@@ -49,6 +49,7 @@ services:
       - django-web
     environment:
       NODE_ENV: ${NODE_ENV}
+      
     env_file:
       - .env
     volumes:

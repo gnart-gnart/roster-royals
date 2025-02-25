@@ -10,6 +10,9 @@ COPY package.json package-lock.json ./
 # Install only production dependencies
 RUN npm install --only=production --legacy-peer-deps --prefer-offline --no-audit
 
+# Remove any existing build directory if present (to ensure a clean build)
+RUN rm -rf build
+
 # Copy the rest of the application
 COPY . .
 
