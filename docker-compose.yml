@@ -68,8 +68,11 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template  # Use template file
+      - ./certbot/conf:/etc/letsencrypt  # Mount certbot certificates
+      - ./certbot/www:/var/www/certbot   # Web root for certbot challenge
     environment:
       - SERVER_IP=${SERVER_IP}  # ✅ Pass IP from .env file
     command: /bin/sh -c "envsubst '$$SERVER_IP' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"  # ✅ Replace variables before running Nginx
@@ -78,6 +81,17 @@ services:
       - django-web
     networks:
       - app_network
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    # This command just sleeps during development
+    entrypoint: /bin/sh -c "sleep 3600 && exit 0"
+    # 🟡🟡🟡Uncomment this in production to actually get certificates
+    # entrypoint: /bin/sh -c "certbot certonly --webroot -w /var/www/certbot --email your-email@example.com --agree-tos --no-eff-email -d rosterroyals.com -d www.rosterroyals.com"
 
 volumes:
   postgres_data:
