@@ -13,8 +13,8 @@ DEBUG = False
 # Security settings for HTTPS - 🟡🟡🟡 Uncomment these in production
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # SECURE_SSL_REDIRECT = True 
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True 
+# CSRF_COOKIE_SECURE = True 
 
 # ALLOWED_HOSTS should include your domain in production
 ALLOWED_HOSTS = ['*']  # Keep '*' for development
