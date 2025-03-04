@@ -44,17 +44,19 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL}
     restart: always
     depends_on:
       - django-web
     environment:
       NODE_ENV: ${NODE_ENV}
-      
+      REACT_APP_API_URL: http://localhost/api # FIXME: remove this
     env_file:
       - .env
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    # volumes:
+      # - ./frontend:/app
+      # - /app/node_modules
     ports:
       - "${REACT_PORT}:${REACT_CONTAINER_PORT}"
     stdin_open: true
@@ -69,10 +71,8 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template  # Use template file
-    environment:
-      - SERVER_IP=${SERVER_IP}  # ✅ Pass IP from .env file
-    command: /bin/sh -c "envsubst '$$SERVER_IP' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"  # ✅ Replace variables before running Nginx
+      - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template
+    command: sh -c "cat /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
     depends_on:
       - react-app
       - django-web

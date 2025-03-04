@@ -7,6 +7,10 @@ WORKDIR /app
 # Copy package.json and package-lock.json first
 COPY package.json package-lock.json ./
 
+# Add this line to receive the build argument
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+
 # Install only production dependencies
 RUN npm install --only=production --legacy-peer-deps --prefer-offline --no-audit
 
@@ -16,7 +20,8 @@ RUN rm -rf build
 # Copy the rest of the application
 COPY . .
 
-# Build the React app for production
+# Force a clean build with the new environment variable
+RUN rm -rf build
 RUN npm run build
 
 # Install `serve` to serve the static files
