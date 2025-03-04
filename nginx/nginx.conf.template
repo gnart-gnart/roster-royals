@@ -1,0 +1,37 @@
+   worker_processes 1;
+   
+   events {
+       worker_connections 1024;
+   }
+   
+   http {
+       server {
+           listen 80;
+   
+           # Frontend
+           location / {
+               proxy_pass http://react-app:3000;
+               proxy_set_header Host $host;
+               proxy_set_header X-Real-IP $remote_addr;
+           }
+   
+           # Backend
+           location /api/ {
+               proxy_pass http://django-web:8000;
+               proxy_set_header Host $host;
+               proxy_set_header X-Real-IP $remote_addr;
+   
+               # Allow CORS
+               add_header Access-Control-Allow-Origin *;
+               add_header Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE";
+               add_header Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization";
+   
+               # Handle preflight requests
+               if ($request_method = OPTIONS) {
+                   add_header Content-Length 0;
+                   add_header Content-Type text/plain;
+                   return 204;
+               }
+           }
+       }
+   }
