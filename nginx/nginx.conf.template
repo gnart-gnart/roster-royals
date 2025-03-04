@@ -43,50 +43,50 @@ http {
         }
         
         # 🟡🟡🟡 Uncomment in production to redirect HTTP to HTTPS
-        # return 301 https://$host$request_uri;
+        return 301 https://$host$request_uri;
     }
 
-    # HTTPS server
-    #server {
-    #    listen 443 ssl;
-    #    server_name rosterroyals.com www.rosterroyals.com;
-    #
-    #    ssl_certificate /etc/letsencrypt/live/rosterroyals.com/fullchain.pem;
-    #    ssl_certificate_key /etc/letsencrypt/live/rosterroyals.com/privkey.pem;
-    #
-    #    # SSL settings
-    #    ssl_protocols TLSv1.2 TLSv1.3;
-    #    ssl_prefer_server_ciphers on;
-    #    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
-    #    
-    #    # Frontend
-    #    location / {
-    #        proxy_pass http://${SERVER_IP}:3000;
-    #        proxy_set_header Host $host;
-    #        proxy_set_header X-Real-IP $remote_addr;
-    #        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    #        proxy_set_header X-Forwarded-Proto $scheme;
-    #    }
-    #
-    #    # Backend
-    #    location /api/ {
-    #        proxy_pass http://${SERVER_IP}:8000;
-    #        proxy_set_header Host $host;
-    #        proxy_set_header X-Real-IP $remote_addr;
-    #        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    #        proxy_set_header X-Forwarded-Proto $scheme;
-    #
-    #        # Allow CORS
-    #        add_header Access-Control-Allow-Origin *;
-    #        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE";
-    #        add_header Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization";
-    #
-    #        # Handle preflight requests
-    #        if ($request_method = OPTIONS) {
-    #            add_header Content-Length 0;
-    #            add_header Content-Type text/plain;
-    #            return 204;
-    #        }
-    #    }
-    #}
+     # HTTPS server
+    server {
+        listen 443 ssl;
+        server_name rosterroyals.com www.rosterroyals.com;
+    
+        ssl_certificate /etc/letsencrypt/live/rosterroyals.com/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/rosterroyals.com/privkey.pem;
+    
+        # SSL settings
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_prefer_server_ciphers on;
+        ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
+        
+        # Frontend
+        location / {
+            proxy_pass http://${SERVER_IP}:3000;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    
+        # Backend
+        location /api/ {
+            proxy_pass http://${SERVER_IP}:8000;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+    
+            # Allow CORS
+            add_header Access-Control-Allow-Origin *;
+            add_header Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE";
+            add_header Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization";
+    
+            # Handle preflight requests
+            if ($request_method = OPTIONS) {
+                add_header Content-Length 0;
+                add_header Content-Type text/plain;
+                return 204;
+            }
+        }
+    }
 }

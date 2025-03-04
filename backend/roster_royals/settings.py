@@ -10,16 +10,16 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY') # Development only
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-# Security settings for HTTPS - 🟡🟡🟡 Uncomment these in production
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# SECURE_SSL_REDIRECT = True 
-# SESSION_COOKIE_SECURE = True 
-# CSRF_COOKIE_SECURE = True 
+Security settings for HTTPS - 🟡🟡🟡 Uncomment these in production
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True 
+SESSION_COOKIE_SECURE = True 
+CSRF_COOKIE_SECURE = True 
 
 # ALLOWED_HOSTS should include your domain in production
-ALLOWED_HOSTS = ['*']  # Keep '*' for development
+# ALLOWED_HOSTS = ['*']  # Keep '*' for development
 # When deploying to production, use:
-# ALLOWED_HOSTS = ['157.230.87.36', 'rosterroyals.com', 'www.rosterroyals.com']
+ALLOWED_HOSTS = ['157.230.87.36', 'rosterroyals.com', 'www.rosterroyals.com']
 
 # Templates configuration
 TEMPLATES = [

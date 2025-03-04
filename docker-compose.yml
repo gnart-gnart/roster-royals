@@ -89,9 +89,9 @@ services:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     # This command just sleeps during development
-    entrypoint: /bin/sh -c "sleep 3600 && exit 0"
+    # entrypoint: /bin/sh -c "sleep 3600 && exit 0"
     # 🟡🟡🟡Uncomment this in production to actually get certificates
-    # entrypoint: /bin/sh -c "certbot certonly --webroot -w /var/www/certbot --email your-email@example.com --agree-tos --no-eff-email -d rosterroyals.com -d www.rosterroyals.com"
+    entrypoint: /bin/sh -c "certbot certonly --webroot -w /var/www/certbot --email your-email@example.com --agree-tos --no-eff-email -d rosterroyals.com -d www.rosterroyals.com"
 
 volumes:
   postgres_data:
