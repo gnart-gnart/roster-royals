@@ -10,6 +10,7 @@ import AddFriendPage from './pages/AddFriendPage';
 import ChooseBetsPage from './pages/ChooseBetsPage';
 import SportEventsPage from './pages/SportEventsPage';
 
+
 const theme = createTheme({
   palette: {
     mode: 'dark',
