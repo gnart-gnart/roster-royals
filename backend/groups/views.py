@@ -194,3 +194,100 @@ def get_available_bets(request, sport=None):
 def test_bets_endpoint(request):
     print("Test endpoint hit!")
     return Response({"message": "Test endpoint working"}) 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_event_details(request, event_key):
+    try:
+        print(f"\nFetching event details for: {event_key}")
+        client = CloudbetClient()
+        
+        # First, determine which sport this event belongs to
+        sports = client.get_sports()
+        sport_key = None
+        
+        for sport in sports:
+            # Get events for this sport
+            sport_data = client.get_events(sport['key'])
+            # Check all competitions for the event
+            for competition in sport_data.get('competitions', []):
+                for event in competition.get('events', []):
+                    if event['key'] == event_key:
+                        # Found the event in this sport
+                        # Enhance the event data with markets
+                        event_with_markets = client.get_event_markets(event_key)
+                        return Response(event_with_markets)
+        
+        # If we got here, event was not found
+        return Response({"error": "Event not found"}, status=404)
+    except Exception as e:
+        print(f"ERROR in get_event_details: {str(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def place_bet(request):
+    try:
+        data = request.data
+        print(f"\nProcessing bet placement:")
+        print(f"- User: {request.user.username}")
+        print(f"- Group ID: {data.get('groupId')}")
+        print(f"- Event: {data.get('eventKey')}")
+        print(f"- Market: {data.get('marketKey')}")
+        print(f"- Outcome: {data.get('outcomeKey')}")
+        print(f"- Amount: ${data.get('amount')}")
+        print(f"- Odds: {data.get('odds')}")
+        
+        # Validate bet data
+        required_fields = ['groupId', 'eventKey', 'marketKey', 'outcomeKey', 'amount', 'odds']
+        for field in required_fields:
+            if field not in data:
+                return Response({'error': f'Missing required field: {field}'}, status=400)
+        
+        # Check if user is in the group
+        try:
+            group = BettingGroup.objects.get(id=data['groupId'])
+            if request.user not in group.members.all():
+                return Response({'error': 'You are not a member of this group'}, status=403)
+        except BettingGroup.DoesNotExist:
+            return Response({'error': 'Group not found'}, status=404)
+        
+        # Create bet record in your database
+        # This is a stub - you'll need to create a Bet model and save the bet
+        # bet = Bet.objects.create(
+        #     user=request.user,
+        #     group=group,
+        #     event_key=data['eventKey'],
+        #     market_key=data['marketKey'],
+        #     outcome_key=data['outcomeKey'],
+        #     amount=data['amount'],
+        #     odds=data['odds'],
+        #     potential_winnings=data['amount'] * data['odds']
+        # )
+        
+        # For now, just return success
+        return Response({
+            'message': 'Bet placed successfully',
+            # 'betId': bet.id
+        })
+        
+    except Exception as e:
+        print(f"ERROR in place_bet: {str(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_competition_events(request, competition_key):
+    try:
+        print(f"\nFetching events for competition: {competition_key}")
+        client = CloudbetClient()
+        
+        # Get events for this competition from Cloudbet API
+        events = client.get_competition_events(competition_key)
+        print(f"Competition events response: {events}")
+        return Response(events)
+            
+    except Exception as e:
+        print(f"ERROR in get_competition_events: {str(e)}")
+        print(f"Error type: {type(e)}")
+        return Response({'error': str(e)}, status=500)

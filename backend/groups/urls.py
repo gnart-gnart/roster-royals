@@ -13,4 +13,7 @@ urlpatterns = [
     path('groups/bets/test/', views.test_bets_endpoint, name='test_bets'),
     path('groups/bets/', views.get_available_bets, name='get_available_bets'),
     path('groups/bets/<str:sport>/', views.get_available_bets, name='get_sport_bets'),
+    path('groups/bets/competition/<str:competition_key>/', views.get_competition_events, name='get_competition_events'),
+    path('groups/bets/events/<str:event_key>/', views.get_event_details, name='get_event_details'),
+    path('groups/bets/place/', views.place_bet, name='place_bet'),
 ] 

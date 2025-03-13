@@ -50,7 +50,24 @@ class CloudbetClient:
 
     def get_events(self, sport):
         """Get events for a specific sport"""
+        print(f"\nDEBUG Response Specific Sport:")
         url = f'{self.base_url}/odds/sports/{sport}'
         response = requests.get(url, headers=self.headers)
         response.raise_for_status()
-        return response.json() 
+        return response.json()
+    
+    def get_competition_events(self, competition_key):
+        """Get events for a specific competition"""
+        url = f'{self.base_url}/odds/competitions/{competition_key}'
+        print(f"Fetching competition events from: {url}")
+        response = requests.get(url, headers=self.headers)
+        response.raise_for_status()
+        return response.json()
+
+    def get_event_markets(self, event_key):
+        """Get detailed markets for a specific event"""
+        url = f'{self.base_url}/odds/events/{event_key}'
+        print(f"Fetching event markets from: {url}")
+        response = requests.get(url, headers=self.headers)
+        response.raise_for_status()
+        return response.json()

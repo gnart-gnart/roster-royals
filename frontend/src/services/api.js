@@ -199,3 +199,26 @@ export const getAvailableSports = async () => {
   });
   return handleResponse(response);
 }; 
+
+export const getAvailableSportEvents = async (sport) => {
+  // If sport parameter is provided, fetch events for that sport
+  const endpoint = sport ? 
+    `${API_URL}/groups/bets/${sport}/` : 
+    `${API_URL}/groups/bets/`;
+    
+  const response = await fetch(endpoint, {
+    headers: getHeaders(),
+  });
+  
+  return handleResponse(response);
+};
+
+export const getCompetitionEvents = async (competitionKey) => {
+  const endpoint = `${API_URL}/groups/bets/competition/${competitionKey}/`;
+  const response = await fetch(endpoint, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
+
