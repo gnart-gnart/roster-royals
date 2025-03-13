@@ -173,10 +173,12 @@ function SportEventsPage() {
     ) || [];
 
   const filteredEvents = competitionEvents.filter(event => 
-    event.name.toLowerCase().includes(eventSearchQuery.toLowerCase()) ||
-    (event.competitors && event.competitors.some(comp => 
-      comp.name.toLowerCase().includes(eventSearchQuery.toLowerCase())
-    ))
+    // Only include events with both home and away teams
+    event.home && event.away &&
+    // Apply search filter
+    (event.name.toLowerCase().includes(eventSearchQuery.toLowerCase()) ||
+    event.home.name.toLowerCase().includes(eventSearchQuery.toLowerCase()) ||
+    event.away.name.toLowerCase().includes(eventSearchQuery.toLowerCase()))
   );
 
   const formatDateTime = (timestamp) => {
@@ -331,32 +333,69 @@ function SportEventsPage() {
                         onClick={() => handleEventSelect(event)}
                       >
                         <CardContent>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                             <Typography variant="h6">
-                              {event.name}
+                              {event.home.name} vs {event.away.name}
                             </Typography>
                             <Chip 
-                              label={event.status === 'open' ? 'Open' : event.status} 
-                              color={event.status === 'open' ? 'success' : 'default'}
+                              label={event.status === 'TRADING_LIVE' ? 'Live' : event.status} 
+                              color={event.status === 'TRADING_LIVE' ? 'error' : 'default'}
                               size="small"
                             />
                           </Box>
-                          <Divider sx={{ my: 1 }} />
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography variant="body2" color="text.secondary">
-                              Start: {formatDateTime(event.startsAt)}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Markets: {event.markets?.length || 0}
-                            </Typography>
-                          </Box>
-                          {event.competitors && (
-                            <Box sx={{ mt: 2 }}>
-                              <Typography variant="body2">
-                                {event.competitors.map(comp => comp.name).join(' vs ')}
+                          <Divider sx={{ my: 2 }} />
+                          
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Box sx={{ textAlign: 'center', flex: 1 }}>
+                              <Typography variant="subtitle1" fontWeight="bold">
+                                {event.home.name}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {event.home.abbreviation}
                               </Typography>
                             </Box>
+                            <Typography variant="h6" sx={{ mx: 2 }}>VS</Typography>
+                            <Box sx={{ textAlign: 'center', flex: 1 }}>
+                              <Typography variant="subtitle1" fontWeight="bold">
+                                {event.away.name}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {event.away.abbreviation}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          
+                          {event.markets && event.markets['basketball.moneyline'] && (
+                            <Box sx={{ mt: 2 }}>
+                              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                Moneyline Odds
+                              </Typography>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                {event.markets['basketball.moneyline'].submarkets['period=ot&period=ft'].selections.map((selection, index) => (
+                                  <Box key={index} sx={{ textAlign: 'center' }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                      {selection.outcome === 'home' ? event.home.name : event.away.name}
+                                    </Typography>
+                                    <Typography variant="h6" color="primary">
+                                      {selection.price.toFixed(2)}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                      {(selection.probability * 100).toFixed(1)}% chance
+                                    </Typography>
+                                  </Box>
+                                ))}
+                              </Box>
+                            </Box>
                           )}
+                          
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Start: {formatDateTime(event.startTime)}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Markets: {Object.keys(event.markets || {}).length}
+                            </Typography>
+                          </Box>
                         </CardContent>
                       </Card>
                     </Grid>
