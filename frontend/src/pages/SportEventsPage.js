@@ -183,8 +183,21 @@ function SportEventsPage() {
 
   const formatDateTime = (timestamp) => {
     if (!timestamp) return 'TBD';
-    const date = new Date(timestamp);
-    return date.toLocaleString();
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) return 'TBD';
+      return date.toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      });
+    } catch (err) {
+      console.error('Error formatting date:', err);
+      return 'TBD';
+    }
   };
 
   const drawer = (
@@ -390,7 +403,7 @@ function SportEventsPage() {
                           
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                             <Typography variant="body2" color="text.secondary">
-                              Start: {formatDateTime(event.startTime)}
+                              Cutoff Time: {formatDateTime(event.cutoffTime)}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                               Markets: {Object.keys(event.markets || {}).length}
