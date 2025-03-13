@@ -42,6 +42,7 @@ function SportEventsPage() {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [eventSearchQuery, setEventSearchQuery] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
   const [competitionEvents, setCompetitionEvents] = useState([]);
@@ -171,6 +172,13 @@ function SportEventsPage() {
       comp.name.toLowerCase().includes(searchQuery.toLowerCase())
     ) || [];
 
+  const filteredEvents = competitionEvents.filter(event => 
+    event.name.toLowerCase().includes(eventSearchQuery.toLowerCase()) ||
+    (event.competitors && event.competitors.some(comp => 
+      comp.name.toLowerCase().includes(eventSearchQuery.toLowerCase())
+    ))
+  );
+
   const formatDateTime = (timestamp) => {
     if (!timestamp) return 'TBD';
     const date = new Date(timestamp);
@@ -289,12 +297,26 @@ function SportEventsPage() {
                   <IconButton onClick={handleBackToCompetitions} sx={{ mr: 2 }}>
                     <ArrowBackIcon />
                   </IconButton>
-                  <Typography variant="h5">
+                  <Typography variant="h5" sx={{ flexGrow: 1 }}>
                     {selectedCompetition.name}
                   </Typography>
+                  <TextField
+                    size="small"
+                    placeholder="Search events..."
+                    value={eventSearchQuery}
+                    onChange={(e) => setEventSearchQuery(e.target.value)}
+                    sx={{ width: 300 }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
                 </Box>
                 <Grid container spacing={2}>
-                  {competitionEvents.map((event) => (
+                  {filteredEvents.map((event) => (
                     <Grid item xs={12} md={6} key={event.key}>
                       <Card 
                         sx={{ 
