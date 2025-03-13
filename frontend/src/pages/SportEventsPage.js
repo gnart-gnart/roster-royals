@@ -352,7 +352,7 @@ function SportEventsPage() {
                             </Typography>
                             <Chip 
                               label={event.status === 'TRADING_LIVE' ? 'Live' : event.status} 
-                              color={event.status === 'TRADING_LIVE' ? 'error' : 'default'}
+                              color={event.status === 'TRADING_LIVE' ? 'error' : event.status === 'TRADING' ? 'success' : 'default'}
                               size="small"
                             />
                           </Box>
