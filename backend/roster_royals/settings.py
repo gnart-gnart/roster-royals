@@ -28,7 +28,15 @@ if not DEBUG:
         "https://rosterroyals.com",
         "https://www.rosterroyals.com",
     ]
-    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOW_ALL_ORIGINS = True  # For troubleshooting only, restrict later
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
+
+    # Add the CSRF trusted origins list
+    CSRF_TRUSTED_ORIGINS = [
+        "https://rosterroyals.com",
+        "https://www.rosterroyals.com",
+    ]
 
 # Templates configuration
 TEMPLATES = [
@@ -122,4 +130,28 @@ CLOUDBET_API_BASE_URL = 'https://sports-api.cloudbet.com/pub/v2/'  # Include com
 # Add to your existing settings
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_OAUTH2_CLIENT_ID')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('GOOGLE_OAUTH2_CLIENT_SECRET')
+
+# If using a custom auth backend, ensure it's properly configured
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+# Add this middleware if not already present
+MIDDLEWARE = [
+    # Django default middleware
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # Make sure this is before CommonMiddleware
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
 
