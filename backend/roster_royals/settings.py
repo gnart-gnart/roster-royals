@@ -7,12 +7,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY') # Development only
 
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
-
 # Update allowed hosts
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'rosterroyals.com', 'www.rosterroyals.com']
+
+DEBUG = False
 
 # Add production security settings
 if not DEBUG:
@@ -116,31 +114,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-
-# Add production security settings
-if not DEBUG:
-    # HTTPS settings
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    
-    # CORS settings - restrict to only your domain in production
-    CORS_ALLOWED_ORIGINS = [
-        "https://rosterroyals.com",
-        "https://www.rosterroyals.com",
-    ]
-    CORS_ALLOW_ALL_ORIGINS = False
-
-# REST Framework settings
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-    ],
-}
 
 # Custom user model
 AUTH_USER_MODEL = 'users.User'
