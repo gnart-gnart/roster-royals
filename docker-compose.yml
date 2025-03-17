@@ -1,5 +1,4 @@
 services:
-
   pgdb:
     image: postgres:15
     restart: always

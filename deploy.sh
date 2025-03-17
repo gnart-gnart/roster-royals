@@ -9,9 +9,16 @@ mkdir -p certbot/www
 mkdir -p backend/static
 mkdir -p backend/media
 
-# Check if we're running the initial setup
+# Check if certificates need to be copied from the host system
+if [ ! -d "certbot/conf/live/rosterroyals.com" ] && [ -d "/etc/letsencrypt/live/rosterroyals.com" ]; then
+  echo "🔑 Using existing certificates from host system..."
+  # Copy the entire letsencrypt directory
+  cp -r /etc/letsencrypt/* certbot/conf/
+fi
+
+# Skip certificate generation if they already exist
 if [ ! -d "certbot/conf/live/rosterroyals.com" ]; then
-  echo "🔑 Initial setup: obtaining SSL certificate..."
+  echo "🔑 Certificates not found, obtaining new SSL certificate..."
   
   # Start nginx temporarily for certificate validation
   docker compose -f docker-compose.prod.yml up -d nginx
@@ -19,7 +26,7 @@ if [ ! -d "certbot/conf/live/rosterroyals.com" ]; then
   # Wait for nginx to start
   sleep 5
   
-  # Get SSL certificate - replace with your email
+  # Get SSL certificate
   docker compose -f docker-compose.prod.yml run --rm certbot certonly \
     --webroot -w /var/www/certbot \
     --email your-email@example.com \
