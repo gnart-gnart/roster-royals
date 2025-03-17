@@ -10,7 +10,8 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY') # Development only
 # Update allowed hosts
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'rosterroyals.com', 'www.rosterroyals.com']
 
-DEBUG = False
+# To this environment variable based setting
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Add production security settings
 if not DEBUG:
