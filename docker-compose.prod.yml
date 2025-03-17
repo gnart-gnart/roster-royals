@@ -28,6 +28,7 @@ services:
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_DB: ${POSTGRES_DB}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      CLOUDBET_API_KEY: ${CLOUDBET_API_KEY}
     volumes:
       - ./backend/static:/app/static
       - ./backend/media:/app/media
