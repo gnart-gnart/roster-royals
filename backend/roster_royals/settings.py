@@ -9,12 +9,27 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY') # Development only
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-ALLOWED_HOSTS = ['*']
-#ALLOWED_HOSTS = ['165.22.187.23', 'rosterroyals.com']
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-# For development, you might want to add this for better error visibility
-DEBUG = True 
+# Update allowed hosts
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'rosterroyals.com', 'www.rosterroyals.com']
+
+# Add production security settings
+if not DEBUG:
+    # HTTPS settings
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # CORS settings - restrict to only your domain in production
+    CORS_ALLOWED_ORIGINS = [
+        "https://rosterroyals.com",
+        "https://www.rosterroyals.com",
+    ]
+    CORS_ALLOW_ALL_ORIGINS = False
 
 # Templates configuration
 TEMPLATES = [
@@ -103,21 +118,22 @@ MIDDLEWARE = [
 ]
 
 
-# During development only
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
+# Add production security settings
+if not DEBUG:
+    # HTTPS settings
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # CORS settings - restrict to only your domain in production
+    CORS_ALLOWED_ORIGINS = [
+        "https://rosterroyals.com",
+        "https://www.rosterroyals.com",
+    ]
+    CORS_ALLOW_ALL_ORIGINS = False
 
 # REST Framework settings
 REST_FRAMEWORK = {
