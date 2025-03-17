@@ -10,6 +10,7 @@ from django.db.models import Q
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.conf import settings
+from rest_framework.permissions import AllowAny
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
@@ -26,6 +27,7 @@ class RegisterView(generics.CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def login_view(request):
     username = request.data.get('username')
     password = request.data.get('password')
