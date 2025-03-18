@@ -19,15 +19,39 @@ import {
   InputAdornment,
   useTheme,
   useMediaQuery,
-  IconButton
+  IconButton,
+  Toolbar
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SearchIcon from '@mui/icons-material/Search';
 import NavBar from '../components/NavBar';
 import { getAvailableSportEvents, getCompetitionEvents } from '../services/api';
+import { styled } from '@mui/material/styles';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
 const DRAWER_WIDTH = 240;
+
+// Create a styled component for the betting card
+const BetCard = styled(Card)(({ theme, active }) => ({
+  backgroundColor: 'rgba(30, 41, 59, 0.7)',
+  backdropFilter: 'blur(8px)',
+  borderRadius: theme.shape.borderRadius * 2,
+  border: active 
+    ? '1px solid rgba(139, 92, 246, 0.4)' 
+    : '1px solid rgba(255, 255, 255, 0.1)',
+  marginBottom: theme.spacing(2),
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    borderColor: 'rgba(139, 92, 246, 0.6)',
+  },
+  ...(active && {
+    boxShadow: '0 0 0 2px rgba(139, 92, 246, 0.6)',
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+  }),
+}));
 
 function SportEventsPage() {
   const { groupId, sportKey } = useParams();
@@ -46,6 +70,11 @@ function SportEventsPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
   const [competitionEvents, setCompetitionEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedOutcome, setSelectedOutcome] = useState(null);
+  const [filterLoading, setFilterLoading] = useState(true);
+  const [filters, setFilters] = useState([]);
+  const [selectedFilter, setSelectedFilter] = useState(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -140,6 +169,26 @@ function SportEventsPage() {
     fetchCompetitionEvents();
   }, [selectedCompetition]);
 
+  useEffect(() => {
+    const fetchFilters = async () => {
+      try {
+        setFilterLoading(true);
+        const response = await getAvailableSportEvents(sportKey);
+        if (response && response.filters) {
+          setFilters(response.filters);
+          setSelectedFilter(response.filters[0].id);
+        }
+      } catch (err) {
+        console.error('Error fetching filters:', err);
+        setError('Failed to load filters. Please try again later.');
+      } finally {
+        setFilterLoading(false);
+      }
+    };
+
+    fetchFilters();
+  }, [sportKey]);
+
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -166,20 +215,18 @@ function SportEventsPage() {
     navigate(`/group/${groupId}/event/${event.key}`);
   };
 
-  const filteredCompetitions = categories
-    .find(cat => cat.key === selectedCategory)
-    ?.competitions.filter(comp => 
-      comp.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ) || [];
+  const handleFilterClick = (filterId) => {
+    setSelectedFilter(filterId);
+  };
 
-  const filteredEvents = competitionEvents.filter(event => 
-    // Only include events with both home and away teams
-    event.home && event.away &&
-    // Apply search filter
-    (event.name.toLowerCase().includes(eventSearchQuery.toLowerCase()) ||
-    event.home.name.toLowerCase().includes(eventSearchQuery.toLowerCase()) ||
-    event.away.name.toLowerCase().includes(eventSearchQuery.toLowerCase()))
-  );
+  const handleOutcomeSelect = (market, outcome) => {
+    setSelectedOutcome(outcome);
+  };
+
+  const handlePlaceBet = (event) => {
+    // Implement the logic to place a bet
+    console.log('Placing bet on event:', event);
+  };
 
   const formatDateTime = (timestamp) => {
     if (!timestamp) return 'TBD';
@@ -196,6 +243,22 @@ function SportEventsPage() {
       });
     } catch (err) {
       console.error('Error formatting date:', err);
+      return 'TBD';
+    }
+  };
+
+  const formatEventDate = (date) => {
+    if (!date) return 'TBD';
+    try {
+      const formattedDate = new Date(date).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      return formattedDate;
+    } catch (err) {
+      console.error('Error formatting event date:', err);
       return 'TBD';
     }
   };
@@ -234,220 +297,306 @@ function SportEventsPage() {
   );
 
   return (
-    <>
+    <Box sx={{ 
+      display: 'flex',
+      minHeight: '100vh',
+      backgroundColor: '#0f0f13',
+    }}>
       <NavBar />
-      <Box sx={{ display: 'flex' }}>
-        <Box
-          component="nav"
-          sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
-        >
-          {isMobile ? (
-            <Drawer
-              variant="temporary"
-              open={mobileOpen}
-              onClose={handleDrawerToggle}
-              ModalProps={{
-                keepMounted: true,
-              }}
-              sx={{
-                display: { xs: 'block', md: 'none' },
-                '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH },
-              }}
-            >
-              {drawer}
-            </Drawer>
+      
+      {/* Sidebar */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: DRAWER_WIDTH,
+          flexShrink: 0,
+          [`& .MuiDrawer-paper`]: { 
+            width: DRAWER_WIDTH, 
+            boxSizing: 'border-box',
+            backgroundColor: 'rgba(20, 30, 49, 0.95)',
+            backdropFilter: 'blur(8px)',
+            borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+          },
+          display: { xs: 'none', md: 'block' },
+        }}
+      >
+        <Toolbar />
+        <Box sx={{ overflow: 'auto', mt: 2 }}>
+          <Typography 
+            variant="subtitle2" 
+            sx={{ 
+              px: 3, 
+              mb: 1, 
+              color: 'rgba(255, 255, 255, 0.5)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontSize: '0.75rem',
+            }}
+          >
+            Filter Events
+          </Typography>
+          
+          {filterLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+              <CircularProgress size={24} sx={{ color: '#8b5cf6' }} />
+            </Box>
           ) : (
-            <Drawer
-              variant="permanent"
-              sx={{
-                display: { xs: 'none', md: 'block' },
-                '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH },
-              }}
-              open
-            >
-              {drawer}
-            </Drawer>
+            <List>
+              {filters.map((filter) => (
+                <ListItem 
+                  key={filter.id} 
+                  disablePadding
+                  onClick={() => handleFilterClick(filter.id)}
+                  sx={{ 
+                    mb: 0.5,
+                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                  }}
+                >
+                  <ListItemButton 
+                    selected={selectedFilter === filter.id}
+                    sx={{ 
+                      py: 1,
+                      px: 3,
+                      borderRadius: 1,
+                      mx: 1,
+                      '&.Mui-selected': {
+                        backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                        '&:hover': {
+                          backgroundColor: 'rgba(139, 92, 246, 0.25)',
+                        },
+                      },
+                    }}
+                  >
+                    <ListItemText 
+                      primary={
+                        <Typography sx={{ 
+                          fontSize: '0.95rem',
+                          fontWeight: selectedFilter === filter.id ? '600' : '400',
+                          color: selectedFilter === filter.id ? '#8b5cf6' : '#f8fafc',
+                        }}>
+                          {filter.name}
+                        </Typography>
+                      }
+                    />
+                    <Box 
+                      component="span" 
+                      sx={{ 
+                        backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                        color: '#8b5cf6',
+                        borderRadius: '4px',
+                        px: 1,
+                        py: 0.5,
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                      }}
+                    >
+                      {filter.count}
+                    </Box>
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
           )}
         </Box>
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            p: 3,
-            width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-          }}
-        >
-          <Container maxWidth="lg">
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-              <Button
-                startIcon={<ArrowBackIcon />}
-                onClick={() => navigate(`/group/${groupId}/choose-bets`)}
-                sx={{
-                  mr: 2,
-                  backgroundColor: 'rgba(96, 165, 250, 0.1)',
-                  border: '1px solid rgba(96, 165, 250, 0.3)',
-                  color: '#f8fafc',
-                  '&:hover': {
-                    backgroundColor: 'rgba(96, 165, 250, 0.2)',
-                    border: '1px solid rgba(96, 165, 250, 0.6)',
-                  },
-                }}
-              >
-                Back
-              </Button>
-              <Typography variant="h4">
-                {sportName} Events
+      </Drawer>
+
+      {/* Main content */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
+          backgroundColor: '#0f0f13',
+        }}
+      >
+        <Container maxWidth="lg">
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+            <Button
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate(`/group/${groupId}/choose-bets`)}
+              sx={{
+                mr: 2,
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                color: '#f8fafc',
+                '&:hover': {
+                  backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                  border: '1px solid rgba(139, 92, 246, 0.6)',
+                },
+                borderRadius: 1,
+              }}
+            >
+              Back
+            </Button>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+              {sportName} Events
+            </Typography>
+          </Box>
+
+          {loading ? (
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column',
+              alignItems: 'center', 
+              justifyContent: 'center',
+              minHeight: '60vh'
+            }}>
+              <CircularProgress sx={{ color: '#8b5cf6', mb: 2 }} />
+              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                Loading events...
               </Typography>
             </Box>
-
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                <CircularProgress />
-              </Box>
-            ) : error ? (
-              <Typography color="error">{error}</Typography>
-            ) : selectedCompetition ? (
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                  <IconButton onClick={handleBackToCompetitions} sx={{ mr: 2 }}>
-                    <ArrowBackIcon />
-                  </IconButton>
-                  <Typography variant="h5" sx={{ flexGrow: 1 }}>
-                    {selectedCompetition.name}
-                  </Typography>
-                  <TextField
-                    size="small"
-                    placeholder="Search events..."
-                    value={eventSearchQuery}
-                    onChange={(e) => setEventSearchQuery(e.target.value)}
-                    sx={{ width: 300 }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Box>
-                <Grid container spacing={2}>
-                  {filteredEvents.map((event) => (
-                    <Grid item xs={12} md={6} key={event.key}>
-                      <Card 
+          ) : error ? (
+            <Box sx={{ 
+              p: 4,
+              backgroundColor: 'rgba(239, 68, 68, 0.1)', 
+              borderRadius: 2,
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: '#f87171'
+            }}>
+              {error}
+            </Box>
+          ) : events.length === 0 ? (
+            <Box sx={{ 
+              p: 6,
+              backgroundColor: 'rgba(30, 41, 59, 0.7)',
+              borderRadius: 2,
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              textAlign: 'center'
+            }}>
+              <Typography variant="h6" sx={{ color: '#f8fafc', mb: 1 }}>
+                No Events Available
+              </Typography>
+              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                There are no upcoming events for this selection.
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              <Typography 
+                variant="subtitle1" 
+                sx={{ 
+                  mb: 3, 
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <CalendarTodayIcon fontSize="small" />
+                Showing {events.length} upcoming events
+              </Typography>
+              
+              {events.map((event, index) => (
+                <BetCard 
+                  key={event.id || index}
+                  active={selectedEvent?.id === event.id}
+                  onClick={() => setSelectedEvent(event)}
+                >
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      mb: 2
+                    }}>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc', mb: 0.5 }}>
+                          {event.name || `${event.home_team} vs ${event.away_team}`}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                          {formatEventDate(event.commence_time || event.date)}
+                        </Typography>
+                      </Box>
+                      
+                      <Chip 
+                        label={event.status || 'Upcoming'} 
+                        size="small"
                         sx={{ 
-                          cursor: 'pointer',
-                          transition: 'transform 0.2s',
-                          '&:hover': {
-                            transform: 'translateY(-4px)',
-                            boxShadow: 3,
-                            border: '1px solid rgba(96, 165, 250, 0.5)',
-                          },
+                          backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                          color: '#10b981',
+                          fontWeight: 'medium',
+                          borderRadius: 1,
                         }}
-                        onClick={() => handleEventSelect(event)}
-                      >
-                        <CardContent>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="h6">
-                              {event.home.name} vs {event.away.name}
+                      />
+                    </Box>
+                    
+                    <Grid container spacing={2}>
+                      {/* Display the betting odds/options */}
+                      {event.markets?.map((market, mIndex) => (
+                        <Grid item xs={12} md={6} key={mIndex}>
+                          <Box sx={{ 
+                            p: 2, 
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                            borderRadius: 1,
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                          }}>
+                            <Typography 
+                              variant="subtitle2" 
+                              sx={{ 
+                                mb: 1, 
+                                color: '#8b5cf6',
+                                fontWeight: 'bold' 
+                              }}
+                            >
+                              {market.name || 'Market'}
                             </Typography>
-                            <Chip 
-                              label={event.status === 'TRADING_LIVE' ? 'Live' : event.status} 
-                              color={event.status === 'TRADING_LIVE' ? 'error' : event.status === 'TRADING' ? 'success' : 'default'}
-                              size="small"
-                            />
-                          </Box>
-                          <Divider sx={{ my: 2 }} />
-                          
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Box sx={{ textAlign: 'center', flex: 1 }}>
-                              <Typography variant="subtitle1" fontWeight="bold">
-                                {event.home.name}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {event.home.abbreviation}
-                              </Typography>
-                            </Box>
-                            <Typography variant="h6" sx={{ mx: 2 }}>VS</Typography>
-                            <Box sx={{ textAlign: 'center', flex: 1 }}>
-                              <Typography variant="subtitle1" fontWeight="bold">
-                                {event.away.name}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {event.away.abbreviation}
-                              </Typography>
+                            
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                              {market.outcomes?.map((outcome, oIndex) => (
+                                <Chip
+                                  key={oIndex}
+                                  label={`${outcome.name}: ${outcome.price}`}
+                                  onClick={() => handleOutcomeSelect(market, outcome)}
+                                  sx={{
+                                    backgroundColor: selectedOutcome?.id === outcome.id 
+                                      ? 'rgba(139, 92, 246, 0.3)'
+                                      : 'rgba(255, 255, 255, 0.1)',
+                                    color: selectedOutcome?.id === outcome.id 
+                                      ? '#8b5cf6'
+                                      : '#f8fafc',
+                                    fontWeight: selectedOutcome?.id === outcome.id ? 'bold' : 'normal',
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                                    },
+                                    cursor: 'pointer',
+                                    borderRadius: 1,
+                                  }}
+                                />
+                              ))}
                             </Box>
                           </Box>
-                          
-                          {event.markets && event.markets['basketball.moneyline'] && (
-                            <Box sx={{ mt: 2 }}>
-                              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                Moneyline Odds
-                              </Typography>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                {event.markets['basketball.moneyline'].submarkets['period=ot&period=ft'].selections.map((selection, index) => (
-                                  <Box key={index} sx={{ textAlign: 'center' }}>
-                                    <Typography variant="body2" color="text.secondary">
-                                      {selection.outcome === 'home' ? event.home.name : event.away.name}
-                                    </Typography>
-                                    <Typography variant="h6" color="primary">
-                                      {selection.price.toFixed(2)}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                      {(selection.probability * 100).toFixed(1)}% chance
-                                    </Typography>
-                                  </Box>
-                                ))}
-                              </Box>
-                            </Box>
-                          )}
-                          
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                            <Typography variant="body2" color="text.secondary">
-                              Cutoff Time: {formatDateTime(event.cutoffTime)}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Markets: {Object.keys(event.markets || {}).length}
-                            </Typography>
-                          </Box>
-                        </CardContent>
-                      </Card>
+                        </Grid>
+                      ))}
                     </Grid>
-                  ))}
-                </Grid>
-              </Box>
-            ) : (
-              <Grid container spacing={2}>
-                {filteredCompetitions.map((competition) => (
-                  <Grid item xs={12} md={6} key={competition.key}>
-                    <Card 
-                      sx={{ 
-                        cursor: 'pointer',
-                        transition: 'transform 0.2s',
-                        '&:hover': {
-                          transform: 'translateY(-4px)',
-                          boxShadow: 3,
-                          border: '1px solid rgba(96, 165, 250, 0.5)',
-                        },
-                      }}
-                      onClick={() => handleCompetitionSelect(competition)}
-                    >
-                      <CardContent>
-                        <Typography variant="h6">
-                          {competition.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {competition.eventCount} events available
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            )}
-          </Container>
-        </Box>
+                    
+                    {selectedEvent?.id === event.id && (
+                      <Box sx={{ mt: 3, textAlign: 'right' }}>
+                        <Button
+                          variant="contained"
+                          onClick={() => handlePlaceBet(event)}
+                          sx={{
+                            backgroundColor: '#8b5cf6',
+                            '&:hover': {
+                              backgroundColor: '#7c3aed',
+                            },
+                            borderRadius: 1,
+                            px: 3,
+                          }}
+                        >
+                          Place Bet
+                        </Button>
+                      </Box>
+                    )}
+                  </CardContent>
+                </BetCard>
+              ))}
+            </>
+          )}
+        </Container>
       </Box>
-    </>
+    </Box>
   );
 }
 

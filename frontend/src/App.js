@@ -15,18 +15,27 @@ const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#60a5fa', // Bright blue
+      main: '#8b5cf6', // Purple primary (matching login button)
     },
     secondary: {
-      main: '#f472b6', // Pink accent
+      main: '#10b981', // Green accent
     },
     background: {
-      default: '#0f172a', // Very dark blue
+      default: '#0f0f13', // Very dark blue-black (matching login)
       paper: '#1e293b', // Slightly lighter dark blue
     },
     text: {
       primary: '#f8fafc', // Brighter white
       secondary: '#cbd5e1', // Lighter gray
+    },
+    error: {
+      main: '#ef4444', // Red
+    },
+    warning: {
+      main: '#f59e0b', // Amber
+    },
+    info: {
+      main: '#60a5fa', // Blue
     },
   },
   components: {
@@ -52,7 +61,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: '#1e293b',
-          borderRadius: 8,
+          borderRadius: 12,
           border: '1px solid rgba(96, 165, 250, 0.2)', // Subtle blue border
           transition: 'border-color 0.2s ease-in-out',
           '&:hover': {
@@ -64,12 +73,11 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 6,
+          borderRadius: 8,
+          boxShadow: 'none',
           textTransform: 'none',
-          border: '1px solid rgba(96, 165, 250, 0.3)',
-          '&:hover': {
-            border: '1px solid rgba(96, 165, 250, 0.6)',
-          },
+          fontWeight: 600,
+          transition: 'all 0.2s',
         },
       },
     },
@@ -88,10 +96,14 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
     button: {
       textTransform: 'none',
+      fontWeight: 500,
     },
+  },
+  shape: {
+    borderRadius: 8,
   },
 });
 

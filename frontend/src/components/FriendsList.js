@@ -8,8 +8,12 @@ import {
   Menu,
   MenuItem,
   Button,
+  ListItemAvatar,
+  Avatar,
+  Typography,
+  Box,
 } from '@mui/material';
-import { MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { MoreVert as MoreVertIcon, GroupAdd as GroupAddIcon, PersonRemove as PersonRemoveIcon } from '@mui/icons-material';
 import { inviteToGroup, removeFriend } from '../services/api';
 
 function FriendsList({ friends, groups, onFriendRemoved }) {
@@ -61,33 +65,110 @@ function FriendsList({ friends, groups, onFriendRemoved }) {
   };
 
   return (
-    <List>
-      {friends.map((friend) => (
-        <ListItem key={friend.id}>
-          <ListItemText 
-            primary={friend.username}
-            secondary={`Points: ${friend.points}`}
-          />
-          <ListItemSecondaryAction>
-            <IconButton onClick={(e) => handleMenuOpen(e, friend)}>
-              <MoreVertIcon />
-            </IconButton>
-          </ListItemSecondaryAction>
-        </ListItem>
-      ))}
+    <List sx={{ p: 0 }}>
+      {friends.length === 0 ? (
+        <Box sx={{ 
+          textAlign: 'center', 
+          py: 3, 
+          color: 'rgba(255, 255, 255, 0.7)'
+        }}>
+          No friends added yet
+        </Box>
+      ) : (
+        friends.map((friend) => (
+          <ListItem 
+            key={friend.id}
+            sx={{ 
+              py: 1.5,
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              '&:last-child': { 
+                borderBottom: 'none',
+              },
+            }}
+          >
+            <ListItemAvatar>
+              <Avatar sx={{ backgroundColor: '#8b5cf6' }}>
+                {friend.username ? friend.username[0].toUpperCase() : 'U'}
+              </Avatar>
+            </ListItemAvatar>
+            <ListItemText 
+              primary={
+                <Typography sx={{ color: '#f8fafc', fontWeight: '500' }}>
+                  {friend.username}
+                </Typography>
+              }
+              secondary={
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                  {friend.points ? `${friend.points} points` : 'New player'}
+                </Typography>
+              }
+            />
+            <ListItemSecondaryAction>
+              <IconButton 
+                onClick={(e) => handleMenuOpen(e, friend)}
+                sx={{ 
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  '&:hover': { color: '#f8fafc' }
+                }}
+              >
+                <MoreVertIcon />
+              </IconButton>
+            </ListItemSecondaryAction>
+          </ListItem>
+        ))
+      )}
 
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            backgroundColor: '#1e293b',
+            borderRadius: 2,
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+            minWidth: 180,
+          }
+        }}
       >
         {ownedGroups.length > 0 && (
-          <MenuItem onClick={handleInviteClick}>
-            Invite to Group
+          <MenuItem 
+            onClick={handleInviteClick}
+            sx={{ 
+              color: '#f8fafc',
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } 
+            }}
+          >
+            <Typography
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <GroupAddIcon fontSize="small" />
+              Invite to Group
+            </Typography>
           </MenuItem>
         )}
-        <MenuItem onClick={handleRemoveFriend} sx={{ color: 'error.main' }}>
-          Remove Friend
+        <MenuItem 
+          onClick={handleRemoveFriend} 
+          sx={{ 
+            color: '#ef4444',
+            '&:hover': { backgroundColor: 'rgba(239, 68, 68, 0.1)' }
+          }}
+        >
+          <Typography
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <PersonRemoveIcon fontSize="small" />
+            Remove Friend
+          </Typography>
         </MenuItem>
       </Menu>
 
@@ -95,11 +176,24 @@ function FriendsList({ friends, groups, onFriendRemoved }) {
         anchorEl={inviteMenuAnchor}
         open={Boolean(inviteMenuAnchor)}
         onClose={handleInviteMenuClose}
+        PaperProps={{
+          sx: {
+            backgroundColor: '#1e293b',
+            borderRadius: 2,
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+            minWidth: 180,
+          }
+        }}
       >
         {ownedGroups.map(group => (
           <MenuItem 
             key={group.id}
             onClick={() => handleInviteToGroup(group.id)}
+            sx={{ 
+              color: '#f8fafc',
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } 
+            }}
           >
             {group.name}
           </MenuItem>

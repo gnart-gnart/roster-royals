@@ -153,29 +153,76 @@ function NavBar() {
   };
 
   return (
-    <AppBar position="static" sx={{ 
-      backgroundColor: 'rgba(17, 24, 39, 0.95)',
-      backdropFilter: 'blur(8px)',
-      borderBottom: '1px solid rgba(55, 65, 81, 0.5)',
-    }}>
+    <AppBar 
+      position="sticky" 
+      sx={{ 
+        backgroundColor: '#0f0f13', 
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: 'none',
+      }}
+    >
       <Toolbar>
         <Typography 
           variant="h6" 
-          sx={{ flexGrow: 1, cursor: 'pointer' }} 
+          sx={{ 
+            flexGrow: 1, 
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            color: '#f8fafc',
+            display: 'flex',
+            alignItems: 'center',
+          }} 
           onClick={() => navigate('/home')}
         >
+          <Box 
+            component="span" 
+            sx={{ 
+              color: '#8b5cf6', 
+              mr: 1,
+              display: 'inline-flex'
+            }}
+          >
+            🏆
+          </Box>
           Roster Royals
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <IconButton
             color="inherit"
             onClick={handleNotificationsOpen}
+            sx={{ 
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
+            }}
           >
-            <Badge badgeContent={friendRequests.length + notifications.filter(n => !n.is_read).length} color="error">
+            <Badge badgeContent={notifications.length} color="error">
               <NotificationsIcon />
             </Badge>
           </IconButton>
+          
+          {/* User Profile Section */}
+          <Box
+            onClick={() => navigate('/profile')}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              },
+              padding: '6px 12px',
+              borderRadius: 1,
+              transition: 'all 0.2s',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+            }}
+          >
+            <AccountCircle sx={{ color: '#8b5cf6' }} />
+            <Typography variant="body1" sx={{ color: 'white', fontWeight: '500' }}>
+              {user?.username || 'Profile'}
+            </Typography>
+          </Box>
 
           {/* Settings Button */}
           <Tooltip title="Settings">
@@ -191,28 +238,6 @@ function NavBar() {
               <SettingsIcon />
             </IconButton>
           </Tooltip>
-
-          {/* Profile Section */}
-          <Box
-            onClick={() => navigate('/profile')}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              cursor: 'pointer',
-              '&:hover': {
-                opacity: 0.8,
-              },
-              padding: '4px 4px',
-              borderRadius: 1,
-              transition: 'all 0.2s',
-            }}
-          >
-            <AccountCircle />
-            <Typography variant="body1" sx={{ color: 'white' }}>
-              {user?.username || 'Profile'}
-            </Typography>
-          </Box>
 
           {/* Logout Button */}
           <Tooltip title="Logout">

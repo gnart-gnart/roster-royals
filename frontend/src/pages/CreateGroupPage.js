@@ -6,6 +6,7 @@ import {
   Button,
   Box,
   Card,
+  CardContent,
   FormControl,
   InputLabel,
   Select,
@@ -16,6 +17,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { createGroup } from '../services/api';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import NavBar from '../components/NavBar';
 
 const SPORTS_LIST = ['NFL', 'NBA', 'MLB', 'Soccer', 'NHL', 'UFC'];
 
@@ -45,92 +47,143 @@ function CreateGroupPage() {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 4, mb: 4 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/home')}
-          sx={{
-            mb: 2,
-            backgroundColor: 'rgba(96, 165, 250, 0.1)',
-            border: '1px solid rgba(96, 165, 250, 0.3)',
-            color: '#f8fafc',
-            '&:hover': {
-              backgroundColor: 'rgba(96, 165, 250, 0.2)',
-              border: '1px solid rgba(96, 165, 250, 0.6)',
-            },
-          }}
-        >
-          Back
-        </Button>
-
-        <Card sx={{
-          p: 3,
-          backgroundColor: 'rgba(30, 41, 59, 0.7)',
-          backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(96, 165, 250, 0.2)',
-        }}>
-          <Typography variant="h5" gutterBottom>
+    <Box sx={{ 
+      minHeight: '100vh',
+      backgroundColor: '#0f0f13',
+      pb: 8 
+    }}>
+      <NavBar />
+      <Container maxWidth="md" sx={{ pt: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/home')}
+            sx={{
+              mr: 2,
+              backgroundColor: 'rgba(139, 92, 246, 0.1)',
+              border: '1px solid rgba(139, 92, 246, 0.3)',
+              color: '#f8fafc',
+              '&:hover': {
+                backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                border: '1px solid rgba(139, 92, 246, 0.6)',
+              },
+              borderRadius: 1,
+            }}
+          >
+            Back
+          </Button>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
             Create New Group
           </Typography>
+        </Box>
 
-          <form onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Group Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              margin="normal"
-              error={!!error && !formData.name}
-              helperText={error && !formData.name ? error : ''}
-            />
+        <Card sx={{
+          backgroundColor: 'rgba(30, 41, 59, 0.7)',
+          backdropFilter: 'blur(8px)',
+          borderRadius: 2,
+          border: '1px solid rgba(139, 92, 246, 0.2)',
+          overflow: 'visible',
+        }}>
+          <CardContent sx={{ p: 4 }}>
+            {error && (
+              <Box sx={{ 
+                p: 2, 
+                mb: 3, 
+                backgroundColor: 'rgba(239, 68, 68, 0.1)', 
+                borderRadius: 1,
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#f87171'
+              }}>
+                {error}
+              </Box>
+            )}
 
-            <TextField
-              fullWidth
-              label="Description (Optional)"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              margin="normal"
-              multiline
-              rows={3}
-            />
+            <Box component="form" onSubmit={handleSubmit}>
+              <TextField
+                fullWidth
+                label="Group Name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+                sx={{ 
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  }
+                }}
+              />
 
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Sports (Optional)</InputLabel>
-              <Select
-                multiple
-                value={formData.sports}
-                onChange={(e) => setFormData({ ...formData, sports: e.target.value })}
-                input={<OutlinedInput label="Sports (Optional)" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} />
-                    ))}
-                  </Box>
-                )}
+              <TextField
+                fullWidth
+                label="Description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                multiline
+                rows={3}
+                sx={{ 
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  }
+                }}
+              />
+
+              <FormControl fullWidth sx={{ mb: 4 }}>
+                <InputLabel id="sports-label">Sports</InputLabel>
+                <Select
+                  labelId="sports-label"
+                  multiple
+                  value={formData.sports}
+                  onChange={(e) => setFormData({ ...formData, sports: e.target.value })}
+                  input={<OutlinedInput label="Sports" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => (
+                        <Chip 
+                          key={value} 
+                          label={value} 
+                          sx={{ 
+                            backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                            color: '#a78bfa',
+                            borderRadius: 1,
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+                  sx={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  }}
+                >
+                  {SPORTS_LIST.map((sport) => (
+                    <MenuItem key={sport} value={sport.toLowerCase()}>
+                      {sport}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                sx={{
+                  p: 1.5,
+                  backgroundColor: '#8b5cf6',
+                  '&:hover': {
+                    backgroundColor: '#7c3aed',
+                  },
+                  borderRadius: 1,
+                  fontWeight: 'bold',
+                }}
               >
-                {SPORTS_LIST.map((sport) => (
-                  <MenuItem key={sport} value={sport}>
-                    {sport}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              sx={{ mt: 3 }}
-            >
-              Create Group
-            </Button>
-          </form>
+                Create Group
+              </Button>
+            </Box>
+          </CardContent>
         </Card>
-      </Box>
-    </Container>
+      </Container>
+    </Box>
   );
 }
 
