@@ -119,19 +119,30 @@ function GroupPage() {
     }
   ];
 
+  const loadGroup = async () => {
+    try {
+      const groupData = await getGroup(id);
+      setGroup(groupData);
+      setMembers(groupData.members);
+    } catch (err) {
+      console.error('Error loading group:', err);
+      setError('Failed to load group data');
+    }
+  };
+
   useEffect(() => {
-    const loadGroup = async () => {
+    const loadData = async () => {
       try {
-        const data = await getGroup(id);  // API call to get group details
-        setGroup(data);
+        await loadGroup();
+        await loadGroupBets();
       } catch (err) {
-        setError('Failed to load group');
-        console.error(err);
+        setError('Failed to load data');
       } finally {
         setLoading(false);
       }
     };
-    loadGroup();
+    
+    loadData();
   }, [id]);
 
   useEffect(() => {
@@ -151,13 +162,6 @@ function GroupPage() {
       console.error('Failed to load friends:', err);
     }
   };
-
-  useEffect(() => {
-    if (group) {
-      const sortedMembers = [...group.members].sort((a, b) => b.points - a.points);
-      setMembers(sortedMembers);
-    }
-  }, [group]);
 
   const handleToggleFriend = (friendId) => {
     setSelectedFriends(prev => {
@@ -212,20 +216,17 @@ function GroupPage() {
     }
   };
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        await loadGroup();
-        await loadGroupBets();
-      } catch (err) {
-        setError('Failed to load data');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handlePlaceBet = (outcome) => {
+    // Navigate to a bet placement page or open a dialog
+    console.log('Placing bet on outcome:', outcome);
+    // For now, let's just show an alert
+    alert(`Feature coming soon: Place bet on ${outcome.outcome_name} with odds ${outcome.odds}`);
     
-    loadData();
-  }, [id]);
+    // In the future, you can implement:
+    // 1. A dialog to enter bet amount
+    // 2. Confirmation step
+    // 3. API call to place the bet
+  };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
