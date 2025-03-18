@@ -221,4 +221,22 @@ export const getCompetitionEvents = async (competitionKey) => {
   return handleResponse(response);
 };
 
+export const addGroupBet = async (betData) => {
+  const response = await fetch(`${API_URL}/bets/add/`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(betData),
+  });
+  
+  return handleResponse(response);
+};
+
+export const getGroupBets = async (groupId) => {
+  const response = await fetch(`${API_URL}/groups/${groupId}/bets/`, {
+    headers: getHeaders(),
+  });
+  
+  return handleResponse(response);
+};
+
 

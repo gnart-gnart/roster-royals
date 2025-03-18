@@ -28,12 +28,14 @@ import {
   Checkbox,
   TextField,
   FormControlLabel,
+  Divider,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SearchIcon from '@mui/icons-material/Search';
+import AddIcon from '@mui/icons-material/Add';
 import NavBar from '../components/NavBar';
-import { inviteToGroup, getFriends, getGroups, getGroup } from '../services/api';
+import { inviteToGroup, getFriends, getGroups, getGroup, getGroupBets } from '../services/api';
 
 function GroupPage() {
   const { id } = useParams();
@@ -49,6 +51,7 @@ function GroupPage() {
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectAll, setSelectAll] = useState(false);
+  const [groupBets, setGroupBets] = useState([]);
 
   // Mock data mapping group IDs to names
   const groupNames = {
@@ -199,6 +202,30 @@ function GroupPage() {
   const filteredFriends = friends.filter(friend =>
     friend.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const loadGroupBets = async () => {
+    try {
+      const bets = await getGroupBets(id);
+      setGroupBets(bets);
+    } catch (err) {
+      console.error('Failed to load group bets:', err);
+    }
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await loadGroup();
+        await loadGroupBets();
+      } catch (err) {
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [id]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
@@ -396,19 +423,72 @@ function GroupPage() {
 
           {/* Available Bets - Full width */}
           <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom>
-              Available Bets
-            </Typography>
-            <Card sx={{
-              width: '100%',
-              backgroundColor: 'rgba(30, 41, 59, 0.7)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(96, 165, 250, 0.2)',
-            }}>
-              <Box sx={{ p: 2, textAlign: 'center' }}>
-                No bets available yet.
-              </Box>
-            </Card>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h5">
+                Available Bets
+              </Typography>
+              {isPresident && (
+                <Button
+                  variant="contained"
+                  onClick={() => navigate(`/group/${id}/choose-bets`)}
+                  startIcon={<AddIcon />}
+                >
+                  Add Bets
+                </Button>
+              )}
+            </Box>
+            
+            {groupBets.length === 0 ? (
+              <Card sx={{
+                width: '100%',
+                backgroundColor: 'rgba(30, 41, 59, 0.7)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(96, 165, 250, 0.2)',
+              }}>
+                <Box sx={{ p: 2, textAlign: 'center' }}>
+                  No bets available yet.
+                </Box>
+              </Card>
+            ) : (
+              <Grid container spacing={2}>
+                {groupBets.map(bet => (
+                  <Grid item xs={12} md={6} key={bet.id}>
+                    <Card sx={{
+                      backgroundColor: 'rgba(30, 41, 59, 0.7)',
+                      backdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(96, 165, 250, 0.2)',
+                    }}>
+                      <CardContent>
+                        <Typography variant="h6" color="primary">{bet.event_name}</Typography>
+                        <Typography variant="subtitle2">{bet.market_name}</Typography>
+                        
+                        <Divider sx={{ my: 1 }} />
+                        
+                        <Typography variant="body2" color="text.secondary">
+                          Added by: {bet.created_by_username}
+                        </Typography>
+                        
+                        <Typography variant="body2" color="text.secondary">
+                          Start time: {new Date(bet.start_time).toLocaleString()}
+                        </Typography>
+                        
+                        <Box sx={{ mt: 2 }}>
+                          <Typography variant="subtitle2">Outcomes:</Typography>
+                          {bet.outcomes.map(outcome => (
+                            <Chip
+                              key={outcome.id}
+                              label={`${outcome.outcome_name}: ${outcome.odds.toFixed(2)}`}
+                              sx={{ m: 0.5, cursor: 'pointer' }}
+                              onClick={() => handlePlaceBet(outcome)}
+                            />
+                          ))}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
           </Grid>
         </Grid>
       </Container>

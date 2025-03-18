@@ -25,7 +25,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SearchIcon from '@mui/icons-material/Search';
 import NavBar from '../components/NavBar';
-import { getAvailableSportEvents, getCompetitionEvents } from '../services/api';
+import { getAvailableSportEvents, getCompetitionEvents, getGroup } from '../services/api';
+import AddBetDialog from '../components/AddBetDialog';
 
 const DRAWER_WIDTH = 240;
 
@@ -46,6 +47,10 @@ function SportEventsPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
   const [competitionEvents, setCompetitionEvents] = useState([]);
+  const [isGroupPresident, setIsGroupPresident] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedMarket, setSelectedMarket] = useState(null);
+  const [addBetDialogOpen, setAddBetDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -140,6 +145,20 @@ function SportEventsPage() {
     fetchCompetitionEvents();
   }, [selectedCompetition]);
 
+  useEffect(() => {
+    const checkGroupRole = async () => {
+      try {
+        const group = await getGroup(groupId);
+        const user = JSON.parse(localStorage.getItem('user'));
+        setIsGroupPresident(group.president.id === user.id);
+      } catch (err) {
+        console.error('Error checking group role:', err);
+      }
+    };
+    
+    checkGroupRole();
+  }, [groupId]);
+
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -164,6 +183,19 @@ function SportEventsPage() {
 
   const handleEventSelect = (event) => {
     navigate(`/group/${groupId}/event/${event.key}`);
+  };
+
+  const handleAddBetToGroup = (event, market) => {
+    setSelectedEvent(event);
+    setSelectedMarket(market);
+    setAddBetDialogOpen(true);
+  };
+
+  const handleAddBetDialogClose = (success) => {
+    setAddBetDialogOpen(false);
+    if (success) {
+      // Show success notification
+    }
   };
 
   const filteredCompetitions = categories
@@ -409,6 +441,20 @@ function SportEventsPage() {
                               Markets: {Object.keys(event.markets || {}).length}
                             </Typography>
                           </Box>
+                          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                            {isGroupPresident && (
+                              <Button 
+                                variant="contained"
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAddBetToGroup(event, event.markets['basketball.moneyline'].submarkets['period=ot&period=ft']);
+                                }}
+                              >
+                                Add to Group
+                              </Button>
+                            )}
+                          </Box>
                         </CardContent>
                       </Card>
                     </Grid>
@@ -447,6 +493,12 @@ function SportEventsPage() {
           </Container>
         </Box>
       </Box>
+      <AddBetDialog
+        open={addBetDialogOpen}
+        onClose={handleAddBetDialogClose}
+        event={selectedEvent}
+        market={selectedMarket}
+      />
     </>
   );
 }

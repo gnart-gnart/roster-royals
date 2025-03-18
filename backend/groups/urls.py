@@ -16,4 +16,10 @@ urlpatterns = [
     path('groups/bets/competition/<str:competition_key>/', views.get_competition_events, name='get_competition_events'),
     path('groups/bets/events/<str:event_key>/', views.get_event_details, name='get_event_details'),
     path('groups/bets/place/', views.place_bet, name='place_bet'),
+    
+    # New bet-related URLs
+    path('bets/add/', views.add_group_bet, name='add_group_bet'),
+    path('bets/place/', views.place_member_bet, name='place_member_bet'),
+    path('groups/<int:group_id>/bets/', views.get_group_bets, name='get_group_bets'),
+    path('groups/<int:group_id>/member-bets/', views.get_member_bets, name='get_member_bets'),
 ] 

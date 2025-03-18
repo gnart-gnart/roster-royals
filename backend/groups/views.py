@@ -291,3 +291,152 @@ def get_competition_events(request, competition_key):
         print(f"ERROR in get_competition_events: {str(e)}")
         print(f"Error type: {type(e)}")
         return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_group_bet(request):
+    try:
+        data = request.data
+        print(f"\nProcessing group bet addition:")
+        print(f"- User: {request.user.username}")
+        print(f"- Group ID: {data.get('groupId')}")
+        print(f"- Event: {data.get('eventKey')}")
+        print(f"- Market: {data.get('marketKey')}")
+        
+        # Validate bet data
+        required_fields = ['groupId', 'eventKey', 'marketKey', 'eventName', 
+                          'marketName', 'startTime', 'sport', 'outcomes']
+        for field in required_fields:
+            if field not in data:
+                return Response({'error': f'Missing required field: {field}'}, status=400)
+        
+        # Check if user is group president
+        try:
+            group = BettingGroup.objects.get(id=data['groupId'])
+            if group.president != request.user:
+                return Response({'error': 'Only group presidents can add bets'}, status=403)
+        except BettingGroup.DoesNotExist:
+            return Response({'error': 'Group not found'}, status=404)
+        
+        # Create the group bet
+        group_bet = GroupBet.objects.create(
+            group=group,
+            event_key=data['eventKey'],
+            market_key=data['marketKey'],
+            event_name=data['eventName'],
+            market_name=data['marketName'],
+            created_by=request.user,
+            start_time=data['startTime'],
+            sport=data['sport']
+        )
+        
+        # Add the outcomes
+        for outcome_data in data['outcomes']:
+            BetOutcome.objects.create(
+                group_bet=group_bet,
+                outcome_key=outcome_data['key'],
+                outcome_name=outcome_data['name'],
+                odds=outcome_data['odds']
+            )
+        
+        # Return the created bet with its outcomes
+        serializer = GroupBetSerializer(group_bet)
+        return Response(serializer.data, status=201)
+        
+    except Exception as e:
+        print(f"ERROR in add_group_bet: {str(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def place_member_bet(request):
+    try:
+        data = request.data
+        print(f"\nProcessing member bet placement:")
+        print(f"- User: {request.user.username}")
+        print(f"- Outcome ID: {data.get('outcomeId')}")
+        print(f"- Amount: ${data.get('amount')}")
+        
+        # Validate bet data
+        required_fields = ['outcomeId', 'amount']
+        for field in required_fields:
+            if field not in data:
+                return Response({'error': f'Missing required field: {field}'}, status=400)
+        
+        # Get the outcome and check if user is in the group
+        try:
+            outcome = BetOutcome.objects.get(id=data['outcomeId'])
+            group = outcome.group_bet.group
+            
+            if request.user not in group.members.all():
+                return Response({'error': 'You are not a member of this group'}, status=403)
+                
+            # Check if bet is still active
+            if not outcome.group_bet.active:
+                return Response({'error': 'This bet is no longer active'}, status=400)
+                
+            # Check if event has already started
+            if outcome.group_bet.start_time < timezone.now():
+                return Response({'error': 'This event has already started'}, status=400)
+                
+        except BetOutcome.DoesNotExist:
+            return Response({'error': 'Outcome not found'}, status=404)
+        
+        # Create the member bet
+        member_bet = MemberBet.objects.create(
+            user=request.user,
+            outcome=outcome,
+            amount=data['amount']
+        )
+        
+        # Return the created bet
+        serializer = MemberBetSerializer(member_bet)
+        return Response(serializer.data, status=201)
+        
+    except Exception as e:
+        print(f"ERROR in place_member_bet: {str(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_group_bets(request, group_id):
+    try:
+        # Check if user is in the group
+        group = BettingGroup.objects.get(id=group_id)
+        if request.user not in group.members.all():
+            return Response({'error': 'You are not a member of this group'}, status=403)
+            
+        # Get active bets for the group
+        bets = GroupBet.objects.filter(group=group, active=True)
+        serializer = GroupBetSerializer(bets, many=True)
+        return Response(serializer.data)
+        
+    except BettingGroup.DoesNotExist:
+        return Response({'error': 'Group not found'}, status=404)
+    except Exception as e:
+        print(f"ERROR in get_group_bets: {str(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_member_bets(request, group_id):
+    try:
+        # Check if user is in the group
+        group = BettingGroup.objects.get(id=group_id)
+        if request.user not in group.members.all():
+            return Response({'error': 'You are not a member of this group'}, status=403)
+            
+        # Get all outcomes for this group's bets
+        group_bets = GroupBet.objects.filter(group=group)
+        outcomes = BetOutcome.objects.filter(group_bet__in=group_bets)
+        
+        # Get member bets for these outcomes
+        member_bets = MemberBet.objects.filter(outcome__in=outcomes)
+        serializer = MemberBetSerializer(member_bets, many=True)
+        return Response(serializer.data)
+        
+    except BettingGroup.DoesNotExist:
+        return Response({'error': 'Group not found'}, status=404)
+    except Exception as e:
+        print(f"ERROR in get_member_bets: {str(e)}")
+        return Response({'error': str(e)}, status=500)
