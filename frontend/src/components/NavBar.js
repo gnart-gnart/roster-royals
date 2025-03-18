@@ -2,93 +2,119 @@ import React, { useState, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
-  IconButton,
-  Badge,
-  Menu,
-  MenuItem,
   Typography,
   Box,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
+  IconButton,
+  Badge,
   Avatar,
+  Menu,
+  MenuItem,
+  Divider,
   Button,
-  Tooltip,
 } from '@mui/material';
-import {
-  Notifications as NotificationsIcon,
-  AccountCircle,
-  Settings as SettingsIcon,
-  Logout as LogoutIcon,
-} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { 
-  getFriendRequests, 
-  handleFriendRequest, 
-  getNotifications,
-  markNotificationsRead,
-  handleGroupInvite as handleGroupInviteAPI,
-  getGroups,
-} from '../services/api';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import { getNotifications, getFriendRequests } from '../services/api';
+import LogoutIcon from '@mui/icons-material/Logout';
+import PersonIcon from '@mui/icons-material/Person';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 function NavBar() {
   const navigate = useNavigate();
-  const [notifAnchorEl, setNotifAnchorEl] = useState(null);
-  const [friendRequests, setFriendRequests] = useState([]);
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || {});
   const [notifications, setNotifications] = useState([]);
-  const user = JSON.parse(localStorage.getItem('user'));
+  const [friendRequests, setFriendRequests] = useState([]);
+  const [notifAnchorEl, setNotifAnchorEl] = useState(null);
+  const [profileAnchorEl, setProfileAnchorEl] = useState(null);
 
-  // Add groups state and loading function
-  const [groups, setGroups] = useState([]);
-
-  const loadGroups = async () => {
-    try {
-      const data = await getGroups();
-      setGroups(data);
-    } catch (err) {
-      console.error('Failed to load groups:', err);
-    }
+  const handleNotificationsOpen = (event) => {
+    setNotifAnchorEl(event.currentTarget);
   };
 
-  useEffect(() => {
-    loadFriendRequests();
-    loadNotifications();
-    loadGroups();  // Initial load
+  const handleNotificationsClose = () => {
+    setNotifAnchorEl(null);
+  };
 
-    // Listen for groups update events
-    window.addEventListener('groupsUpdated', loadGroups);
+  const handleProfileOpen = (event) => {
+    setProfileAnchorEl(event.currentTarget);
+  };
 
-    return () => {
-      window.removeEventListener('groupsUpdated', loadGroups);
-    };
-  }, []);
+  const handleProfileClose = () => {
+    setProfileAnchorEl(null);
+  };
 
-  const loadFriendRequests = async () => {
-    try {
-      const data = await getFriendRequests();
-      setFriendRequests(data.requests);
-    } catch (err) {
-      console.error('Failed to load friend requests:', err);
-    }
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
+  const handleProfile = () => {
+    handleProfileClose();
+    navigate('/profile');
+  };
+
+  const handleSettings = () => {
+    handleProfileClose();
+    navigate('/settings');
   };
 
   const loadNotifications = async () => {
     try {
-      const data = await getNotifications();
-      setNotifications(data);
+      // Safer way to handle potential API errors
+      const [notifResponse, requestsResponse] = await Promise.all([
+        fetch(`${process.env.REACT_APP_API_URL}/notifications/`, {
+          headers: {
+            'Authorization': `Token ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        }),
+        fetch(`${process.env.REACT_APP_API_URL}/friend-requests/`, {
+          headers: {
+            'Authorization': `Token ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        }),
+      ]);
+
+      // Check responses individually
+      if (notifResponse.ok) {
+        const notifData = await notifResponse.json();
+        setNotifications(Array.isArray(notifData) ? notifData : []);
+      } else {
+        console.error('Failed to load notifications');
+        setNotifications([]);
+      }
+
+      if (requestsResponse.ok) {
+        const requestsData = await requestsResponse.json();
+        setFriendRequests(Array.isArray(requestsData) ? requestsData : []);
+      } else {
+        console.error('Failed to load friend requests');
+        setFriendRequests([]);
+      }
     } catch (err) {
       console.error('Failed to load notifications:', err);
+      // Ensure we at least have empty arrays
+      setNotifications([]);
+      setFriendRequests([]);
     }
   };
 
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
   const handleAcceptFriend = async (requestId) => {
     try {
-      await handleFriendRequest(requestId, 'accept');
-      setFriendRequests(prev => prev.filter(req => req.id !== requestId));
+      await fetch(`${process.env.REACT_APP_API_URL}/friends/accept/${requestId}/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
       loadNotifications();
-      window.dispatchEvent(new Event('friendsUpdated'));
     } catch (err) {
       console.error('Failed to accept friend request:', err);
     }
@@ -96,81 +122,44 @@ function NavBar() {
 
   const handleRejectFriend = async (requestId) => {
     try {
-      await handleFriendRequest(requestId, 'reject');
-      setFriendRequests(prev => prev.filter(req => req.id !== requestId));
+      await fetch(`${process.env.REACT_APP_API_URL}/friends/reject/${requestId}/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      loadNotifications();
     } catch (err) {
       console.error('Failed to reject friend request:', err);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/');
-  };
-
-  const handleNotificationsOpen = async (event) => {
-    setNotifAnchorEl(event.currentTarget);
-    
-    if (notifications.some(n => !n.is_read)) {
-      try {
-        await markNotificationsRead();
-        setNotifications(prev => 
-          prev.map(notif => ({ ...notif, is_read: true }))
-        );
-      } catch (err) {
-        console.error('Failed to mark notifications as read:', err);
-      }
-    }
-  };
-
-  const handleNotificationsClose = () => {
-    setNotifAnchorEl(null);
-    loadNotifications();
-  };
-
-  const handleGroupInvite = async (notificationId, inviteId, action) => {
-    try {
-      await handleGroupInviteAPI(inviteId, action);
-      
-      // Remove the notification from the list
-      setNotifications(prev => 
-        prev.filter(n => n.id !== notificationId)
-      );
-      
-      // Refresh groups list if accepted
-      if (action === 'accept') {
-        // Dispatch event before loading groups to ensure all listeners are notified
-        window.dispatchEvent(new Event('groupsUpdated'));
-        await loadGroups();
-        
-        // Navigate to home page to see updated groups
-        navigate('/home');
-      }
-    } catch (err) {
-      console.error('Failed to handle group invite:', err);
-    }
-  };
-
   return (
     <AppBar 
-      position="sticky" 
+      position="relative"
+      elevation={0}
       sx={{ 
-        backgroundColor: '#0f0f13', 
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        backgroundColor: '#171717',
+        borderBottom: 'none',
         boxShadow: 'none',
+        zIndex: 1300,
       }}
     >
       <Toolbar>
+        {/* Logo */}
         <Typography 
           variant="h6" 
           sx={{ 
             flexGrow: 1, 
             cursor: 'pointer',
-            fontWeight: 'bold',
+            fontWeight: '800',
             color: '#f8fafc',
             display: 'flex',
             alignItems: 'center',
+            fontFamily: "'Montserrat', sans-serif",
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase',
           }} 
           onClick={() => navigate('/home')}
         >
@@ -188,22 +177,37 @@ function NavBar() {
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {/* Notifications Button */}
           <IconButton
             color="inherit"
             onClick={handleNotificationsOpen}
             sx={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
+              backgroundColor: 'rgba(0, 0, 0, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
             }}
           >
-            <Badge badgeContent={notifications.length} color="error">
+            <Badge 
+              badgeContent={
+                ((friendRequests && friendRequests.length) || 0) + 
+                ((notifications && notifications.filter(n => !n.is_read).length) || 0)
+              } 
+              color="error"
+              sx={{ 
+                '& .MuiBadge-badge': {
+                  display: ((friendRequests && friendRequests.length) || 0) + 
+                          ((notifications && notifications.filter(n => !n.is_read).length) || 0) > 0 
+                          ? 'flex' : 'none'
+                }
+              }}
+            >
               <NotificationsIcon />
             </Badge>
           </IconButton>
           
-          {/* User Profile Section */}
+          {/* User Profile Button */}
           <Box
-            onClick={() => navigate('/profile')}
+            onClick={handleProfileOpen}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -213,48 +217,27 @@ function NavBar() {
                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
               },
               padding: '6px 12px',
-              borderRadius: 1,
+              borderRadius: 2,
               transition: 'all 0.2s',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              backgroundColor: 'rgba(0, 0, 0, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
             }}
           >
-            <AccountCircle sx={{ color: '#8b5cf6' }} />
+            <Avatar 
+              sx={{ 
+                bgcolor: '#8b5cf6',
+                width: 32,
+                height: 32,
+              }}
+            >
+              {user?.username ? user.username[0].toUpperCase() : 'U'}
+            </Avatar>
             <Typography variant="body1" sx={{ color: 'white', fontWeight: '500' }}>
               {user?.username || 'Profile'}
             </Typography>
           </Box>
-
-          {/* Settings Button */}
-          <Tooltip title="Settings">
-            <IconButton
-              color="inherit"
-              onClick={() => navigate('/settings')}
-              sx={{
-                '&:hover': {
-                  backgroundColor: 'rgba(55, 65, 81, 0.3)',
-                },
-              }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-
-          {/* Logout Button */}
-          <Tooltip title="Logout">
-            <IconButton
-              color="inherit"
-              onClick={handleLogout}
-              sx={{
-                '&:hover': {
-                  backgroundColor: 'rgba(55, 65, 81, 0.3)',
-                },
-              }}
-            >
-              <LogoutIcon />
-            </IconButton>
-          </Tooltip>
         </Box>
-
+        
         {/* Notifications Menu */}
         <Menu
           anchorEl={notifAnchorEl}
@@ -262,108 +245,250 @@ function NavBar() {
           onClose={handleNotificationsClose}
           PaperProps={{
             sx: {
-              backgroundColor: 'rgba(17, 24, 39, 0.98)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(55, 65, 81, 0.5)',
+              backgroundColor: 'rgba(25, 25, 35, 0.98)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               color: '#f8fafc',
-              minWidth: '300px',
+              minWidth: '320px',
               maxHeight: '80vh',
               overflowY: 'auto',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+              borderRadius: 2,
             }
           }}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
           {/* Friend Requests Section */}
-          {friendRequests.length > 0 && (
+          {friendRequests && friendRequests.length > 0 && (
             <>
-              <Typography sx={{ p: 2, fontWeight: 'bold' }}>
-                Friend Requests
-              </Typography>
-              <Divider />
-              <List>
-                {friendRequests.map((request) => (
-                  <ListItem key={request.id}>
-                    <ListItemAvatar>
-                      <Avatar>{request.from_user.username[0]}</Avatar>
-                    </ListItemAvatar>
-                    <ListItemText 
-                      primary={request.from_user.username}
-                      secondary={
-                        <Box sx={{ mt: 1 }}>
-                          <Button
-                            size="small"
-                            variant="contained"
-                            onClick={() => handleAcceptFriend(request.id)}
-                            sx={{ mr: 1 }}
-                          >
-                            Accept
-                          </Button>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => handleRejectFriend(request.id)}
-                          >
-                            Reject
-                          </Button>
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
+              <Box sx={{ 
+                p: 2, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+              }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                  Friend Requests
+                </Typography>
+                <Box 
+                  sx={{ 
+                    backgroundColor: '#ef4444', 
+                    color: 'white', 
+                    borderRadius: '50%', 
+                    width: 20, 
+                    height: 20, 
+                    fontSize: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {friendRequests.length}
+                </Box>
+              </Box>
+              
+              {friendRequests.map((request) => (
+                <Box 
+                  key={request.id}
+                  sx={{ 
+                    p: 2, 
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.02)' }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                    <Avatar 
+                      sx={{ 
+                        mr: 1.5, 
+                        bgcolor: '#8b5cf6',
+                        width: 36,
+                        height: 36,
+                      }}
+                    >
+                      {request.from_user.username[0].toUpperCase()}
+                    </Avatar>
+                    <Box>
+                      <Typography sx={{ fontWeight: '500' }}>
+                        {request.from_user.username}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                        Sent you a friend request
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleAcceptFriend(request.id)}
+                      sx={{
+                        backgroundColor: '#10b981',
+                        '&:hover': { backgroundColor: '#059669' },
+                        borderRadius: 1,
+                        fontWeight: '500',
+                        fontSize: '0.75rem',
+                        boxShadow: 'none',
+                        py: 0.5,
+                      }}
+                    >
+                      Accept
+                    </Button>
+                    
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => handleRejectFriend(request.id)}
+                      sx={{
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        '&:hover': { 
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                        },
+                        borderRadius: 1,
+                        fontWeight: '500',
+                        fontSize: '0.75rem',
+                        py: 0.5,
+                      }}
+                    >
+                      Decline
+                    </Button>
+                  </Box>
+                </Box>
+              ))}
             </>
           )}
 
           {/* Notifications Section */}
-          {notifications.length > 0 && (
+          {notifications && notifications.length > 0 ? (
             <>
-              <Typography sx={{ p: 2, fontWeight: 'bold' }}>
-                Notifications
-              </Typography>
-              <Divider />
-              <List>
-                {notifications.map((notification) => (
-                  <ListItem 
-                    key={notification.id}
-                    sx={{
-                      backgroundColor: notification.is_read ? 'transparent' : 'rgba(96, 165, 250, 0.1)',
-                    }}
-                  >
-                    <ListItemText 
-                      primary={notification.message}
-                      secondary={
-                        notification.type === 'group_invite' ? (
-                          <Box sx={{ mt: 1 }}>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              onClick={() => handleGroupInvite(notification.id, notification.reference_id, 'accept')}
-                              sx={{ mr: 1 }}
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => handleGroupInvite(notification.id, notification.reference_id, 'reject')}
-                            >
-                              Reject
-                            </Button>
-                          </Box>
-                        ) : new Date(notification.created_at).toLocaleDateString()
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </>
-          )}
+              <Box sx={{ 
+                p: 2, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                borderTop: friendRequests && friendRequests.length > 0 ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+              }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                  Notifications
+                </Typography>
+                <Box 
+                  sx={{ 
+                    backgroundColor: notifications.filter(n => !n.is_read).length ? '#ef4444' : 'rgba(255, 255, 255, 0.2)', 
+                    color: 'white', 
+                    borderRadius: '50%', 
+                    width: 20, 
+                    height: 20, 
+                    fontSize: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {notifications.filter(n => !n.is_read).length || 0}
+                </Box>
+              </Box>
 
-          {friendRequests.length === 0 && notifications.length === 0 && (
-            <Typography sx={{ p: 2, textAlign: 'center' }}>
-              No new notifications
-            </Typography>
+              {notifications.map((notification) => (
+                <Box 
+                  key={notification.id}
+                  sx={{ 
+                    p: 2, 
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                    backgroundColor: notification.is_read ? 'transparent' : 'rgba(139, 92, 246, 0.05)',
+                    '&:hover': { backgroundColor: notification.is_read ? 'rgba(255, 255, 255, 0.02)' : 'rgba(139, 92, 246, 0.08)' }
+                  }}
+                >
+                  <Typography variant="body1">
+                    {notification.message}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 0.5, color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
+                    {new Date(notification.created_at).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </Typography>
+                </Box>
+              ))}
+            </>
+          ) : null}
+
+          {/* Empty State */}
+          {(!notifications || notifications.length === 0) && (!friendRequests || friendRequests.length === 0) && (
+            <Box sx={{ p: 3, textAlign: 'center' }}>
+              <Box sx={{ 
+                width: 60, 
+                height: 60, 
+                borderRadius: '50%', 
+                backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2
+              }}>
+                <NotificationsIcon sx={{ color: 'rgba(255, 255, 255, 0.3)', fontSize: 30 }} />
+              </Box>
+              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                No new notifications
+              </Typography>
+            </Box>
           )}
+        </Menu>
+
+        {/* Profile Menu */}
+        <Menu
+          anchorEl={profileAnchorEl}
+          open={Boolean(profileAnchorEl)}
+          onClose={handleProfileClose}
+          PaperProps={{
+            sx: {
+              backgroundColor: 'rgba(25, 25, 35, 0.98)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              color: '#f8fafc',
+              minWidth: '200px',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+              borderRadius: 2,
+              mt: 1.5,
+            }
+          }}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        >
+          <Box sx={{ px: 2, py: 1.5 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+              {user?.username || 'User'}
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+              {user?.points || 0} points
+            </Typography>
+          </Box>
+          
+          <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)' }} />
+          
+          <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
+            <PersonIcon sx={{ mr: 1.5, fontSize: 20, color: 'rgba(255, 255, 255, 0.7)' }} />
+            <Typography>Profile</Typography>
+          </MenuItem>
+          
+          <MenuItem onClick={handleSettings} sx={{ py: 1.5 }}>
+            <SettingsIcon sx={{ mr: 1.5, fontSize: 20, color: 'rgba(255, 255, 255, 0.7)' }} />
+            <Typography>Settings</Typography>
+          </MenuItem>
+          
+          <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)' }} />
+          
+          <MenuItem onClick={handleLogout} sx={{ py: 1.5, color: '#ef4444' }}>
+            <LogoutIcon sx={{ mr: 1.5, fontSize: 20 }} />
+            <Typography>Logout</Typography>
+          </MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>

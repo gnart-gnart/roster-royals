@@ -194,11 +194,69 @@ export const getGroup = async (groupId) => {
 };
 
 export const getAvailableSports = async () => {
-  const response = await fetch(`${API_URL}/groups/bets/`, {
-    headers: getHeaders(),
-  });
-  return handleResponse(response);
-}; 
+  console.log("Fetching available sports from API...");
+  try {
+    // Add a timeout to the fetch to avoid long hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+    
+    console.log("Sending request to:", `${API_URL}/sports/`);
+    const response = await fetch(`${API_URL}/sports/`, {
+      method: 'GET',
+      headers: getHeaders(),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId); // Clear the timeout if request completes normally
+    
+    console.log("Response status:", response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("API Error Response:", errorText);
+      try {
+        const errorData = JSON.parse(errorText);
+        throw new Error(errorData.error || `API Error (${response.status}): Failed to fetch sports`);
+      } catch (e) {
+        throw new Error(`API Error (${response.status}): ${errorText || 'Failed to fetch sports'}`);
+      }
+    }
+    
+    const data = await response.json();
+    console.log("API sports data received:", data);
+    
+    // If the API returns an empty array or no data, provide fallback data
+    if (!data || data.length === 0) {
+      console.log("API returned empty data, using fallback sports data");
+      return getFallbackSports();
+    }
+    
+    return data;
+  } catch (error) {
+    // Handle different error types distinctly
+    if (error.name === 'AbortError') {
+      console.error("Request timeout - API did not respond in time");
+    } else if (error.message.includes('Failed to fetch')) {
+      console.error("Network error - Unable to connect to API:", error);
+    } else {
+      console.error("Error fetching sports data:", error);
+    }
+    
+    // Always return fallback data in case of any error
+    return getFallbackSports();
+  }
+};
+
+export function getFallbackSports() {
+  return [
+    { key: 'nba', name: 'Basketball', activeEvents: 12, description: 'NBA games and player props' },
+    { key: 'nfl', name: 'Football', activeEvents: 8, description: 'NFL matchups and player stats' },
+    { key: 'mlb', name: 'Baseball', activeEvents: 15, description: 'MLB games and team stats' },
+    { key: 'nhl', name: 'Hockey', activeEvents: 9, description: 'NHL matches and player performance' },
+    { key: 'soccer', name: 'Soccer', activeEvents: 20, description: 'Soccer matches from top leagues' },
+    { key: 'ufc', name: 'UFC/MMA', activeEvents: 4, description: 'MMA fights and fighter props' }
+  ];
+}
 
 export const getAvailableSportEvents = async (sport) => {
   // If sport parameter is provided, fetch events for that sport
@@ -219,6 +277,26 @@ export const getCompetitionEvents = async (competitionKey) => {
     headers: getHeaders(),
   });
   return handleResponse(response);
+};
+
+export const submitBet = async (betData) => {
+  try {
+    const response = await fetch(`${API_URL}/bets/`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(betData),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to submit bet');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error submitting bet:', error);
+    throw error;
+  }
 };
 
 

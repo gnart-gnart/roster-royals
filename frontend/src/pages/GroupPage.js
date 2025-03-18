@@ -226,7 +226,7 @@ function GroupPage() {
                 backgroundColor: 'rgba(139, 92, 246, 0.2)',
                 border: '1px solid rgba(139, 92, 246, 0.6)',
               },
-              borderRadius: 1,
+              borderRadius: 2,
             }}
           >
             Back
@@ -258,19 +258,25 @@ function GroupPage() {
         ) : (
           <>
             {group?.description && (
-              <Typography 
-                variant="body1" 
+              <Box 
                 sx={{ 
                   mb: 4,
-                  color: 'rgba(255, 255, 255, 0.8)',
-                  backgroundColor: 'rgba(30, 41, 59, 0.7)',
-                  borderRadius: 2,
+                  backgroundColor: 'rgba(25, 25, 35, 0.8)',
+                  backdropFilter: 'blur(8px)',
+                  borderRadius: 3,
                   p: 3,
-                  border: '1px solid rgba(139, 92, 246, 0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
                 }}
               >
-                {group.description}
-              </Typography>
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    color: 'rgba(255, 255, 255, 0.8)',
+                  }}
+                >
+                  {group.description}
+                </Typography>
+              </Box>
             )}
 
             {/* Main content grid */}
@@ -278,7 +284,12 @@ function GroupPage() {
               {/* Left Column - Active Bets */}
               <Grid item xs={12} md={8}>
                 <Box sx={{ mb: 4 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    mb: 3 
+                  }}>
                     <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
                       Active Bets
                     </Typography>
@@ -292,7 +303,10 @@ function GroupPage() {
                         '&:hover': {
                           backgroundColor: '#7c3aed',
                         },
-                        borderRadius: 1,
+                        borderRadius: 2,
+                        px: 3,
+                        py: 1.2,
+                        boxShadow: '0 6px 15px rgba(139, 92, 246, 0.3)',
                       }}
                     >
                       Place Bet
@@ -303,9 +317,10 @@ function GroupPage() {
                     <Box sx={{ 
                       textAlign: 'center', 
                       py: 4, 
-                      backgroundColor: 'rgba(30, 41, 59, 0.7)',
-                      borderRadius: 2,
-                      border: '1px solid rgba(255, 255, 255, 0.1)'
+                      backgroundColor: 'rgba(25, 25, 35, 0.8)',
+                      backdropFilter: 'blur(8px)',
+                      borderRadius: 3,
+                      border: '1px solid rgba(255, 255, 255, 0.08)'
                     }}>
                       <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                         No active bets yet
@@ -318,59 +333,79 @@ function GroupPage() {
                           key={bet.id}
                           sx={{ 
                             mb: 2,
-                            backgroundColor: 'rgba(30, 41, 59, 0.7)',
+                            backgroundColor: 'rgba(25, 25, 35, 0.8)',
                             backdropFilter: 'blur(8px)',
-                            borderRadius: 2,
-                            border: '1px solid rgba(255, 255, 255, 0.1)'
+                            borderRadius: 3,
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            position: 'relative',
+                            overflow: 'hidden',
                           }}
                         >
                           <CardContent sx={{ p: 3 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              mb: 2 
+                            }}>
                               <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
                                 {bet.match}
                               </Typography>
-                              <Chip 
-                                label={bet.status} 
-                                size="small"
-                                sx={{ 
+                              <Box
+                                sx={{
                                   backgroundColor: bet.status === 'Open' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
                                   color: bet.status === 'Open' ? '#10b981' : '#ef4444',
-                                  fontWeight: 'medium',
-                                  borderRadius: 1,
+                                  fontWeight: '500',
+                                  fontSize: '0.825rem',
+                                  borderRadius: 2,
+                                  px: 2,
+                                  py: 0.5,
+                                  border: bet.status === 'Open' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
                                 }}
-                              />
+                              >
+                                {bet.status}
+                              </Box>
                             </Box>
                             
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              flexWrap: 'wrap', 
+                              gap: 2, 
+                              mt: 2 
+                            }}>
                               <Box sx={{ 
-                                py: 0.5, 
+                                py: 0.8, 
                                 px: 2, 
-                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                borderRadius: 1,
+                                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                                borderRadius: 2,
+                                border: '1px solid rgba(255, 255, 255, 0.05)',
                                 display: 'flex',
+                                flexDirection: 'column',
                                 alignItems: 'center',
                               }}>
-                                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)', mr: 1 }}>
-                                  Type:
+                                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)', mb: 0.5, fontSize: '0.75rem' }}>
+                                  Type
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: '#f8fafc', fontWeight: '500' }}>
+                                <Typography variant="body1" sx={{ color: '#f8fafc', fontWeight: '600' }}>
                                   {bet.type}
                                 </Typography>
                               </Box>
                               
                               <Box sx={{ 
-                                py: 0.5, 
+                                py: 0.8, 
                                 px: 2, 
-                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                borderRadius: 1,
+                                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                                borderRadius: 2,
+                                border: '1px solid rgba(255, 255, 255, 0.05)',
                                 display: 'flex',
+                                flexDirection: 'column',
                                 alignItems: 'center',
                               }}>
-                                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)', mr: 1 }}>
-                                  Odds:
+                                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)', mb: 0.5, fontSize: '0.75rem' }}>
+                                  Odds
                                 </Typography>
                                 <Typography 
-                                  variant="body2" 
+                                  variant="body1" 
                                   sx={{ 
                                     color: bet.odds.startsWith('+') ? '#10b981' : '#ef4444',
                                     fontWeight: '600' 
@@ -381,17 +416,19 @@ function GroupPage() {
                               </Box>
                               
                               <Box sx={{ 
-                                py: 0.5, 
+                                py: 0.8, 
                                 px: 2, 
-                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                borderRadius: 1,
+                                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                                borderRadius: 2,
+                                border: '1px solid rgba(255, 255, 255, 0.05)',
                                 display: 'flex',
+                                flexDirection: 'column',
                                 alignItems: 'center',
                               }}>
-                                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)', mr: 1 }}>
-                                  Points:
+                                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)', mb: 0.5, fontSize: '0.75rem' }}>
+                                  Points
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: '#f8fafc', fontWeight: '500' }}>
+                                <Typography variant="body1" sx={{ color: '#f8fafc', fontWeight: '600' }}>
                                   {bet.points}
                                 </Typography>
                               </Box>
@@ -406,17 +443,19 @@ function GroupPage() {
               
               {/* Right Column - Leaderboard */}
               <Grid item xs={12} md={4}>
-                <Box sx={{ 
-                  backgroundColor: 'rgba(30, 41, 59, 0.7)',
-                  borderRadius: 2,
-                  p: 3,
-                  border: '1px solid rgba(139, 92, 246, 0.2)'
+                <Box sx={{
+                  backgroundColor: 'rgba(25, 25, 35, 0.8)',
+                  backdropFilter: 'blur(8px)',
+                  borderRadius: 3,
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  overflow: 'hidden'
                 }}>
                   <Box sx={{ 
+                    p: 3,
                     display: 'flex', 
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    mb: 3
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                   }}>
                     <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
                       Leaderboard
@@ -435,7 +474,7 @@ function GroupPage() {
                             backgroundColor: 'rgba(139, 92, 246, 0.2)',
                             border: '1px solid rgba(139, 92, 246, 0.6)',
                           },
-                          borderRadius: 1,
+                          borderRadius: 2,
                         }}
                       >
                         Invite
@@ -443,59 +482,66 @@ function GroupPage() {
                     )}
                   </Box>
                   
-                  {mockMembers.map((member, index) => (
-                    <Box 
-                      key={index}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        py: 1.5,
-                        borderBottom: index < mockMembers.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-                      }}
-                    >
-                      <Box sx={{ 
-                        minWidth: 24, 
-                        textAlign: 'center',
-                        fontWeight: 'bold',
-                        color: index < 3 ? ['#f59e0b', '#94a3b8', '#b45309'][index] : 'rgba(255, 255, 255, 0.5)'
-                      }}>
-                        {index + 1}
-                      </Box>
-                      
-                      <Avatar 
-                        sx={{ 
-                          mx: 2, 
-                          bgcolor: index === 0 ? '#f59e0b' : index === 1 ? '#94a3b8' : index === 2 ? '#b45309' : '#1e293b',
-                          width: 30,
-                          height: 30,
-                          fontSize: '0.8rem',
-                          fontWeight: 'bold'
+                  <Box sx={{ px: 2, py: 1 }}>
+                    {mockMembers.map((member, index) => (
+                      <Box 
+                        key={index}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          p: 1.5,
+                          borderBottom: index < mockMembers.length - 1 ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
                         }}
                       >
-                        {member.avatar}
-                      </Avatar>
-                      
-                      <Box sx={{ flexGrow: 1 }}>
-                        <Typography sx={{ fontWeight: 'medium', color: '#f8fafc' }}>
-                          {member.name}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                          Win Rate: {member.winRate}
+                        <Box sx={{ 
+                          minWidth: 24, 
+                          textAlign: 'center',
+                          fontWeight: 'bold',
+                          color: index < 3 ? ['#f59e0b', '#94a3b8', '#b45309'][index] : 'rgba(255, 255, 255, 0.5)',
+                          fontSize: '1.1rem',
+                          mr: 1,
+                        }}>
+                          {index + 1}
+                        </Box>
+                        
+                        <Avatar 
+                          sx={{ 
+                            bgcolor: index === 0 ? '#f59e0b' : index === 1 ? '#94a3b8' : index === 2 ? '#b45309' : 'rgba(0, 0, 0, 0.3)',
+                            width: 36,
+                            height: 36,
+                            fontSize: '0.9rem',
+                            fontWeight: 'bold',
+                            mr: 2,
+                            border: '2px solid rgba(255, 255, 255, 0.1)'
+                          }}
+                        >
+                          {member.avatar}
+                        </Avatar>
+                        
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Typography sx={{ fontWeight: 'medium', color: '#f8fafc', fontSize: '0.95rem' }}>
+                            {member.name}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.825rem' }}>
+                            Win Rate: {member.winRate}
+                          </Typography>
+                        </Box>
+                        
+                        <Typography sx={{ 
+                          fontWeight: 'bold', 
+                          color: '#f8fafc',
+                          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                          borderRadius: 2,
+                          px: 2,
+                          py: 0.5,
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          fontSize: '0.95rem'
+                        }}>
+                          {member.points}
                         </Typography>
                       </Box>
-                      
-                      <Typography sx={{ 
-                        fontWeight: 'bold', 
-                        color: '#f8fafc',
-                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                        borderRadius: 1,
-                        px: 1.5,
-                        py: 0.5,
-                      }}>
-                        {member.points}
-                      </Typography>
-                    </Box>
-                  ))}
+                    ))}
+                  </Box>
                 </Box>
               </Grid>
             </Grid>

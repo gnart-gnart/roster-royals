@@ -20,13 +20,14 @@ import {
   useTheme,
   useMediaQuery,
   IconButton,
-  Toolbar
+  Toolbar,
+  Alert
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SearchIcon from '@mui/icons-material/Search';
 import NavBar from '../components/NavBar';
-import { getAvailableSportEvents, getCompetitionEvents } from '../services/api';
+import { getAvailableSportEvents, getCompetitionEvents, getEventsBySport, submitBet } from '../services/api';
 import { styled } from '@mui/material/styles';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
@@ -75,6 +76,10 @@ function SportEventsPage() {
   const [filterLoading, setFilterLoading] = useState(true);
   const [filters, setFilters] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState(null);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -224,8 +229,51 @@ function SportEventsPage() {
   };
 
   const handlePlaceBet = (event) => {
-    // Implement the logic to place a bet
-    console.log('Placing bet on event:', event);
+    // Clear any previous messages
+    setErrorMessage('');
+    setSuccessMessage('');
+    
+    // Check if we have a selected option
+    if (!selectedOption) {
+      setErrorMessage("Please select a betting option first.");
+      return;
+    }
+
+    // Start loading
+    setIsSubmitting(true);
+
+    // Create the bet object with all required information
+    const betData = {
+      groupId,
+      sportKey,
+      eventId: event.id,
+      teamId: selectedOption.teamId || null,
+      playerId: selectedOption.playerId || null,
+      betType: selectedOption.type,
+      choice: selectedOption.name,
+      odds: selectedOption.odds,
+      line: selectedOption.line || null,
+    };
+
+    // Call API to place the bet
+    submitBet(betData)
+      .then(response => {
+        setSuccessMessage(`Bet placed successfully!`);
+        // Reset selection
+        setSelectedOption(null);
+        setSelectedEvent(null);
+        // Optional: Navigate back to group page after short delay
+        setTimeout(() => {
+          navigate(`/group/${groupId}`);
+        }, 2000);
+      })
+      .catch(err => {
+        console.error("Error placing bet:", err);
+        setErrorMessage(err.message || "Failed to place bet. Please try again.");
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   const formatDateTime = (timestamp) => {
@@ -313,9 +361,9 @@ function SportEventsPage() {
           [`& .MuiDrawer-paper`]: { 
             width: DRAWER_WIDTH, 
             boxSizing: 'border-box',
-            backgroundColor: 'rgba(20, 30, 49, 0.95)',
+            backgroundColor: 'rgba(25, 25, 35, 0.8)',
             backdropFilter: 'blur(8px)',
-            borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRight: '1px solid rgba(255, 255, 255, 0.08)',
           },
           display: { xs: 'none', md: 'block' },
         }}
@@ -460,9 +508,10 @@ function SportEventsPage() {
           ) : events.length === 0 ? (
             <Box sx={{ 
               p: 6,
-              backgroundColor: 'rgba(30, 41, 59, 0.7)',
-              borderRadius: 2,
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              backgroundColor: 'rgba(25, 25, 35, 0.8)',
+              backdropFilter: 'blur(8px)',
+              borderRadius: 3,
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               textAlign: 'center'
             }}>
               <Typography variant="h6" sx={{ color: '#f8fafc', mb: 1 }}>
@@ -489,17 +538,35 @@ function SportEventsPage() {
               </Typography>
               
               {events.map((event, index) => (
-                <BetCard 
+                <Card 
                   key={event.id || index}
-                  active={selectedEvent?.id === event.id}
+                  sx={{ 
+                    mb: 3,
+                    backgroundColor: 'rgba(25, 25, 35, 0.8)',
+                    backdropFilter: 'blur(8px)',
+                    borderRadius: 3,
+                    border: selectedEvent?.id === event.id 
+                      ? '1px solid rgba(139, 92, 246, 0.4)'
+                      : '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: selectedEvent?.id === event.id 
+                      ? '0 0 0 2px rgba(139, 92, 246, 0.2)'
+                      : 'none',
+                    transition: 'all 0.2s ease',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      borderColor: 'rgba(139, 92, 246, 0.3)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                    },
+                  }}
                   onClick={() => setSelectedEvent(event)}
                 >
                   <CardContent sx={{ p: 3 }}>
                     <Box sx={{ 
                       display: 'flex', 
                       justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      mb: 2
+                      alignItems: 'center',
+                      mb: 3
                     }}>
                       <Box>
                         <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc', mb: 0.5 }}>
@@ -510,16 +577,20 @@ function SportEventsPage() {
                         </Typography>
                       </Box>
                       
-                      <Chip 
-                        label={event.status || 'Upcoming'} 
-                        size="small"
-                        sx={{ 
+                      <Box
+                        sx={{
                           backgroundColor: 'rgba(16, 185, 129, 0.2)',
                           color: '#10b981',
-                          fontWeight: 'medium',
-                          borderRadius: 1,
+                          fontWeight: '500',
+                          fontSize: '0.825rem',
+                          borderRadius: 2,
+                          px: 2,
+                          py: 0.5,
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
                         }}
-                      />
+                      >
+                        {event.status || 'Upcoming'}
+                      </Box>
                     </Box>
                     
                     <Grid container spacing={2}>
@@ -528,16 +599,16 @@ function SportEventsPage() {
                         <Grid item xs={12} md={6} key={mIndex}>
                           <Box sx={{ 
                             p: 2, 
-                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                            borderRadius: 1,
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                            borderRadius: 2,
+                            border: '1px solid rgba(255, 255, 255, 0.05)',
                           }}>
                             <Typography 
                               variant="subtitle2" 
                               sx={{ 
-                                mb: 1, 
+                                mb: 1.5, 
                                 color: '#8b5cf6',
-                                fontWeight: 'bold' 
+                                fontWeight: '600' 
                               }}
                             >
                               {market.name || 'Market'}
@@ -552,7 +623,7 @@ function SportEventsPage() {
                                   sx={{
                                     backgroundColor: selectedOutcome?.id === outcome.id 
                                       ? 'rgba(139, 92, 246, 0.3)'
-                                      : 'rgba(255, 255, 255, 0.1)',
+                                      : 'rgba(0, 0, 0, 0.3)',
                                     color: selectedOutcome?.id === outcome.id 
                                       ? '#8b5cf6'
                                       : '#f8fafc',
@@ -561,7 +632,12 @@ function SportEventsPage() {
                                       backgroundColor: 'rgba(139, 92, 246, 0.2)',
                                     },
                                     cursor: 'pointer',
-                                    borderRadius: 1,
+                                    borderRadius: 2,
+                                    border: selectedOutcome?.id === outcome.id 
+                                      ? '1px solid rgba(139, 92, 246, 0.5)'
+                                      : '1px solid rgba(255, 255, 255, 0.1)',
+                                    px: 2,
+                                    py: 1,
                                   }}
                                 />
                               ))}
@@ -572,25 +648,65 @@ function SportEventsPage() {
                     </Grid>
                     
                     {selectedEvent?.id === event.id && (
-                      <Box sx={{ mt: 3, textAlign: 'right' }}>
-                        <Button
-                          variant="contained"
-                          onClick={() => handlePlaceBet(event)}
-                          sx={{
-                            backgroundColor: '#8b5cf6',
-                            '&:hover': {
-                              backgroundColor: '#7c3aed',
-                            },
-                            borderRadius: 1,
-                            px: 3,
-                          }}
-                        >
-                          Place Bet
-                        </Button>
+                      <Box sx={{ mt: 3 }}>
+                        {errorMessage && (
+                          <Alert 
+                            severity="error" 
+                            sx={{ 
+                              mb: 2, 
+                              backgroundColor: 'rgba(239, 68, 68, 0.1)', 
+                              color: '#f87171',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              borderRadius: 2,
+                            }}
+                          >
+                            {errorMessage}
+                          </Alert>
+                        )}
+                        
+                        {successMessage && (
+                          <Alert 
+                            severity="success" 
+                            sx={{ 
+                              mb: 2, 
+                              backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+                              color: '#10b981',
+                              border: '1px solid rgba(16, 185, 129, 0.3)',
+                              borderRadius: 2,
+                            }}
+                          >
+                            {successMessage}
+                          </Alert>
+                        )}
+                        
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Button
+                            variant="contained"
+                            onClick={() => handlePlaceBet(event)}
+                            disabled={isSubmitting || !selectedOption}
+                            sx={{
+                              backgroundColor: '#8b5cf6',
+                              '&:hover': {
+                                backgroundColor: '#7c3aed',
+                              },
+                              borderRadius: 1,
+                              px: 3,
+                            }}
+                          >
+                            {isSubmitting ? (
+                              <>
+                                <CircularProgress size={16} sx={{ mr: 1, color: 'white' }} />
+                                Placing Bet...
+                              </>
+                            ) : (
+                              'Place Bet'
+                            )}
+                          </Button>
+                        </Box>
                       </Box>
                     )}
                   </CardContent>
-                </BetCard>
+                </Card>
               ))}
             </>
           )}

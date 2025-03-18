@@ -9,94 +9,63 @@ import CreateGroupPage from './pages/CreateGroupPage';
 import AddFriendPage from './pages/AddFriendPage';
 import ChooseBetsPage from './pages/ChooseBetsPage';
 import SportEventsPage from './pages/SportEventsPage';
+import { COLORS } from './styles/constants';
 
-
+// Custom theme configuration
 const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#8b5cf6', // Purple primary (matching login button)
+      main: COLORS.primary,
+      light: COLORS.primaryLight,
+      dark: COLORS.primaryDark,
     },
     secondary: {
-      main: '#10b981', // Green accent
+      main: COLORS.secondary,
+      light: COLORS.secondaryLight,
+      dark: COLORS.secondaryDark,
     },
     background: {
-      default: '#0f0f13', // Very dark blue-black (matching login)
-      paper: '#1e293b', // Slightly lighter dark blue
+      default: '#171717',
+      paper: COLORS.bgCard,
     },
     text: {
-      primary: '#f8fafc', // Brighter white
-      secondary: '#cbd5e1', // Lighter gray
+      primary: COLORS.textPrimary,
+      secondary: COLORS.textSecondary,
     },
     error: {
-      main: '#ef4444', // Red
+      main: COLORS.error,
     },
     warning: {
-      main: '#f59e0b', // Amber
+      main: COLORS.warning,
     },
     info: {
-      main: '#60a5fa', // Blue
+      main: COLORS.info,
     },
-  },
-  components: {
-    MuiCssBaseline: {
-      styleOverrides: {
-        body: {
-          backgroundColor: '#0f172a',
-          color: '#f8fafc',
-        },
-      },
-    },
-    MuiTableCell: {
-      styleOverrides: {
-        root: {
-          color: '#f8fafc', // Ensure table text is white
-        },
-        head: {
-          color: '#cbd5e1', // Slightly dimmer white for table headers
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          backgroundColor: '#1e293b',
-          borderRadius: 12,
-          border: '1px solid rgba(96, 165, 250, 0.2)', // Subtle blue border
-          transition: 'border-color 0.2s ease-in-out',
-          '&:hover': {
-            border: '1px solid rgba(96, 165, 250, 0.4)',
-          },
-        },
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          boxShadow: 'none',
-          textTransform: 'none',
-          fontWeight: 600,
-          transition: 'all 0.2s',
-        },
-      },
-    },
-    MuiTypography: {
-      styleOverrides: {
-        h4: {
-          color: '#f8fafc', // Ensure headers are bright
-          fontWeight: '600',
-          letterSpacing: '-0.02em',
-        },
-        h6: {
-          color: '#f8fafc', // Ensure headers are bright
-          fontWeight: '500',
-        },
-      },
+    success: {
+      main: COLORS.success,
     },
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h1: {
+      fontWeight: 700,
+    },
+    h2: {
+      fontWeight: 700,
+    },
+    h3: {
+      fontWeight: 700,
+    },
+    h4: {
+      fontWeight: 600,
+    },
+    h5: {
+      fontWeight: 600,
+    },
+    h6: {
+      fontWeight: 600,
+    },
     button: {
       textTransform: 'none',
       fontWeight: 500,
@@ -104,6 +73,57 @@ const theme = createTheme({
   },
   shape: {
     borderRadius: 8,
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          borderRadius: 8,
+          padding: '8px 16px',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+          backgroundColor: COLORS.bgCard,
+          backdropFilter: 'blur(8px)',
+          border: `1px solid ${COLORS.border}`,
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: COLORS.bgInput,
+            borderRadius: 8,
+          },
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'rgba(25, 25, 35, 0.9)',
+          backdropFilter: 'blur(10px)',
+          boxShadow: 'none',
+          borderBottom: `1px solid ${COLORS.border}`,
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          borderBottom: `1px solid ${COLORS.border}`,
+        },
+        head: {
+          fontWeight: 600,
+        },
+      },
+    },
   },
 });
 
@@ -114,37 +134,54 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<LoginPage />} />
-          <Route path="/home" element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          } />
-          <Route path="/group/:id" element={<GroupPage />} />
-          <Route path="/create-group" element={
-            <ProtectedRoute>
-              <CreateGroupPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/add-friend" element={
-            <ProtectedRoute>
-              <AddFriendPage />
-            </ProtectedRoute>
-          } />
-          <Route 
-            path="/group/:groupId/choose-bets" 
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/home"
+            element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/group/:id"
+            element={
+              <ProtectedRoute>
+                <GroupPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-group"
+            element={
+              <ProtectedRoute>
+                <CreateGroupPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-friend"
+            element={
+              <ProtectedRoute>
+                <AddFriendPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/group/:groupId/choose-bets"
             element={
               <ProtectedRoute>
                 <ChooseBetsPage />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/group/:groupId/choose-bets/:sportKey" 
+          <Route
+            path="/group/:groupId/sport/:sportKey"
             element={
               <ProtectedRoute>
                 <SportEventsPage />
               </ProtectedRoute>
-            } 
+            }
           />
         </Routes>
       </Router>

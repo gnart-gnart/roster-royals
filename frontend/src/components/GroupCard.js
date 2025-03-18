@@ -49,14 +49,14 @@ function GroupCard({ group, onClick }) {
   return (
     <Card 
       sx={{
-        backgroundColor: 'rgba(30, 41, 59, 0.7)',
+        backgroundColor: 'rgba(25, 25, 35, 0.8)',
         backdropFilter: 'blur(8px)',
-        borderRadius: 2,
-        border: `1px solid rgba(255, 255, 255, 0.1)`,
+        borderRadius: 3,
+        border: `1px solid rgba(255, 255, 255, 0.08)`,
         transition: 'all 0.3s ease',
         '&:hover': {
           transform: 'translateY(-4px)',
-          boxShadow: `0 10px 15px -3px rgba(${groupColor === '#8b5cf6' ? '139, 92, 246' : groupColor === '#10b981' ? '16, 185, 129' : '96, 165, 250'}, 0.2)`,
+          boxShadow: `0 12px 20px -5px rgba(${groupColor === '#8b5cf6' ? '139, 92, 246' : groupColor === '#10b981' ? '16, 185, 129' : '96, 165, 250'}, 0.2)`,
           borderColor: `${groupColor}50`,
         },
         position: 'relative',
@@ -70,12 +70,13 @@ function GroupCard({ group, onClick }) {
           right: 20,
           backgroundColor: groupColor,
           borderRadius: '50%',
-          width: 30,
-          height: 30,
+          width: 34,
+          height: 34,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+          border: '2px solid rgba(255, 255, 255, 0.1)'
         }}
       >
         {displaySports()[0] && sportIcons[displaySports()[0]] ? 
@@ -84,7 +85,7 @@ function GroupCard({ group, onClick }) {
         }
       </Box>
       
-      <CardActionArea onClick={onClick}>
+      <CardActionArea onClick={onClick} sx={{ borderRadius: 3 }}>
         <CardContent sx={{ p: 3 }}>
           <Typography 
             variant="h6" 
@@ -102,13 +103,13 @@ function GroupCard({ group, onClick }) {
           </Typography>
           
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <PeopleAltIcon sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 20, mr: 0.5 }} />
+            <PeopleAltIcon sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 18, mr: 0.5 }} />
             <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
               {group.members?.length || 1} {group.members?.length === 1 ? 'member' : 'members'}
             </Typography>
           </Box>
           
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
             {displaySports().map((sport) => (
               <Chip
                 key={sport}
@@ -120,14 +121,22 @@ function GroupCard({ group, onClick }) {
                   borderRadius: 1,
                   fontWeight: 'medium',
                   fontSize: '0.75rem',
+                  border: `1px solid ${groupColor}40`,
                 }}
               />
             ))}
           </Box>
           
           {group.members && group.members.length > 0 && (
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <AvatarGroup max={3} sx={{ '& .MuiAvatar-root': { width: 30, height: 30, fontSize: '0.75rem' } }}>
+            <Box sx={{ 
+              mt: 2, 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              pt: 2,
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            }}>
+              <AvatarGroup max={3} sx={{ '& .MuiAvatar-root': { width: 28, height: 28, fontSize: '0.75rem' } }}>
                 {group.members.map((member, index) => (
                   <Avatar 
                     key={index} 
@@ -135,7 +144,8 @@ function GroupCard({ group, onClick }) {
                     src={member.avatar || undefined}
                     sx={{ 
                       bgcolor: groupColor,
-                      color: 'white'
+                      color: 'white',
+                      border: '2px solid rgba(25, 25, 35, 0.8)'
                     }}
                   >
                     {member.username ? member.username[0].toUpperCase() : `M${index + 1}`}
@@ -143,16 +153,34 @@ function GroupCard({ group, onClick }) {
                 ))}
               </AvatarGroup>
               
-              <Typography variant="body2" sx={{ 
-                py: 0.5, 
-                px: 1.5, 
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: 1,
-                color: 'rgba(255, 255, 255, 0.7)',
-                fontWeight: '500'
-              }}>
-                {group.active_bets ? `${group.active_bets} active` : 'No active bets'}
-              </Typography>
+              <Box
+                sx={{
+                  py: 0.5, 
+                  px: 1.5, 
+                  backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: 2,
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <Box 
+                  sx={{ 
+                    width: 8, 
+                    height: 8, 
+                    borderRadius: '50%', 
+                    backgroundColor: group.active_bets ? '#10b981' : 'rgba(255, 255, 255, 0.3)'
+                  }} 
+                />
+                <Typography variant="body2" sx={{ 
+                  color: group.active_bets ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.5)',
+                  fontWeight: '500',
+                  fontSize: '0.75rem',
+                }}>
+                  {group.active_bets ? `${group.active_bets} active bets` : 'No active bets'}
+                </Typography>
+              </Box>
             </Box>
           )}
         </CardContent>

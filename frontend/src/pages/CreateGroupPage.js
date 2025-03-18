@@ -13,13 +13,20 @@ import {
   MenuItem,
   Chip,
   OutlinedInput,
+  Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { createGroup } from '../services/api';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import NavBar from '../components/NavBar';
+import { PrimaryButton, SecondaryButton } from '../components/ButtonBase';
+import { SPORT_CONFIG } from '../styles/constants';
 
-const SPORTS_LIST = ['NFL', 'NBA', 'MLB', 'Soccer', 'NHL', 'UFC'];
+// Transform SPORT_CONFIG to a list format required by the form
+const SPORTS_LIST = Object.keys(SPORT_CONFIG).map(key => ({
+  key,
+  name: SPORT_CONFIG[key].displayName
+}));
 
 function CreateGroupPage() {
   const navigate = useNavigate();
@@ -55,47 +62,41 @@ function CreateGroupPage() {
       <NavBar />
       <Container maxWidth="md" sx={{ pt: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-          <Button
+          <SecondaryButton
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/home')}
-            sx={{
-              mr: 2,
-              backgroundColor: 'rgba(139, 92, 246, 0.1)',
-              border: '1px solid rgba(139, 92, 246, 0.3)',
-              color: '#f8fafc',
-              '&:hover': {
-                backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                border: '1px solid rgba(139, 92, 246, 0.6)',
-              },
-              borderRadius: 1,
-            }}
+            sx={{ mr: 2 }}
           >
             Back
-          </Button>
+          </SecondaryButton>
           <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
             Create New Group
           </Typography>
         </Box>
 
         <Card sx={{
-          backgroundColor: 'rgba(30, 41, 59, 0.7)',
+          backgroundColor: 'rgba(25, 25, 35, 0.8)',
           backdropFilter: 'blur(8px)',
-          borderRadius: 2,
-          border: '1px solid rgba(139, 92, 246, 0.2)',
+          borderRadius: 3,
+          border: '1px solid rgba(255, 255, 255, 0.08)',
           overflow: 'visible',
         }}>
           <CardContent sx={{ p: 4 }}>
             {error && (
-              <Box sx={{ 
-                p: 2, 
-                mb: 3, 
-                backgroundColor: 'rgba(239, 68, 68, 0.1)', 
-                borderRadius: 1,
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                color: '#f87171'
-              }}>
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: 3, 
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)', 
+                  color: '#f87171',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  '& .MuiAlert-icon': {
+                    color: '#f87171'
+                  }
+                }}
+              >
                 {error}
-              </Box>
+              </Alert>
             )}
 
             <Box component="form" onSubmit={handleSubmit}>
@@ -108,7 +109,9 @@ function CreateGroupPage() {
                 sx={{ 
                   mb: 3,
                   '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: 2,
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
                   }
                 }}
               />
@@ -123,7 +126,9 @@ function CreateGroupPage() {
                 sx={{ 
                   mb: 3,
                   '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: 2,
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
                   }
                 }}
               />
@@ -138,47 +143,52 @@ function CreateGroupPage() {
                   input={<OutlinedInput label="Sports" />}
                   renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip 
-                          key={value} 
-                          label={value} 
-                          sx={{ 
-                            backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                            color: '#a78bfa',
-                            borderRadius: 1,
-                          }}
-                        />
-                      ))}
+                      {selected.map((value) => {
+                        const sportColor = SPORT_CONFIG[value]?.color || '#8b5cf6';
+                        return (
+                          <Chip 
+                            key={value} 
+                            label={value.toUpperCase()} 
+                            sx={{ 
+                              backgroundColor: `${sportColor}20`,
+                              color: sportColor,
+                              borderRadius: 1,
+                              fontWeight: 'medium',
+                              fontSize: '0.75rem',
+                              border: `1px solid ${sportColor}40`,
+                            }}
+                          />
+                        );
+                      })}
                     </Box>
                   )}
                   sx={{ 
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: 2,
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
                   }}
                 >
                   {SPORTS_LIST.map((sport) => (
-                    <MenuItem key={sport} value={sport.toLowerCase()}>
-                      {sport}
+                    <MenuItem key={sport.key} value={sport.key}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {SPORT_CONFIG[sport.key] && React.createElement(
+                          SPORT_CONFIG[sport.key].icon, 
+                          { sx: { color: SPORT_CONFIG[sport.key].color, fontSize: 20 } }
+                        )}
+                        {sport.name}
+                      </Box>
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
 
-              <Button
+              <PrimaryButton
                 type="submit"
-                variant="contained"
                 fullWidth
-                sx={{
-                  p: 1.5,
-                  backgroundColor: '#8b5cf6',
-                  '&:hover': {
-                    backgroundColor: '#7c3aed',
-                  },
-                  borderRadius: 1,
-                  fontWeight: 'bold',
-                }}
+                sx={{ p: 1.5 }}
               >
                 Create Group
-              </Button>
+              </PrimaryButton>
             </Box>
           </CardContent>
         </Card>
