@@ -116,102 +116,233 @@ function LoginPage() {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box sx={{ marginTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Typography
-          component="h1"
-          variant="h1"
+    <Box
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        backgroundColor: '#0f0f13',
+        color: 'white',
+      }}
+    >
+      {/* Left section - Login Form */}
+      <Box
+        sx={{
+          width: '50%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          p: 4,
+        }}
+      >
+        <Box
           sx={{
-            color: '#60a5fa',
-            fontWeight: '700',
-            marginBottom: 6,
-            textAlign: 'center',
-            fontSize: { xs: '3.5rem', sm: '4.5rem' },
-            textShadow: '0 2px 10px rgba(96, 165, 250, 0.3)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1,
+            maxWidth: 400,
+            width: '100%',
+            mx: 'auto',
+            p: 3,
           }}
         >
-          Roster Royals
-        </Typography>
-        
-        {error && <Alert severity="error" sx={{ mt: 2, width: '100%' }}>{error}</Alert>}
-        
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            label="Username"
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-          />
+          <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
+            Sign in
+          </Typography>
           
-          {(!isLogin || googleEmail) && (
+          {error && <Alert severity="error" sx={{ mt: 2, width: '100%', mb: 2 }}>{error}</Alert>}
+          
+          <Box component="form" onSubmit={handleSubmit}>
             <TextField
               margin="normal"
               required
               fullWidth
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              disabled={!!googleEmail}
-              InputProps={{
-                sx: { backgroundColor: googleEmail ? 'rgba(0, 0, 0, 0.1)' : 'inherit' }
+              label="Username"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                }
               }}
             />
-          )}
-          
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            label="Password"
-            type="password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-          />
-          
-          {isLogin && !googleEmail && (
-            <Box sx={{ mt: 2, width: '100%' }}>
-              <GoogleOAuthProvider clientId="1065387003454-mrilapnplql4coaj3ebvv4jcut0a1rr3.apps.googleusercontent.com">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => setError('Google login failed')}
-                  theme="filled_black"
-                  size="large"
-                  width="100%"
-                  text="Sign in with Google"
-                />
-              </GoogleOAuthProvider>
-            </Box>
-          )}
-          
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-          >
-            {isLogin ? 'Sign In' : 'Register'}
-          </Button>
-          
-          {!googleEmail && (
-            <Button
+            
+            <TextField
+              margin="normal"
+              required
               fullWidth
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setFormData({ username: '', email: '', password: '' });
+              label="Password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              sx={{ 
+                mb: 1,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                }
               }}
-              sx={{ textAlign: 'center' }}
+              InputProps={{
+                endAdornment: (
+                  <Box sx={{ color: 'rgba(255, 255, 255, 0.5)', cursor: 'pointer' }}>
+                    👁️
+                  </Box>
+                ),
+              }}
+            />
+            
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                textAlign: 'right', 
+                color: '#10b981', 
+                mb: 2,
+                fontSize: '0.8rem',
+                cursor: 'pointer'
+              }}
             >
-              {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+              Forgot password?
+            </Typography>
+            
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ 
+                mt: 1, 
+                mb: 2, 
+                py: 1.5,
+                backgroundColor: '#8b5cf6',
+                '&:hover': {
+                  backgroundColor: '#7c3aed',
+                },
+                borderRadius: 1,
+              }}
+            >
+              Sign in
             </Button>
-          )}
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', my: 2 }}>
+              <Box sx={{ flex: 1, height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+              <Typography sx={{ mx: 2, color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.9rem' }}>
+                OR
+              </Typography>
+              <Box sx={{ flex: 1, height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+            </Box>
+            
+            {isLogin && !googleEmail && (
+              <Box sx={{ mt: 2, width: '100%' }}>
+                <GoogleOAuthProvider clientId="1065387003454-mrilapnplql4coaj3ebvv4jcut0a1rr3.apps.googleusercontent.com">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => setError('Google login failed')}
+                    theme="filled_black"
+                    size="large"
+                    width="100%"
+                    text="Continue with Google"
+                    shape="rectangular"
+                  />
+                </GoogleOAuthProvider>
+              </Box>
+            )}
+            
+            <Box sx={{ mt: 3, textAlign: 'center' }}>
+              <Button
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setFormData({ username: '', email: '', password: '' });
+                }}
+                sx={{ 
+                  textAlign: 'center', 
+                  color: 'white',
+                  textTransform: 'none',
+                }}
+              >
+                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign In"}
+              </Button>
+            </Box>
+          </Box>
         </Box>
       </Box>
-    </Container>
+      
+      {/* Right section - Promo Content */}
+      <Box
+        sx={{
+          width: '50%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          p: 4,
+          textAlign: 'center',
+        }}
+      >
+        <Box>
+          <Typography variant="h3" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
+            BEAT THE ODDS
+          </Typography>
+          <Typography variant="h3" component="h1" sx={{ fontWeight: 'bold', color: '#10b981', mb: 3 }}>
+            WIN TOGETHER
+          </Typography>
+          
+          <Typography variant="body1" sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}>
+            Join friends in private leagues and prove your sports knowledge
+          </Typography>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, mb: 4 }}>
+            <Box sx={{ 
+              p: 2, 
+              borderRadius: '50%', 
+              backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+              color: '#10b981',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 50,
+              height: 50,
+            }}>
+              ⚡
+            </Box>
+            <Box sx={{ 
+              p: 2, 
+              borderRadius: '50%', 
+              backgroundColor: 'rgba(139, 92, 246, 0.1)', 
+              color: '#8b5cf6',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 50,
+              height: 50,
+            }}>
+              🏆
+            </Box>
+            <Box sx={{ 
+              p: 2, 
+              borderRadius: '50%', 
+              backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+              color: '#10b981',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 50,
+              height: 50,
+            }}>
+              💰
+            </Box>
+          </Box>
+          
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              fontStyle: 'italic', 
+              color: 'rgba(255, 255, 255, 0.7)',
+              maxWidth: 350,
+              mx: 'auto'
+            }}
+          >
+            "The ultimate platform for competing with friends on sports predictions"
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
