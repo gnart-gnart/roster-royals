@@ -129,6 +129,14 @@ const theme = createTheme({
   },
 });
 
+function RootRedirect() {
+  // Check for token
+  const isAuthenticated = !!localStorage.getItem('token');
+  
+  // If token exists, redirect to home, otherwise to login
+  return isAuthenticated ? <Navigate to="/home" replace /> : <Navigate to="/login" replace />;
+}
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -138,18 +146,14 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           
           {/* Redirect root to login if not authenticated, otherwise to home */}
-          <Route path="/" element={
-            localStorage.getItem('token') ? 
-              <Navigate to="/home" replace /> : 
-              <Navigate to="/login" replace />
-          } />
+          <Route path="/" element={<RootRedirect />} />
           
           <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
           <Route path="/group/:id" element={<ProtectedRoute><GroupPage /></ProtectedRoute>} />
           <Route path="/create-group" element={<ProtectedRoute><CreateGroupPage /></ProtectedRoute>} />
           <Route path="/add-friend" element={<ProtectedRoute><AddFriendPage /></ProtectedRoute>} />
-          <Route path="/choose-bets/:groupId" element={<ProtectedRoute><ChooseBetsPage /></ProtectedRoute>} />
-          <Route path="/sport-events/:groupId/:sportKey" element={<ProtectedRoute><SportEventsPage /></ProtectedRoute>} />
+          <Route path="/group/:groupId/choose-bets" element={<ProtectedRoute><ChooseBetsPage /></ProtectedRoute>} />
+          <Route path="/group/:groupId/sport/:sportKey" element={<ProtectedRoute><SportEventsPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           
