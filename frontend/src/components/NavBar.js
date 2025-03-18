@@ -451,43 +451,57 @@ function NavBar() {
             sx: {
               backgroundColor: 'rgba(25, 25, 35, 0.98)',
               backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              color: '#f8fafc',
-              minWidth: '200px',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
               borderRadius: 2,
-              mt: 1.5,
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+              minWidth: 180,
             }
           }}
           transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
-          <Box sx={{ px: 2, py: 1.5 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-              {user?.username || 'User'}
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-              {user?.points || 0} points
-            </Typography>
-          </Box>
-          
-          <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)' }} />
-          
-          <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
-            <PersonIcon sx={{ mr: 1.5, fontSize: 20, color: 'rgba(255, 255, 255, 0.7)' }} />
-            <Typography>Profile</Typography>
+          <MenuItem 
+            onClick={handleProfile}
+            sx={{ 
+              color: '#f8fafc',
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+              py: 1.5,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <PersonIcon fontSize="small" />
+              <Typography>Profile</Typography>
+            </Box>
           </MenuItem>
           
-          <MenuItem onClick={handleSettings} sx={{ py: 1.5 }}>
-            <SettingsIcon sx={{ mr: 1.5, fontSize: 20, color: 'rgba(255, 255, 255, 0.7)' }} />
-            <Typography>Settings</Typography>
+          <MenuItem 
+            onClick={handleSettings}
+            sx={{ 
+              color: '#f8fafc',
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+              py: 1.5,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <SettingsIcon fontSize="small" />
+              <Typography>Settings</Typography>
+            </Box>
           </MenuItem>
           
-          <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)' }} />
+          <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)', my: 1 }} />
           
-          <MenuItem onClick={handleLogout} sx={{ py: 1.5, color: '#ef4444' }}>
-            <LogoutIcon sx={{ mr: 1.5, fontSize: 20 }} />
-            <Typography>Logout</Typography>
+          <MenuItem 
+            onClick={handleLogout}
+            sx={{ 
+              color: '#f8fafc',
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+              py: 1.5,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <LogoutIcon fontSize="small" />
+              <Typography>Logout</Typography>
+            </Box>
           </MenuItem>
         </Menu>
       </Toolbar>

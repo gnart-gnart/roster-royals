@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
@@ -9,6 +9,8 @@ import CreateGroupPage from './pages/CreateGroupPage';
 import AddFriendPage from './pages/AddFriendPage';
 import ChooseBetsPage from './pages/ChooseBetsPage';
 import SportEventsPage from './pages/SportEventsPage';
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 import { COLORS } from './styles/constants';
 
 // Custom theme configuration
@@ -133,56 +135,26 @@ function App() {
       <CssBaseline />
       <Router>
         <Routes>
-          <Route path="/" element={<LoginPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/home"
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/group/:id"
-            element={
-              <ProtectedRoute>
-                <GroupPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/create-group"
-            element={
-              <ProtectedRoute>
-                <CreateGroupPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/add-friend"
-            element={
-              <ProtectedRoute>
-                <AddFriendPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/group/:groupId/choose-bets"
-            element={
-              <ProtectedRoute>
-                <ChooseBetsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/group/:groupId/sport/:sportKey"
-            element={
-              <ProtectedRoute>
-                <SportEventsPage />
-              </ProtectedRoute>
-            }
-          />
+          
+          {/* Redirect root to login if not authenticated, otherwise to home */}
+          <Route path="/" element={
+            localStorage.getItem('token') ? 
+              <Navigate to="/home" replace /> : 
+              <Navigate to="/login" replace />
+          } />
+          
+          <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+          <Route path="/group/:id" element={<ProtectedRoute><GroupPage /></ProtectedRoute>} />
+          <Route path="/create-group" element={<ProtectedRoute><CreateGroupPage /></ProtectedRoute>} />
+          <Route path="/add-friend" element={<ProtectedRoute><AddFriendPage /></ProtectedRoute>} />
+          <Route path="/choose-bets/:groupId" element={<ProtectedRoute><ChooseBetsPage /></ProtectedRoute>} />
+          <Route path="/sport-events/:groupId/:sportKey" element={<ProtectedRoute><SportEventsPage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          
+          {/* Catch all unmatched routes */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
     </ThemeProvider>
