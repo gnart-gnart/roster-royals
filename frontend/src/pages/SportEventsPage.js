@@ -181,20 +181,35 @@ function SportEventsPage() {
     setCompetitionEvents([]);
   };
 
-  const handleEventSelect = (event) => {
-    navigate(`/group/${groupId}/event/${event.key}`);
-  };
-
-  const handleAddBetToGroup = (event, market) => {
-    setSelectedEvent(event);
-    setSelectedMarket(market);
-    setAddBetDialogOpen(true);
+  const handleEventClick = (event) => {
+    if (event.markets && event.markets['basketball.moneyline']) {
+      const marketGroup = event.markets['basketball.moneyline'];
+      const submarketKey = 'period=ot&period=ft';
+      
+      if (marketGroup.submarkets && marketGroup.submarkets[submarketKey]) {
+        const market = marketGroup.submarkets[submarketKey];
+        
+        // Add the market key since it's missing from the submarket object
+        market.key = `basketball.moneyline:${submarketKey}`;
+        
+        console.log("Selected market:", market); // Debug log
+        
+        setSelectedEvent(event);
+        setSelectedMarket(market);
+        setAddBetDialogOpen(true);
+      } else {
+        alert("No moneyline betting market available for this event");
+      }
+    } else {
+      alert("No moneyline betting market available for this event");
+    }
   };
 
   const handleAddBetDialogClose = (success) => {
     setAddBetDialogOpen(false);
     if (success) {
-      // Show success notification
+      alert("Bet successfully added to group!");
+      navigate(`/group/${groupId}`);
     }
   };
 
@@ -375,7 +390,7 @@ function SportEventsPage() {
                             border: '1px solid rgba(96, 165, 250, 0.5)',
                           },
                         }}
-                        onClick={() => handleEventSelect(event)}
+                        onClick={() => handleEventClick(event)}
                       >
                         <CardContent>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -448,7 +463,7 @@ function SportEventsPage() {
                                 size="small"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleAddBetToGroup(event, event.markets['basketball.moneyline'].submarkets['period=ot&period=ft']);
+                                  handleEventClick(event);
                                 }}
                               >
                                 Add to Group

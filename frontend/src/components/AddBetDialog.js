@@ -59,7 +59,7 @@ function AddBetDialog({ open, onClose, event, market }) {
       const betData = {
         groupId: selectedGroup,
         eventKey: event.key,
-        marketKey: market.key,
+        marketKey: market.key || `basketball.moneyline:period=ot&period=ft`,
         eventName: `${event.home.name} vs ${event.away.name}`,
         marketName: market.name,
         startTime: event.cutoffTime,
@@ -71,11 +71,13 @@ function AddBetDialog({ open, onClose, event, market }) {
         }))
       };
 
+      console.log("Sending bet data:", betData);
+      
       await addGroupBet(betData);
-      onClose(true); // Close with success indicator
+      onClose(true);
     } catch (err) {
       setError(err.message || 'Failed to add bet to group');
-      console.error(err);
+      console.error("Error adding bet:", err);
     } finally {
       setLoading(false);
     }
