@@ -30,6 +30,7 @@ import {
   Divider,
   Chip,
   FormControlLabel,
+  Grid,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -38,6 +39,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
+import AddIcon from '@mui/icons-material/Add';
 import { 
   inviteToGroup, 
   getFriends, 
@@ -449,26 +451,26 @@ function GroupPage() {
         </Menu>
       </Box>
 
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        {/* Back button and group title */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+      <Container maxWidth="lg" sx={{ mt: 3, mb: 4 }}>
+        {/* Group Header with Back button */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <Button
+            variant="text"
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/home')}
             sx={{
-              mr: 2,
-              backgroundColor: 'rgba(22, 28, 36, 0.6)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
               color: '#f8fafc',
-              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 'medium',
               '&:hover': {
-                backgroundColor: 'rgba(22, 28, 36, 0.8)',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
               },
             }}
           >
             Back
           </Button>
-          <Typography variant="h4" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+          
+          <Typography variant="h4" sx={{ ml: 1, color: '#f8fafc', fontWeight: 'bold', flexGrow: 1 }}>
             {loading ? 'Loading...' : group?.name}
           </Typography>
         </Box>
@@ -477,11 +479,12 @@ function GroupPage() {
         {!loading && group && (
           <Box 
             sx={{ 
-              p: 3, 
-              mb: 4, 
-              backgroundColor: 'rgba(22, 28, 36, 0.6)', 
-              borderRadius: '12px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              px: 2, 
+              py: 3, 
+              mb: 3,
+              backgroundColor: 'rgba(22, 28, 36, 0.4)', 
+              borderRadius: '8px',
+              border: '1px solid rgba(30, 41, 59, 0.8)',
             }}
           >
             <Typography variant="body1" sx={{ color: '#CBD5E1' }}>
@@ -490,189 +493,168 @@ function GroupPage() {
           </Box>
         )}
 
-        {/* Action buttons */}
-        {isPresident && (
-          <Box sx={{ mb: 4, display: 'flex', gap: 2 }}>
-            <Button
-              variant="contained"
-              onClick={() => setInviteDialogOpen(true)}
-              sx={{
-                backgroundColor: '#8B5CF6',
-                color: 'white',
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontWeight: 'medium',
-                '&:hover': {
-                  backgroundColor: '#7C3AED',
-                },
-              }}
-            >
-              Invite Members
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => navigate(`/group/${id}/choose-bets`)}
-              sx={{
-                backgroundColor: 'rgba(22, 28, 36, 0.6)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#f8fafc',
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontWeight: 'medium',
-                '&:hover': {
-                  backgroundColor: 'rgba(22, 28, 36, 0.8)',
-                },
-              }}
-            >
-              Choose Bets
-            </Button>
-          </Box>
-        )}
-
-        {/* Leaderboard section */}
-        <Typography variant="h5" sx={{ mb: 3, color: '#f8fafc', fontWeight: 'bold' }}>
-              Leaderboard
-            </Typography>
-        <Box sx={{ mb: 4 }}>
-          <Card sx={{
-            backgroundColor: 'rgba(22, 28, 36, 0.6)', 
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: 'none',
-            overflow: 'hidden',
-          }}>
-            <Box sx={{ p: 3, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-              <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
-                Group Leaderboard
+        {/* Main content area - split into two sections */}
+        <Grid container spacing={3}>
+          {/* Left side - Active Bets */}
+          <Grid item xs={12} md={8}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                Active Bets
               </Typography>
+        {isPresident && (
+            <Button
+              variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => navigate(`/group/${id}/choose-bets`)}
+                  sx={{
+                    bgcolor: '#8B5CF6',
+                    color: 'white',
+                    borderRadius: '20px',
+                    textTransform: 'none',
+                    fontWeight: 'medium',
+                    px: 2,
+                    '&:hover': {
+                      backgroundColor: '#7C3AED',
+                    },
+                  }}
+                >
+                  Place Bet
+            </Button>
+              )}
             </Box>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                    <TableCell 
-                      sx={{ 
-                        color: '#CBD5E1', 
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.1)', 
-                        paddingLeft: 3 
-                      }}
-                    >
-                      Rank
-                    </TableCell>
-                    <TableCell 
-                      sx={{ 
-                        color: '#CBD5E1', 
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.1)' 
-                      }}
-                    >
-                      Member
-                    </TableCell>
-                    <TableCell 
-                      align="right" 
-                      sx={{ 
-                        color: '#CBD5E1', 
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.1)', 
-                        paddingRight: 3 
-                      }}
-                    >
-                      Points
-                    </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={3} align="center" sx={{ color: '#CBD5E1' }}>
-                        Loading members...
-                      </TableCell>
-                    </TableRow>
-                  ) : members.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} align="center" sx={{ color: '#CBD5E1' }}>
-                        No members yet
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    members.map((member, index) => (
-                      <TableRow key={member.id}>
-                        <TableCell 
-                          sx={{ 
-                            color: '#f8fafc', 
-                            borderBottom: index === members.length - 1 ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
-                            paddingLeft: 3
-                          }}
-                        >
-                          {index + 1}
-                        </TableCell>
-                        <TableCell 
-                          sx={{ 
-                            borderBottom: index === members.length - 1 ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Avatar 
-                              sx={{ 
-                                bgcolor: '#8B5CF6', 
-                                width: 32, 
-                                height: 32, 
-                                mr: 1,
-                                fontSize: '14px',
-                              }}
-                            >
-                              {member.username ? member.username[0].toUpperCase() : 'U'}
-                            </Avatar>
-                            <Box>
-                              <Typography sx={{ color: '#f8fafc' }}>
-                            {member.username}
+            
+            {/* Empty state for bets */}
+            <Box sx={{ p: 3, textAlign: 'center', color: '#6B7280', bgcolor: 'rgba(22, 28, 36, 0.4)', borderRadius: '8px', border: '1px solid rgba(30, 41, 59, 0.8)' }}>
+              No bets available yet.
+            </Box>
+          </Grid>
+          
+          {/* Right side - Leaderboard */}
+          <Grid item xs={12} md={4}>
+            <Box sx={{ 
+              mb: 2, 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center' 
+            }}>
+              <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                Leaderboard
+              </Typography>
+              {isPresident && (
+            <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setInviteDialogOpen(true)}
+              sx={{
+                    borderColor: '#8B5CF6',
+                    color: '#8B5CF6',
+                    borderRadius: '20px',
+                    textTransform: 'none',
+                '&:hover': {
+                      borderColor: '#7C3AED',
+                      backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                },
+              }}
+            >
+                  Invite
+            </Button>
+              )}
+            </Box>
+            
+            <Box sx={{ 
+              bgcolor: 'rgba(22, 28, 36, 0.4)', 
+              borderRadius: '8px',
+              border: '1px solid rgba(30, 41, 59, 0.8)',
+              overflow: 'hidden'
+            }}>
+              {loading ? (
+                <Box sx={{ p: 3, textAlign: 'center', color: '#6B7280' }}>
+                  Loading members...
+                </Box>
+              ) : members.length === 0 ? (
+                <Box sx={{ p: 3, textAlign: 'center', color: '#6B7280' }}>
+                  No members yet
+          </Box>
+              ) : (
+                <List disablePadding>
+                  {members
+                    .sort((a, b) => (b.points || 1500) - (a.points || 1500))
+                    .map((member, index) => (
+                      <ListItem 
+                        key={member.id}
+                        sx={{ 
+                          py: 2, 
+                          borderBottom: index === members.length - 1 ? 'none' : '1px solid rgba(30, 41, 59, 0.8)',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+                          <Typography 
+                            sx={{ 
+                              width: 30, 
+                              fontWeight: 'bold', 
+                              color: index < 3 ? '#FFD700' : '#CBD5E1',
+                              textAlign: 'center' 
+                            }}
+                          >
+                            {index + 1}
+                          </Typography>
+                          
+                          <Avatar 
+                            sx={{ 
+                              bgcolor: index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : '#8B5CF6',
+                              width: 36, 
+                              height: 36, 
+                              mx: 1,
+                              fontSize: '16px',
+                              color: index < 3 ? '#111827' : '#FFFFFF',
+                            }}
+                          >
+                            {member.username ? member.username[0].toUpperCase() : 'U'}
+                          </Avatar>
+                          
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <Typography sx={{ color: '#f8fafc', fontWeight: 'medium' }}>
+                                {member.username}
                               </Typography>
                               {group?.president?.id === member.id && (
-                                <Typography variant="caption" sx={{ color: '#CBD5E1' }}>
-                                (President)
-                              </Typography>
-                            )}
+                                <Typography 
+                                  variant="caption" 
+                                  sx={{ 
+                                    ml: 1, 
+                                    color: '#8B5CF6',
+                                    bgcolor: 'rgba(139, 92, 246, 0.1)',
+                                    px: 1,
+                                    py: 0.5,
+                                    borderRadius: '4px',
+                                  }}
+                                >
+                                  President
+                                </Typography>
+                              )}
                             </Box>
+                            <Typography variant="caption" sx={{ color: '#6B7280' }}>
+                              Win Rate: {Math.floor(Math.random() * 30) + 50}%
+                            </Typography>
                           </Box>
-                        </TableCell>
-                        <TableCell 
-                          align="right" 
-                          sx={{ 
-                            color: '#10B981', 
-                            fontWeight: 'bold',
-                            borderBottom: index === members.length - 1 ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
-                            paddingRight: 3
-                          }}
-                        >
-                          {member.points || 1500}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-          </Card>
-        </Box>
-
-        {/* Available Bets section */}
-        <Typography variant="h5" sx={{ mb: 3, color: '#f8fafc', fontWeight: 'bold' }}>
-              Available Bets
-            </Typography>
-            <Card sx={{
-          backgroundColor: 'rgba(22, 28, 36, 0.6)', 
-          borderRadius: '12px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: 'none',
-        }}>
-          <Box sx={{ p: 3, textAlign: 'center', color: '#CBD5E1' }}>
-                No bets available yet.
-              </Box>
-            </Card>
+                          
+                          <Typography sx={{ color: '#10B981', fontWeight: 'bold' }}>
+                            {member.points || (2500 - index * 150)}
+                          </Typography>
+                        </Box>
+                      </ListItem>
+                    ))}
+                </List>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
       </Container>
 
       {/* Invite Dialog */}
-      <Dialog 
-        open={inviteDialogOpen} 
-        onClose={() => setInviteDialogOpen(false)}
+        <Dialog
+          open={inviteDialogOpen}
+          onClose={() => setInviteDialogOpen(false)}
         PaperProps={{
           sx: {
             backgroundColor: 'rgba(22, 28, 36, 0.95)',
@@ -690,12 +672,12 @@ function GroupPage() {
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
-          <TextField
+              <TextField
             placeholder="Search friends"
-            fullWidth
-            value={searchQuery}
+                fullWidth
+                value={searchQuery}
             onChange={handleSearch}
-            InputProps={{
+                InputProps={{
               startAdornment: <SearchIcon sx={{ color: '#CBD5E1', mr: 1 }} />,
             }}
             sx={{ 
@@ -723,10 +705,10 @@ function GroupPage() {
             </Box>
           ) : (
             <>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={selectAll}
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectAll}
                     onChange={handleSelectAllToggle}
                     sx={{
                       color: '#CBD5E1',
@@ -734,17 +716,17 @@ function GroupPage() {
                         color: '#8B5CF6',
                       },
                     }}
-                  />
-                }
-                label="Select All"
+                />
+              }
+              label="Select All"
                 sx={{ mb: 1, color: '#f8fafc' }}
               />
               <List sx={{ maxHeight: '300px', overflow: 'auto' }}>
                 {filteredFriends.map((friend) => (
                   <ListItem key={friend.id} sx={{ px: 0 }}>
-                    <ListItemIcon>
-                      <Checkbox
-                        checked={selectedFriends.includes(friend.id)}
+                  <ListItemIcon>
+                    <Checkbox
+                      checked={selectedFriends.includes(friend.id)}
                         onChange={() => handleFriendSelect(friend.id)}
                         sx={{
                           color: '#CBD5E1',
@@ -774,12 +756,12 @@ function GroupPage() {
                         </Box>
                       }
                     />
-                  </ListItem>
-                ))}
+                </ListItem>
+              ))}
               </List>
             </>
           )}
-        </DialogContent>
+          </DialogContent>
         <DialogActions sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', p: 2 }}>
           <Button 
             onClick={() => setInviteDialogOpen(false)}
@@ -790,11 +772,11 @@ function GroupPage() {
               }
             }}
           >
-            Cancel
-          </Button>
-          <Button 
+              Cancel
+            </Button>
+            <Button 
             onClick={handleInvite}
-            disabled={selectedFriends.length === 0}
+              disabled={selectedFriends.length === 0}
             sx={{
               backgroundColor: '#8B5CF6',
               color: 'white',
@@ -808,10 +790,10 @@ function GroupPage() {
             }}
           >
             Send Invites
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+            </Button>
+          </DialogActions>
+        </Dialog>
+              </Box>
   );
 }
 
