@@ -578,75 +578,145 @@ function HomePage() {
                       }}
                     >
                       <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                             <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold', mb: 1 }}>
                               {group.name}
                             </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', color: '#CBD5E1', mb: 1 }}>
-                              <PersonOutlineIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                              <Typography variant="body2">
-                                {group.members?.length || 1} member{(group.members?.length || 1) !== 1 ? 's' : ''}
-                              </Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                              {group.sports && group.sports.length > 0 && (
+                            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                              {group.sports && group.sports.length > 0 ? (
                                 group.sports.map(sport => (
                                   <Chip
                                     key={sport}
                                     label={sport.toUpperCase()}
                                     size="small"
                                     sx={{
-                                      backgroundColor: 'rgba(22, 28, 36, 0.8)',
-                                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                                      color: '#CBD5E1',
+                                      backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                                      border: '1px solid rgba(251, 191, 36, 0.2)',
+                                      color: '#FBBF24',
                                       fontSize: '12px',
                                       height: '24px',
+                                      fontWeight: 'medium',
                                     }}
                                   />
                                 ))
-                              )}
-                              {(!group.sports || group.sports.length === 0) && (
+                              ) : (
                                 <>
                                   <Chip
                                     label="NFL"
                                     size="small"
                                     sx={{
-                                      backgroundColor: 'rgba(22, 28, 36, 0.8)',
-                                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                                      color: '#CBD5E1',
+                                      backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                                      border: '1px solid rgba(251, 191, 36, 0.2)',
+                                      color: '#FBBF24',
                                       fontSize: '12px',
                                       height: '24px',
+                                      fontWeight: 'medium',
                                     }}
                                   />
                                   <Chip
                                     label="NBA"
                                     size="small"
                                     sx={{
-                                      backgroundColor: 'rgba(22, 28, 36, 0.8)',
-                                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                                      color: '#CBD5E1',
+                                      backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                                      border: '1px solid rgba(251, 191, 36, 0.2)',
+                                      color: '#FBBF24',
                                       fontSize: '12px',
                                       height: '24px',
+                                      fontWeight: 'medium',
                                     }}
                                   />
                                 </>
                               )}
                             </Box>
                           </Box>
-                          <Box>
-                            <Chip
-                              label="No active bets"
-                              size="small"
-                              sx={{
-                                backgroundColor: 'rgba(100, 100, 100, 0.15)',
-                                color: 'rgba(255, 255, 255, 0.5)',
-                                fontSize: '12px',
-                                height: '24px',
-                              }}
-                              icon={<Box sx={{ width: 6, height: 6, bgcolor: '#777', borderRadius: '50%', ml: 1 }} />}
-                            />
+                          <Chip
+                            label="No active bets"
+                            size="small"
+                            sx={{
+                              backgroundColor: 'rgba(100, 100, 100, 0.15)',
+                              color: 'rgba(255, 255, 255, 0.5)',
+                              fontSize: '12px',
+                              height: '24px',
+                            }}
+                            icon={<Box sx={{ width: 6, height: 6, bgcolor: '#777', borderRadius: '50%', ml: 1 }} />}
+                          />
+                        </Box>
+
+                        {/* Divider line */}
+                        <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.05)' }} />
+                        
+                        {/* Bottom section with members and avatar */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Typography variant="body2" sx={{ color: '#CBD5E1', mr: 2 }}>
+                              {group.members?.length || 1} member{(group.members?.length || 1) !== 1 ? 's' : ''}
+                            </Typography>
+                            
+                            {/* Member avatars - shown in an overlapping stack */}
+                            <Box sx={{ display: 'flex' }}>
+                              {/* First show the president avatar */}
+                              <Avatar 
+                                sx={{ 
+                                  bgcolor: '#8B5CF6', 
+                                  width: 28, 
+                                  height: 28, 
+                                  fontSize: '14px',
+                                  border: '2px solid #161E2E',
+                                }}
+                              >
+                                {/* Use first letter of president's username if available */}
+                                {group.president?.username?.[0]?.toUpperCase() || 'G'}
+                              </Avatar>
+                              
+                              {/* Add additional avatars if there are more members */}
+                              {group.members && group.members.length > 1 && (
+                                <Avatar 
+                                  sx={{ 
+                                    bgcolor: '#60A5FA', 
+                                    width: 28, 
+                                    height: 28, 
+                                    fontSize: '14px',
+                                    border: '2px solid #161E2E',
+                                    ml: -1,
+                                  }}
+                                >
+                                  {/* Just use a generic letter for other members */}
+                                  B
+                                </Avatar>
+                              )}
+                              
+                              {/* Show a count avatar if there are more than 2 members */}
+                              {group.members && group.members.length > 2 && (
+                                <Avatar 
+                                  sx={{ 
+                                    bgcolor: 'rgba(255, 255, 255, 0.1)', 
+                                    color: '#CBD5E1',
+                                    width: 28, 
+                                    height: 28, 
+                                    fontSize: '12px',
+                                    ml: -1,
+                                    border: '2px solid #161E2E',
+                                  }}
+                                >
+                                  +{group.members.length - 2}
+                                </Avatar>
+                              )}
+                            </Box>
                           </Box>
+                          
+                          {/* Add a circular icon for the user's avatar like in your mockup - changed to yellow/gold */}
+                          <Avatar 
+                            sx={{ 
+                              bgcolor: '#FBBF24', 
+                              width: 32, 
+                              height: 32, 
+                              fontSize: '16px', 
+                              fontWeight: 'bold',
+                            }}
+                          >
+                            G
+                          </Avatar>
                         </Box>
                       </CardContent>
                     </Card>
