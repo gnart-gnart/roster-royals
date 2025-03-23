@@ -158,20 +158,71 @@ function ChooseBetsPage() {
                     backgroundColor: 'rgba(22, 28, 36, 0.6)',
                     borderRadius: '12px',
                     border: '1px solid rgba(255, 255, 255, 0.05)',
+                    position: 'relative',
+                    overflow: 'hidden',
                     '&:hover': {
                       backgroundColor: 'rgba(22, 28, 36, 0.8)',
-                      transform: 'translateY(-2px)',
-                      transition: 'all 0.2s',
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 10px 20px rgba(0, 0, 0, 0.2)',
+                      transition: 'all 0.3s ease',
+                      '&::before': {
+                        opacity: 0.15,
+                      },
+                    },
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                      opacity: 0.05,
+                      transition: 'opacity 0.3s ease',
                     },
                   }}
                 >
-                  <CardContent>
-                    <Typography variant="h6" sx={{ color: '#8B5CF6', fontWeight: 'bold' }}>
-                      {sport.name}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#cbd5e1' }}>
+                  <CardContent sx={{ position: 'relative', zIndex: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                      <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                        {sport.name}
+                      </Typography>
+                      {/* Sport Icon based on name */}
+                      {sport.name === 'American Football' && <Box sx={{ fontSize: '1.8rem' }}>🏈</Box>}
+                      {sport.name === 'Baseball' && <Box sx={{ fontSize: '1.8rem' }}>⚾</Box>}
+                      {sport.name === 'Basketball' && <Box sx={{ fontSize: '1.8rem' }}>🏀</Box>}
+                      {sport.name === 'Soccer' && <Box sx={{ fontSize: '1.8rem' }}>⚽</Box>}
+                      {sport.name === 'Ice Hockey' && <Box sx={{ fontSize: '1.8rem' }}>🏒</Box>}
+                    </Box>
+                    <Typography variant="body2" sx={{ color: '#cbd5e1', mb: 1 }}>
                       {sport.eventCount} events available
                     </Typography>
+                    <Box 
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        mt: 1, 
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)', 
+                        borderRadius: '16px',
+                        px: 1.5,
+                        py: 0.5,
+                        width: 'fit-content',
+                      }}
+                    >
+                      <Box 
+                        sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          bgcolor: '#8B5CF6', 
+                          mr: 1, 
+                          boxShadow: '0 0 0 2px rgba(139, 92, 246, 0.2)'
+                        }} 
+                      />
+                      <Typography variant="caption" sx={{ color: '#8B5CF6', fontWeight: 'medium' }}>
+                        Live Betting
+                      </Typography>
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>
