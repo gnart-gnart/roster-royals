@@ -208,6 +208,8 @@ function SportEventsPage() {
   const filteredEvents = competitionEvents.filter(event => 
     // Only include events with both home and away teams
     event.home && event.away &&
+    // Only include events with active markets
+    event.status === 'TRADING' &&
     // Apply search filter
     (event.name.toLowerCase().includes(eventSearchQuery.toLowerCase()) ||
     event.home.name.toLowerCase().includes(eventSearchQuery.toLowerCase()) ||

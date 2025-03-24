@@ -210,7 +210,16 @@ export const getAvailableSportEvents = async (sport) => {
     headers: getHeaders(),
   });
   
-  return handleResponse(response);
+  const data = await handleResponse(response);
+  // Filter events to include only those with active markets
+  if (data && data.events) {
+    data.events = data.events.filter(event => 
+      event.status === 'TRADING' || 
+      event.status === 'TRADING_LIVE' || 
+      event.status === 'PRE_TRADING'
+    );
+  }
+  return data;
 };
 
 export const getCompetitionEvents = async (competitionKey) => {

@@ -309,7 +309,7 @@ function GroupPage() {
                     },
                   }}
                 >
-                  Place Bet
+                  Choose Bet
             </Button>
               )}
             </Box>

@@ -89,13 +89,13 @@ function ChooseBetsPage() {
                   onClick={() => navigate(`/group/${groupId}/choose-bets/${sport.key}`)}
                   sx={{
                     cursor: 'pointer',
-                    backgroundColor: 'rgba(22, 28, 36, 0.6)',
+                    backgroundColor: sport.eventCount > 0 ? 'rgba(22, 28, 36, 0.6)' : 'rgba(100, 100, 100, 0.6)',
                     borderRadius: '12px',
                     border: '1px solid rgba(255, 255, 255, 0.05)',
                     position: 'relative',
                     overflow: 'hidden',
                     '&:hover': {
-                      backgroundColor: 'rgba(22, 28, 36, 0.8)',
+                      backgroundColor: sport.eventCount > 0 ? 'rgba(22, 28, 36, 0.8)' : 'rgba(100, 100, 100, 0.8)',
                       transform: 'translateY(-4px)',
                       boxShadow: '0 10px 20px rgba(0, 0, 0, 0.2)',
                       transition: 'all 0.3s ease',
@@ -127,9 +127,15 @@ function ChooseBetsPage() {
                       {sport.name === 'Basketball' && <Box sx={{ fontSize: '1.8rem' }}>🏀</Box>}
                       {sport.name === 'Soccer' && <Box sx={{ fontSize: '1.8rem' }}>⚽</Box>}
                       {sport.name === 'Ice Hockey' && <Box sx={{ fontSize: '1.8rem' }}>🏒</Box>}
+                      {sport.name === 'Tennis' && <Box sx={{ fontSize: '1.8rem' }}>🎾</Box>}
                     </Box>
                     <Typography variant="body2" sx={{ color: '#cbd5e1', mb: 1 }}>
-                      {sport.eventCount} events available
+                      {sport.events && sport.events.filter ? 
+                        sport.events.filter(event => 
+                          event.status === 'TRADING' || 
+                          event.status === 'TRADING_LIVE' || 
+                          event.status === 'PRE_TRADING'
+                        ).length : sport.eventCount || 0} events available
                     </Typography>
                     <Box 
                       sx={{ 
