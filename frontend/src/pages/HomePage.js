@@ -20,6 +20,8 @@ import {
   ListItemText,
   Divider,
   Tooltip,
+  MenuItem,
+  ListItemIcon,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
@@ -32,6 +34,7 @@ import InfiniteIcon from '@mui/icons-material/AllInclusiveOutlined';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
+import PersonIcon from '@mui/icons-material/Person';
 
 function HomePage() {
   const [groups, setGroups] = useState([]);
@@ -42,6 +45,8 @@ function HomePage() {
   const [notifAnchorEl, setNotifAnchorEl] = useState(null);
   const [friendRequests, setFriendRequests] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [profileAnchorEl, setProfileAnchorEl] = useState(null);
+  const profileMenuOpen = Boolean(profileAnchorEl);
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user')) || { username: '' };
 
@@ -165,6 +170,14 @@ function HomePage() {
     }
   };
 
+  const handleProfileMenuOpen = (event) => {
+    setProfileAnchorEl(event.currentTarget);
+  };
+
+  const handleProfileMenuClose = () => {
+    setProfileAnchorEl(null);
+  };
+
   const renderSportTabs = () => {
     const sportTabs = [
       { label: "All Sports", icon: <InfiniteIcon />, count: "1" },
@@ -275,20 +288,9 @@ function HomePage() {
             </Badge>
           </IconButton>
           
-          {/* Settings */}
-          <Tooltip title="Settings">
-            <IconButton
-              color="inherit"
-              onClick={() => navigate('/settings')}
-              sx={{ color: '#f8fafc' }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-          
-          {/* Profile */}
+          {/* Profile dropdown that combines Profile and Settings */}
           <Box
-            onClick={() => navigate('/profile')}
+            onClick={handleProfileMenuOpen}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -327,153 +329,51 @@ function HomePage() {
             </IconButton>
           </Tooltip>
         </Box>
-        
-        {/* Notifications Menu */}
-        <Menu
-          anchorEl={notifAnchorEl}
-          open={Boolean(notifAnchorEl)}
-          onClose={handleNotificationsClose}
-          PaperProps={{
-            sx: {
-              backgroundColor: 'rgba(22, 28, 36, 0.95)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: '#f8fafc',
-              minWidth: '300px',
-              maxHeight: '80vh',
-              overflowY: 'auto',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-            }
-          }}
-        >
-          {/* Friend Requests Section */}
-          {friendRequests.length > 0 && (
-            <>
-              <Typography variant="subtitle1" sx={{ p: 2, fontWeight: 'bold' }}>
-                Friend Requests
-              </Typography>
-              <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-              <List sx={{ p: 0 }}>
-                {friendRequests.map((request) => (
-                  <React.Fragment key={request.id}>
-                    <ListItem sx={{ py: 2 }}>
-                      <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: '#8B5CF6' }}>
-                          {request.from_user.username[0].toUpperCase()}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText 
-                        primary={`${request.from_user.username} wants to be friends`}
-                        sx={{ color: '#f8fafc' }}
-                      />
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button 
-                          size="small" 
-                          onClick={() => handleAcceptFriend(request.id)}
-                          sx={{ 
-                            minWidth: 'auto', 
-                            bgcolor: '#8B5CF6',
-                            color: 'white',
-                            '&:hover': {
-                              bgcolor: '#7C3AED',
-                            }
-                          }}
-                        >
-                          Accept
-                        </Button>
-                        <Button 
-                          size="small" 
-                          onClick={() => handleRejectFriend(request.id)}
-                          sx={{ 
-                            minWidth: 'auto',
-                            color: '#f8fafc',
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                            '&:hover': {
-                              bgcolor: 'rgba(255, 255, 255, 0.05)',
-                            }
-                          }}
-                          variant="outlined"
-                        >
-                          Reject
-                        </Button>
-                      </Box>
-                    </ListItem>
-                    <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-                  </React.Fragment>
-                ))}
-              </List>
-            </>
-          )}
-          
-          {/* Other Notifications */}
-          {notifications.length > 0 && (
-            <>
-              <Typography variant="subtitle1" sx={{ p: 2, fontWeight: 'bold' }}>
-                Notifications
-              </Typography>
-              <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-              <List sx={{ p: 0 }}>
-                {notifications.map((notification) => (
-                  <React.Fragment key={notification.id}>
-                    <ListItem sx={{ 
-                      py: 2,
-                      bgcolor: notification.is_read ? 'transparent' : 'rgba(139, 92, 246, 0.1)'
-                    }}>
-                      <ListItemText 
-                        primary={notification.message}
-                        secondary={
-                          notification.type === 'group_invite' ? (
-                            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                              <Button 
-                                size="small" 
-                                onClick={() => handleGroupInviteAction(notification.reference_id, 'accept')}
-                                sx={{ 
-                                  minWidth: 'auto', 
-                                  bgcolor: '#8B5CF6',
-                                  color: 'white',
-                                  '&:hover': {
-                                    bgcolor: '#7C3AED',
-                                  }
-                                }}
-                              >
-                                Join
-                              </Button>
-                              <Button 
-                                size="small" 
-                                onClick={() => handleGroupInviteAction(notification.reference_id, 'reject')}
-                                sx={{ 
-                                  minWidth: 'auto',
-                                  color: '#f8fafc',
-                                  borderColor: 'rgba(255, 255, 255, 0.3)',
-                                  '&:hover': {
-                                    bgcolor: 'rgba(255, 255, 255, 0.05)',
-                                  }
-                                }}
-                                variant="outlined"
-                              >
-                                Decline
-                              </Button>
-                            </Box>
-                          ) : null
-                        }
-                        secondaryTypographyProps={{ component: 'div' }}
-                        sx={{ color: '#f8fafc' }}
-                      />
-                    </ListItem>
-                    <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-                  </React.Fragment>
-                ))}
-              </List>
-            </>
-          )}
-          
-          {friendRequests.length === 0 && notifications.length === 0 && (
-            <Box sx={{ p: 3, textAlign: 'center' }}>
-              <Typography>No notifications</Typography>
-            </Box>
-          )}
-        </Menu>
       </Box>
+      
+      {/* Profile Menu */}
+      <Menu
+        anchorEl={profileAnchorEl}
+        open={profileMenuOpen}
+        onClose={handleProfileMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        PaperProps={{
+          sx: {
+            bgcolor: '#1E293B',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '8px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+          }
+        }}
+      >
+        <MenuItem onClick={() => {
+          navigate('/profile');
+          handleProfileMenuClose();
+        }}
+        sx={{ 
+          color: '#f8fafc',
+          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.05)' }
+        }}>
+          <ListItemIcon>
+            <PersonIcon sx={{ color: '#f8fafc' }} />
+          </ListItemIcon>
+          Profile
+        </MenuItem>
+        <MenuItem onClick={() => {
+          navigate('/settings');
+          handleProfileMenuClose();
+        }}
+        sx={{ 
+          color: '#f8fafc',
+          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.05)' }
+        }}>
+          <ListItemIcon>
+            <SettingsIcon sx={{ color: '#f8fafc' }} />
+          </ListItemIcon>
+          Settings
+        </MenuItem>
+      </Menu>
       
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         {/* Welcome Section */}
@@ -708,7 +608,7 @@ function HomePage() {
                           {/* Add a circular icon for the user's avatar like in your mockup - changed to yellow/gold */}
                           <Avatar 
                             sx={{ 
-                              bgcolor: '#FBBF24', 
+                              bgcolor: '#8B5CF6', 
                               width: 32, 
                               height: 32, 
                               fontSize: '16px', 

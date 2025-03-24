@@ -22,7 +22,10 @@ import {
   IconButton,
   Tooltip,
   Badge,
-  Avatar
+  Avatar,
+  Menu,
+  MenuItem,
+  ListItemIcon
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -31,6 +34,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
+import PersonIcon from '@mui/icons-material/Person';
 import NavBar from '../components/NavBar';
 import { getAvailableSportEvents, getCompetitionEvents } from '../services/api';
 
@@ -65,6 +69,16 @@ function SportEventsPage() {
   const [selectedCompetition, setSelectedCompetition] = useState(null);
   const [competitionEvents, setCompetitionEvents] = useState([]);
   const user = JSON.parse(localStorage.getItem('user')) || { username: '' };
+  const [profileAnchorEl, setProfileAnchorEl] = useState(null);
+  const profileMenuOpen = Boolean(profileAnchorEl);
+  
+  const handleProfileMenuOpen = (event) => {
+    setProfileAnchorEl(event.currentTarget);
+  };
+  
+  const handleProfileMenuClose = () => {
+    setProfileAnchorEl(null);
+  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -287,20 +301,9 @@ function SportEventsPage() {
             </Badge>
           </IconButton>
           
-          {/* Settings */}
-          <Tooltip title="Settings">
-            <IconButton
-              color="inherit"
-              onClick={() => navigate('/settings')}
-              sx={{ color: '#f8fafc' }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-          
-          {/* Profile */}
+          {/* Profile dropdown that combines Profile and Settings */}
           <Box
-            onClick={() => navigate('/profile')}
+            onClick={handleProfileMenuOpen}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -315,7 +318,7 @@ function SportEventsPage() {
           >
             <Avatar 
               sx={{ 
-                bgcolor: '#8B5CF6', 
+                bgcolor: '#8B5CF6',
                 width: 32, 
                 height: 32, 
                 fontSize: '14px', 
@@ -340,6 +343,50 @@ function SportEventsPage() {
           </Tooltip>
         </Box>
       </Box>
+      
+      {/* Profile Menu */}
+      <Menu
+        anchorEl={profileAnchorEl}
+        open={profileMenuOpen}
+        onClose={handleProfileMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        PaperProps={{
+          sx: {
+            bgcolor: '#1E293B',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '8px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+          }
+        }}
+      >
+        <MenuItem onClick={() => {
+          navigate('/profile');
+          handleProfileMenuClose();
+        }}
+        sx={{ 
+          color: '#f8fafc',
+          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.05)' }
+        }}>
+          <ListItemIcon>
+            <PersonIcon sx={{ color: '#f8fafc' }} />
+          </ListItemIcon>
+          Profile
+        </MenuItem>
+        <MenuItem onClick={() => {
+          navigate('/settings');
+          handleProfileMenuClose();
+        }}
+        sx={{ 
+          color: '#f8fafc',
+          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.05)' }
+        }}>
+          <ListItemIcon>
+            <SettingsIcon sx={{ color: '#f8fafc' }} />
+          </ListItemIcon>
+          Settings
+        </MenuItem>
+      </Menu>
       
       <Container maxWidth="lg" sx={{ mt: 3, mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>

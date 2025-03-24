@@ -9,7 +9,8 @@ import CreateGroupPage from './pages/CreateGroupPage';
 import AddFriendPage from './pages/AddFriendPage';
 import ChooseBetsPage from './pages/ChooseBetsPage';
 import SportEventsPage from './pages/SportEventsPage';
-
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 
 const theme = createTheme({
   palette: {
@@ -134,6 +135,16 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          } />
         </Routes>
       </Router>
     </ThemeProvider>
