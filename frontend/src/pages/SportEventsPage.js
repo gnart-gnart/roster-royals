@@ -208,6 +208,8 @@ function SportEventsPage() {
   const filteredEvents = competitionEvents.filter(event => 
     // Only include events with both home and away teams
     event.home && event.away &&
+    // Only include events with active markets
+    event.status === 'TRADING' &&
     // Apply search filter
     (event.name.toLowerCase().includes(eventSearchQuery.toLowerCase()) ||
     event.home.name.toLowerCase().includes(eventSearchQuery.toLowerCase()) ||
@@ -421,6 +423,30 @@ function SportEventsPage() {
                         <Typography variant="body2" color="text.secondary">
                           Markets: {Object.keys(event.markets || {}).length}
                         </Typography>
+                      </Box>
+
+                      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent card click event
+                            navigate(`/group/${groupId}/event/${event.key}/add-bet`);
+                          }}
+                          sx={{
+                            bgcolor: '#8B5CF6',
+                            borderRadius: '20px',
+                            color: 'white',
+                            textTransform: 'none',
+                            fontWeight: 'medium',
+                            px: 3,
+                            '&:hover': {
+                              backgroundColor: '#7C3AED',
+                            },
+                          }}
+                        >
+                          Add Bet
+                        </Button>
                       </Box>
                     </CardContent>
                   </Card>

@@ -11,6 +11,7 @@ import ChooseBetsPage from './pages/ChooseBetsPage';
 import SportEventsPage from './pages/SportEventsPage';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
+import PlaceBetPage from './pages/PlaceBetPage';
 
 const theme = createTheme({
   palette: {
@@ -132,6 +133,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <SportEventsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/group/:groupId/event/:eventKey/add-bet" 
+            element={
+              <ProtectedRoute>
+                <PlaceBetPage />
               </ProtectedRoute>
             } 
           />

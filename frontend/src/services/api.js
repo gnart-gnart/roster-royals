@@ -201,16 +201,19 @@ export const getAvailableSports = async () => {
 }; 
 
 export const getAvailableSportEvents = async (sport) => {
-  // If sport parameter is provided, fetch events for that sport
+  // If sport parameter is provided, fetch data for that sport using the new endpoint
   const endpoint = sport ? 
     `${API_URL}/groups/bets/${sport}/` : 
     `${API_URL}/groups/bets/`;
-    
+  
   const response = await fetch(endpoint, {
     headers: getHeaders(),
   });
   
-  return handleResponse(response);
+  const data = await handleResponse(response);
+  
+  // Previously filtered events, now removed because data contains sport info with categories.
+  return data;
 };
 
 export const getCompetitionEvents = async (competitionKey) => {
@@ -221,4 +224,12 @@ export const getCompetitionEvents = async (competitionKey) => {
   return handleResponse(response);
 };
 
+export const placeBet = async (betData) => {
+  const response = await fetch(`${API_URL}/groups/bets/place/`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(betData),
+  });
+  return handleResponse(response);
+};
 

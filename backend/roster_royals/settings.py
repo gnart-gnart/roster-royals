@@ -13,9 +13,6 @@ DEBUG = False
 ALLOWED_HOSTS = ['*']
 #ALLOWED_HOSTS = ['165.22.187.23', 'rosterroyals.com']
 
-# For development, you might want to add this for better error visibility
-DEBUG = True 
-
 # Templates configuration
 TEMPLATES = [
     {
@@ -140,3 +137,18 @@ CLOUDBET_API_BASE_URL = 'https://sports-api.cloudbet.com/pub/v2/'  # Include com
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_OAUTH2_CLIENT_ID')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('GOOGLE_OAUTH2_CLIENT_SECRET')
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'DEBUG', # or ERROR for production
+        },
+    },
+}

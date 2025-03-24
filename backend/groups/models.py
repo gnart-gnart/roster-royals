@@ -51,4 +51,17 @@ class GroupInvite(models.Model):
     ], default='pending')
 
     class Meta:
-        unique_together = ('group', 'to_user') 
+        unique_together = ('group', 'to_user')
+
+class GroupEvent(models.Model):
+    """Model for a betting event posted to a group."""
+    group = models.ForeignKey(BettingGroup, on_delete=models.CASCADE, related_name='group_events')
+    event_key = models.CharField(max_length=255)
+    event_id = models.IntegerField(null=True, blank=True)  # New field to store the Cloudbet event ID
+    event_name = models.CharField(max_length=255)
+    sport = models.CharField(max_length=100)
+    market_data = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.event_name} ({self.sport}) in group {self.group.name}' 
