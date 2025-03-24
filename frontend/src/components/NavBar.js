@@ -16,12 +16,15 @@ import {
   Avatar,
   Button,
   Tooltip,
+  ListItemIcon,
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
   AccountCircle,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
+  EmojiEvents as EmojiEventsOutlinedIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -42,6 +45,8 @@ function NavBar() {
 
   // Add groups state and loading function
   const [groups, setGroups] = useState([]);
+
+  const [profileAnchorEl, setProfileAnchorEl] = useState(null);
 
   const loadGroups = async () => {
     try {
@@ -152,123 +157,210 @@ function NavBar() {
     }
   };
 
+  const handleProfileMenuOpen = (event) => {
+    setProfileAnchorEl(event.currentTarget);
+  };
+  
+  const handleProfileMenuClose = () => {
+    setProfileAnchorEl(null);
+  };
+
   return (
-    <AppBar position="static" sx={{ 
-      backgroundColor: 'rgba(17, 24, 39, 0.95)',
-      backdropFilter: 'blur(8px)',
-      borderBottom: '1px solid rgba(55, 65, 81, 0.5)',
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'space-between', 
+      alignItems: 'center', 
+      p: 2, 
+      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+      bgcolor: '#161821'
     }}>
-      <Toolbar>
-        <Typography 
-          variant="h6" 
-          sx={{ flexGrow: 1, cursor: 'pointer' }} 
-          onClick={() => navigate('/home')}
-        >
-          Roster Royals
+      <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/home')}>
+        <EmojiEventsOutlinedIcon sx={{ color: '#FFD700', mr: 1 }} />
+        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+          ROSTER ROYALS
         </Typography>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <IconButton
-            color="inherit"
-            onClick={handleNotificationsOpen}
-          >
-            <Badge badgeContent={friendRequests.length + notifications.filter(n => !n.is_read).length} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
-
-          {/* Settings Button */}
-          <Tooltip title="Settings">
-            <IconButton
-              color="inherit"
-              onClick={() => navigate('/settings')}
-              sx={{
-                '&:hover': {
-                  backgroundColor: 'rgba(55, 65, 81, 0.3)',
-                },
-              }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-
-          {/* Profile Section */}
-          <Box
-            onClick={() => navigate('/profile')}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              cursor: 'pointer',
-              '&:hover': {
-                opacity: 0.8,
-              },
-              padding: '4px 4px',
-              borderRadius: 1,
-              transition: 'all 0.2s',
-            }}
-          >
-            <AccountCircle />
-            <Typography variant="body1" sx={{ color: 'white' }}>
-              {user?.username || 'Profile'}
-            </Typography>
-          </Box>
-
-          {/* Logout Button */}
-          <Tooltip title="Logout">
-            <IconButton
-              color="inherit"
-              onClick={handleLogout}
-              sx={{
-                '&:hover': {
-                  backgroundColor: 'rgba(55, 65, 81, 0.3)',
-                },
-              }}
-            >
-              <LogoutIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
-
-        {/* Notifications Menu */}
-        <Menu
-          anchorEl={notifAnchorEl}
-          open={Boolean(notifAnchorEl)}
-          onClose={handleNotificationsClose}
-          PaperProps={{
-            sx: {
-              backgroundColor: 'rgba(17, 24, 39, 0.98)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(55, 65, 81, 0.5)',
-              color: '#f8fafc',
-              minWidth: '300px',
-              maxHeight: '80vh',
-              overflowY: 'auto',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-            }
+      </Box>
+      
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        {/* Notifications */}
+        <IconButton
+          color="inherit"
+          onClick={handleNotificationsOpen}
+          sx={{ color: '#f8fafc' }}
+        >
+          <Badge badgeContent={friendRequests.length + notifications.filter(n => !n.is_read).length} color="error">
+            <NotificationsIcon />
+          </Badge>
+        </IconButton>
+        
+        {/* Profile dropdown that combines Profile and Settings */}
+        <Box
+          onClick={handleProfileMenuOpen}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            padding: '4px 8px',
+            borderRadius: 1,
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            },
           }}
         >
-          {/* Friend Requests Section */}
-          {friendRequests.length > 0 && (
-            <>
-              <Typography sx={{ p: 2, fontWeight: 'bold' }}>
-                Friend Requests
-              </Typography>
-              <Divider />
-              <List>
-                {friendRequests.map((request) => (
-                  <ListItem key={request.id}>
-                    <ListItemAvatar>
-                      <Avatar>{request.from_user.username[0]}</Avatar>
-                    </ListItemAvatar>
-                    <ListItemText 
-                      primary={request.from_user.username}
-                      secondary={
+          <Avatar 
+            sx={{ 
+              bgcolor: '#8B5CF6',
+              width: 32, 
+              height: 32, 
+              fontSize: '14px', 
+              fontWeight: 'bold' 
+            }}
+          >
+            {user?.username ? user.username[0].toUpperCase() : 'U'}
+          </Avatar>
+          <Typography variant="body2" sx={{ color: '#f8fafc' }}>
+            {user?.username || 'Profile'}
+          </Typography>
+        </Box>
+        
+        {/* Logout Button */}
+        <Tooltip title="Logout">
+          <IconButton
+            color="inherit"
+            onClick={handleLogout}
+            sx={{
+              color: '#f8fafc',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              },
+            }}
+          >
+            <LogoutIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      {/* Profile Menu */}
+      <Menu
+        anchorEl={profileAnchorEl}
+        open={Boolean(profileAnchorEl)}
+        onClose={handleProfileMenuClose}
+        PaperProps={{
+          sx: {
+            backgroundColor: 'rgba(17, 24, 39, 0.98)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(55, 65, 81, 0.5)',
+            color: '#f8fafc',
+            minWidth: '200px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}
+      >
+        <MenuItem onClick={() => {
+          handleProfileMenuClose();
+          navigate('/profile');
+        }}>
+          <ListItemIcon>
+            <PersonIcon sx={{ color: '#f8fafc' }} />
+          </ListItemIcon>
+          <Typography>Profile</Typography>
+        </MenuItem>
+        
+        <MenuItem onClick={() => {
+          handleProfileMenuClose();
+          navigate('/settings');
+        }}>
+          <ListItemIcon>
+            <SettingsIcon sx={{ color: '#f8fafc' }} />
+          </ListItemIcon>
+          <Typography>Settings</Typography>
+        </MenuItem>
+      </Menu>
+
+      {/* Notifications Menu */}
+      <Menu
+        anchorEl={notifAnchorEl}
+        open={Boolean(notifAnchorEl)}
+        onClose={handleNotificationsClose}
+        PaperProps={{
+          sx: {
+            backgroundColor: 'rgba(17, 24, 39, 0.98)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(55, 65, 81, 0.5)',
+            color: '#f8fafc',
+            minWidth: '300px',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}
+      >
+        {/* Friend Requests Section */}
+        {friendRequests.length > 0 && (
+          <>
+            <Typography sx={{ p: 2, fontWeight: 'bold' }}>
+              Friend Requests
+            </Typography>
+            <Divider />
+            <List>
+              {friendRequests.map((request) => (
+                <ListItem key={request.id}>
+                  <ListItemAvatar>
+                    <Avatar>{request.from_user.username[0]}</Avatar>
+                  </ListItemAvatar>
+                  <ListItemText 
+                    primary={request.from_user.username}
+                    secondary={
+                      <Box sx={{ mt: 1 }}>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={() => handleAcceptFriend(request.id)}
+                          sx={{ mr: 1 }}
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => handleRejectFriend(request.id)}
+                        >
+                          Reject
+                        </Button>
+                      </Box>
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </>
+        )}
+
+        {/* Notifications Section */}
+        {notifications.length > 0 && (
+          <>
+            <Typography sx={{ p: 2, fontWeight: 'bold' }}>
+              Notifications
+            </Typography>
+            <Divider />
+            <List>
+              {notifications.map((notification) => (
+                <ListItem 
+                  key={notification.id}
+                  sx={{
+                    backgroundColor: notification.is_read ? 'transparent' : 'rgba(96, 165, 250, 0.1)',
+                  }}
+                >
+                  <ListItemText 
+                    primary={notification.message}
+                    secondary={
+                      notification.type === 'group_invite' ? (
                         <Box sx={{ mt: 1 }}>
                           <Button
                             size="small"
                             variant="contained"
-                            onClick={() => handleAcceptFriend(request.id)}
+                            onClick={() => handleGroupInvite(notification.id, notification.reference_id, 'accept')}
                             sx={{ mr: 1 }}
                           >
                             Accept
@@ -276,72 +368,27 @@ function NavBar() {
                           <Button
                             size="small"
                             variant="outlined"
-                            onClick={() => handleRejectFriend(request.id)}
+                            onClick={() => handleGroupInvite(notification.id, notification.reference_id, 'reject')}
                           >
                             Reject
                           </Button>
                         </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </>
-          )}
+                      ) : new Date(notification.created_at).toLocaleDateString()
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </>
+        )}
 
-          {/* Notifications Section */}
-          {notifications.length > 0 && (
-            <>
-              <Typography sx={{ p: 2, fontWeight: 'bold' }}>
-                Notifications
-              </Typography>
-              <Divider />
-              <List>
-                {notifications.map((notification) => (
-                  <ListItem 
-                    key={notification.id}
-                    sx={{
-                      backgroundColor: notification.is_read ? 'transparent' : 'rgba(96, 165, 250, 0.1)',
-                    }}
-                  >
-                    <ListItemText 
-                      primary={notification.message}
-                      secondary={
-                        notification.type === 'group_invite' ? (
-                          <Box sx={{ mt: 1 }}>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              onClick={() => handleGroupInvite(notification.id, notification.reference_id, 'accept')}
-                              sx={{ mr: 1 }}
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => handleGroupInvite(notification.id, notification.reference_id, 'reject')}
-                            >
-                              Reject
-                            </Button>
-                          </Box>
-                        ) : new Date(notification.created_at).toLocaleDateString()
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </>
-          )}
-
-          {friendRequests.length === 0 && notifications.length === 0 && (
-            <Typography sx={{ p: 2, textAlign: 'center' }}>
-              No new notifications
-            </Typography>
-          )}
-        </Menu>
-      </Toolbar>
-    </AppBar>
+        {friendRequests.length === 0 && notifications.length === 0 && (
+          <Typography sx={{ p: 2, textAlign: 'center' }}>
+            No new notifications
+          </Typography>
+        )}
+      </Menu>
+    </Box>
   );
 }
 

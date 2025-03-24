@@ -27,6 +27,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings';
 import LanguageIcon from '@mui/icons-material/Language';
 import DeleteIcon from '@mui/icons-material/Delete';
+import NavBar from '../components/NavBar';
 
 function SettingsPage() {
   const navigate = useNavigate();

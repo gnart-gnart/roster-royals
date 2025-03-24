@@ -26,6 +26,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import NavBar from '../components/NavBar';
 
 function ProfilePage() {
   const navigate = useNavigate();
@@ -68,39 +69,8 @@ function ProfilePage() {
   
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh' }}>
-      {/* Top Navigation Bar */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        p: 2, 
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        bgcolor: '#161821'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/home')}>
-          <EmojiEventsOutlinedIcon sx={{ color: '#FFD700', mr: 1 }} />
-          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-            ROSTER ROYALS
-          </Typography>
-        </Box>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton sx={{ color: '#f8fafc' }}>
-            <NotificationsIcon />
-          </IconButton>
-          <Avatar 
-            sx={{ 
-              bgcolor: '#8B5CF6', 
-              width: 32, 
-              height: 32, 
-              fontSize: '14px', 
-              fontWeight: 'bold' 
-            }}
-          >
-            {user.username[0].toUpperCase()}
-          </Avatar>
-        </Box>
-      </Box>
+      {/* Replace the custom navigation with the NavBar component */}
+      <NavBar />
       
       {/* Main Content */}
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
