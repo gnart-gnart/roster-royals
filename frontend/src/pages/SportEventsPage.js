@@ -424,6 +424,30 @@ function SportEventsPage() {
                           Markets: {Object.keys(event.markets || {}).length}
                         </Typography>
                       </Box>
+
+                      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent card click event
+                            navigate(`/group/${groupId}/event/${event.key}/add-bet`);
+                          }}
+                          sx={{
+                            bgcolor: '#8B5CF6',
+                            borderRadius: '20px',
+                            color: 'white',
+                            textTransform: 'none',
+                            fontWeight: 'medium',
+                            px: 3,
+                            '&:hover': {
+                              backgroundColor: '#7C3AED',
+                            },
+                          }}
+                        >
+                          Add Bet
+                        </Button>
+                      </Box>
                     </CardContent>
                   </Card>
                 </Grid>

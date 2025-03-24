@@ -224,4 +224,12 @@ export const getCompetitionEvents = async (competitionKey) => {
   return handleResponse(response);
 };
 
+export const placeBet = async (betData) => {
+  const response = await fetch(`${API_URL}/groups/bets/place/`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(betData),
+  });
+  return handleResponse(response);
+};
 

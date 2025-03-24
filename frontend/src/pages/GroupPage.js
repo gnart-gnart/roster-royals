@@ -32,6 +32,7 @@ import {
   FormControlLabel,
   Grid,
   MenuItem,
+  CardContent,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -51,7 +52,8 @@ import {
   getNotifications, 
   handleFriendRequest, 
   handleGroupInvite, 
-  markNotificationsRead 
+  markNotificationsRead,
+  placeBet 
 } from '../services/api';
 import NavBar from '../components/NavBar';
 
@@ -63,6 +65,7 @@ function GroupPage() {
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [bets, setBets] = useState([]);
   const user = JSON.parse(localStorage.getItem('user')) || { username: '' };
   const isPresident = group?.president?.id === user?.id;
   const [members, setMembers] = useState([]);
@@ -94,6 +97,9 @@ function GroupPage() {
         // Load notifications and friend requests for navbar
         loadFriendRequests();
         loadNotifications();
+
+        // Load group bets (these would be the bets added to the group)
+        loadGroupBets();
       } catch (err) {
         setError('Failed to load group data');
         console.error(err);
@@ -120,6 +126,22 @@ function GroupPage() {
       setNotifications(data);
     } catch (err) {
       console.error('Failed to load notifications:', err);
+    }
+  };
+
+  const loadGroupBets = async () => {
+    try {
+      // For now, we'll just use the regular getGroup call which might include bets
+      // In a real implementation, you might want a dedicated API endpoint for this
+      const groupData = await getGroup(id);
+      if (groupData.bets) {
+        setBets(groupData.bets);
+      } else {
+        // If the API doesn't return bets, we'll keep an empty array
+        setBets([]);
+      }
+    } catch (err) {
+      console.error('Failed to load group bets:', err);
     }
   };
 
@@ -314,10 +336,69 @@ function GroupPage() {
               )}
             </Box>
             
-            {/* Empty state for bets */}
-            <Box sx={{ p: 3, textAlign: 'center', color: '#6B7280', bgcolor: 'rgba(22, 28, 36, 0.4)', borderRadius: '8px', border: '1px solid rgba(30, 41, 59, 0.8)' }}>
-              No bets available yet.
-            </Box>
+            {/* Replace the empty state with a dynamic list of bets */}
+            {bets && bets.length > 0 ? (
+              <Grid container spacing={2}>
+                {bets.map((bet) => (
+                  <Grid item xs={12} key={bet.id}>
+                    <Card sx={{ 
+                      bgcolor: 'rgba(22, 28, 36, 0.4)', 
+                      borderRadius: '8px', 
+                      border: '1px solid rgba(30, 41, 59, 0.8)',
+                      overflow: 'hidden',
+                      boxShadow: 'none',
+                    }}>
+                      <CardContent>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                          <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                            {bet.event_name || 'Betting Event'}
+                          </Typography>
+                          <Chip 
+                            label={bet.status || 'Active'} 
+                            color={bet.status === 'CLOSED' ? 'error' : 'success'}
+                            size="small"
+                          />
+                        </Box>
+                        
+                        <Typography variant="body2" sx={{ color: '#CBD5E1', mb: 2 }}>
+                          Sport: {bet.sport || 'Not specified'}
+                        </Typography>
+                        
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box>
+                            <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
+                              Market: {bet.marketKey || 'Moneyline'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
+                              Odds: {bet.odds || '-'}
+                            </Typography>
+                          </Box>
+                          
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            sx={{
+                              borderColor: '#8B5CF6',
+                              color: '#8B5CF6',
+                              '&:hover': {
+                                borderColor: '#7C3AED',
+                                backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                              },
+                            }}
+                          >
+                            View Details
+                          </Button>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            ) : (
+              <Box sx={{ p: 3, textAlign: 'center', color: '#6B7280', bgcolor: 'rgba(22, 28, 36, 0.4)', borderRadius: '8px', border: '1px solid rgba(30, 41, 59, 0.8)' }}>
+                No bets available yet.
+              </Box>
+            )}
           </Grid>
           
           {/* Right side - Leaderboard */}
