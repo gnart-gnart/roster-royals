@@ -9,20 +9,21 @@ import CreateGroupPage from './pages/CreateGroupPage';
 import AddFriendPage from './pages/AddFriendPage';
 import ChooseBetsPage from './pages/ChooseBetsPage';
 import SportEventsPage from './pages/SportEventsPage';
-
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 
 const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#60a5fa', // Bright blue
+      main: '#8B5CF6', // Purple
     },
     secondary: {
       main: '#f472b6', // Pink accent
     },
     background: {
-      default: '#0f172a', // Very dark blue
-      paper: '#1e293b', // Slightly lighter dark blue
+      default: '#0C0D14', // Match the exact dark background from HomePage
+      paper: '#161E2E', // Slightly lighter dark blue
     },
     text: {
       primary: '#f8fafc', // Brighter white
@@ -33,7 +34,7 @@ const theme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: '#0f172a',
+          backgroundColor: '#0C0D14', // Update to match HomePage background
           color: '#f8fafc',
         },
       },
@@ -53,10 +54,10 @@ const theme = createTheme({
         root: {
           backgroundColor: '#1e293b',
           borderRadius: 8,
-          border: '1px solid rgba(96, 165, 250, 0.2)', // Subtle blue border
+          border: '1px solid rgba(139, 92, 246, 0.2)', // Updated to purple border
           transition: 'border-color 0.2s ease-in-out',
           '&:hover': {
-            border: '1px solid rgba(96, 165, 250, 0.4)',
+            border: '1px solid rgba(139, 92, 246, 0.4)',
           },
         },
       },
@@ -64,11 +65,11 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 6,
+          borderRadius: 20, // More rounded buttons to match home page
           textTransform: 'none',
-          border: '1px solid rgba(96, 165, 250, 0.3)',
+          border: '1px solid rgba(139, 92, 246, 0.3)', // Updated to purple border
           '&:hover': {
-            border: '1px solid rgba(96, 165, 250, 0.6)',
+            border: '1px solid rgba(139, 92, 246, 0.6)',
           },
         },
       },
@@ -134,6 +135,16 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          } />
         </Routes>
       </Router>
     </ThemeProvider>
