@@ -33,6 +33,11 @@ import {
   Grid,
   MenuItem,
   CardContent,
+  Select,
+  FormControl,
+  InputLabel,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -43,6 +48,10 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import PersonIcon from '@mui/icons-material/Person';
+import DeleteIcon from '@mui/icons-material/Delete';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import { 
   inviteToGroup, 
   getFriends, 
@@ -54,6 +63,9 @@ import {
   handleGroupInvite, 
   markNotificationsRead,
   placeBet 
+  getGroupBets,
+  addBet,
+  deleteBet,
 } from '../services/api';
 import NavBar from '../components/NavBar';
 
@@ -81,6 +93,14 @@ function GroupPage() {
   // Profile menu state
   const [profileAnchorEl, setProfileAnchorEl] = useState(null);
   const profileMenuOpen = Boolean(profileAnchorEl);
+
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    title: '',
+    message: '',
+    action: null,
+    memberId: null,
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -259,13 +279,36 @@ function GroupPage() {
     setProfileAnchorEl(null);
   };
 
+  const handlePromoteToCoPresident = (memberId) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Promote to Co-President',
+      message: 'Are you sure you want to promote this member to co-president?',
+      action: 'promote',
+      memberId,
+    });
+  };
+
+  const handleRemoveMember = (memberId) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Remove Member',
+      message: 'Are you sure you want to remove this member from the group?',
+      action: 'remove',
+      memberId,
+    });
+  };
+
+  const handleConfirmAction = () => {
+    // This will be implemented later with backend logic
+    setConfirmDialog({ ...confirmDialog, open: false });
+  };
+
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh' }}>
-      {/* Replace the custom navigation with the NavBar component */}
       <NavBar />
       
       <Container maxWidth="lg" sx={{ mt: 3, mb: 4 }}>
-        {/* Group Header with Back button */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <Button
             variant="text"
@@ -288,7 +331,6 @@ function GroupPage() {
           </Typography>
         </Box>
 
-        {/* Group description */}
         {!loading && group && (
           <Box 
             sx={{ 
@@ -306,9 +348,7 @@ function GroupPage() {
           </Box>
         )}
 
-        {/* Main content area - split into two sections */}
         <Grid container spacing={3}>
-          {/* Left side - Active Bets */}
           <Grid item xs={12} md={8}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
@@ -401,7 +441,6 @@ function GroupPage() {
             )}
           </Grid>
           
-          {/* Right side - Leaderboard */}
           <Grid item xs={12} md={4}>
             <Box sx={{ 
               mb: 2, 
@@ -504,6 +543,21 @@ function GroupPage() {
                                   President
                                 </Typography>
                               )}
+                              {member.is_co_president && (
+                                <Typography 
+                                  variant="caption" 
+                                  sx={{ 
+                                    ml: 1, 
+                                    color: '#8B5CF6',
+                                    bgcolor: 'rgba(139, 92, 246, 0.1)',
+                                    px: 1,
+                                    py: 0.5,
+                                    borderRadius: '4px',
+                                  }}
+                                >
+                                  Co-President
+                                </Typography>
+                              )}
                             </Box>
                             <Typography variant="caption" sx={{ color: '#6B7280' }}>
                               Win Rate: {Math.floor(Math.random() * 30) + 50}%
@@ -513,6 +567,36 @@ function GroupPage() {
                           <Typography sx={{ color: '#10B981', fontWeight: 'bold' }}>
                             {member.points || (2500 - index * 150)}
                           </Typography>
+                          
+                          {isPresident && member.id !== group.president.id && (
+                            <Box sx={{ display: 'flex', ml: 2 }}>
+                              <Tooltip title={member.is_co_president ? "Remove Co-President" : "Promote to Co-President"}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handlePromoteToCoPresident(member.id)}
+                                  sx={{ 
+                                    color: member.is_co_president ? '#8B5CF6' : '#CBD5E1',
+                                    '&:hover': { bgcolor: 'rgba(139, 92, 246, 0.1)' }
+                                  }}
+                                >
+                                  {member.is_co_president ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
+                                </IconButton>
+                              </Tooltip>
+                              
+                              <Tooltip title="Remove Member">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleRemoveMember(member.id)}
+                                  sx={{ 
+                                    color: '#F87171',
+                                    '&:hover': { bgcolor: 'rgba(248, 113, 113, 0.1)' }
+                                  }}
+                                >
+                                  <PersonRemoveIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          )}
                         </Box>
                       </ListItem>
                     ))}
@@ -523,20 +607,19 @@ function GroupPage() {
         </Grid>
       </Container>
 
-      {/* Invite Dialog */}
-        <Dialog
-          open={inviteDialogOpen}
-          onClose={() => setInviteDialogOpen(false)}
-        PaperProps={{
-          sx: {
-            backgroundColor: 'rgba(22, 28, 36, 0.95)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: '12px',
-            color: '#f8fafc',
-            maxWidth: '500px',
-            width: '100%',
-          }
-        }}
+      <Dialog
+        open={inviteDialogOpen}
+        onClose={() => setInviteDialogOpen(false)}
+      PaperProps={{
+        sx: {
+          backgroundColor: 'rgba(22, 28, 36, 0.95)',
+          backdropFilter: 'blur(8px)',
+          borderRadius: '12px',
+          color: '#f8fafc',
+          maxWidth: '500px',
+          width: '100%',
+        }
+      }}
       >
         <DialogTitle sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', pb: 2 }}>
           <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
@@ -665,7 +748,31 @@ function GroupPage() {
             </Button>
           </DialogActions>
         </Dialog>
-              </Box>
+
+        <Dialog
+          open={confirmDialog.open}
+          onClose={() => setConfirmDialog({ ...confirmDialog, open: false })}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle>{confirmDialog.title}</DialogTitle>
+          <DialogContent>
+            <Typography>{confirmDialog.message}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmDialog({ ...confirmDialog, open: false })}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmAction}
+              variant="contained"
+              color={confirmDialog.action === 'remove' ? 'error' : 'primary'}
+            >
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
   );
 }
 
