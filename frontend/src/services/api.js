@@ -201,24 +201,18 @@ export const getAvailableSports = async () => {
 }; 
 
 export const getAvailableSportEvents = async (sport) => {
-  // If sport parameter is provided, fetch events for that sport
+  // If sport parameter is provided, fetch data for that sport using the new endpoint
   const endpoint = sport ? 
     `${API_URL}/groups/bets/${sport}/` : 
     `${API_URL}/groups/bets/`;
-    
+  
   const response = await fetch(endpoint, {
     headers: getHeaders(),
   });
   
   const data = await handleResponse(response);
-  // Filter events to include only those with active markets
-  if (data && data.events) {
-    data.events = data.events.filter(event => 
-      event.status === 'TRADING' || 
-      event.status === 'TRADING_LIVE' || 
-      event.status === 'PRE_TRADING'
-    );
-  }
+  
+  // Previously filtered events, now removed because data contains sport info with categories.
   return data;
 };
 

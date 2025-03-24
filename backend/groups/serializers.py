@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import BettingGroup, Bet
+from .models import BettingGroup, Bet, GroupEvent
 from users.serializers import UserSerializer
 
 class BettingGroupSerializer(serializers.ModelSerializer):
@@ -22,4 +22,9 @@ class BettingGroupSerializer(serializers.ModelSerializer):
 class BetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bet
-        fields = ('id', 'name', 'type', 'points', 'status', 'deadline') 
+        fields = ('id', 'name', 'type', 'points', 'status', 'deadline')
+
+class GroupEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GroupEvent
+        fields = '__all__' 
