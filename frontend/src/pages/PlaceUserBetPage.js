@@ -85,8 +85,12 @@ function PlaceUserBetPage() {
     setLoading(true);
     
     try {
+      // Ensure we have valid numeric values
+      const betAmount = parseFloat(amount);
+      const currentMoney = parseFloat(user.money || 0);
+      
       // Check if user has enough money
-      if (parseFloat(amount) > user.money) {
+      if (betAmount > currentMoney) {
         throw new Error('Insufficient funds to place this bet');
       }
 
@@ -96,9 +100,10 @@ function PlaceUserBetPage() {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
       
       // Update user's money in localStorage (temporary - will be replaced with proper API)
+      const updatedMoney = currentMoney - betAmount;
       const updatedUser = { 
         ...user, 
-        money: parseFloat((user.money - parseFloat(amount)).toFixed(2)) 
+        money: parseFloat(updatedMoney.toFixed(2))
       };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
@@ -150,8 +155,19 @@ function PlaceUserBetPage() {
 
   // Calculate potential winnings
   const calculatePotentialWinnings = () => {
-    if (!amount || !eventDetails?.odds) return 0;
-    return (parseFloat(amount) * parseFloat(eventDetails.odds)).toFixed(2);
+    if (!amount || !eventDetails?.odds) return '0.00';
+    
+    try {
+      const betAmount = parseFloat(amount);
+      const oddsValue = parseFloat(eventDetails.odds);
+      
+      if (isNaN(betAmount) || isNaN(oddsValue)) return '0.00';
+      
+      return (betAmount * oddsValue).toFixed(2);
+    } catch (error) {
+      console.error('Error calculating winnings:', error);
+      return '0.00';
+    }
   };
 
   return (
@@ -189,7 +205,7 @@ function PlaceUserBetPage() {
               Your Balance
             </Typography>
             <Typography variant="h4" sx={{ color: '#10B981', fontWeight: 'bold', mb: 1 }}>
-              ${user.money?.toFixed(2) || '0.00'}
+              ${typeof user.money === 'number' ? user.money.toFixed(2) : '0.00'}
             </Typography>
             <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
               Available for betting
