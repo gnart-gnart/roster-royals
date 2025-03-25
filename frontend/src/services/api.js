@@ -263,6 +263,13 @@ export const placeBet = async (betData) => {
 };
 
 /**
+ * Alias for placeBet function to maintain backward compatibility
+ * @param {Object} betData - The bet data
+ * @returns {Promise<Object>} - A promise that resolves to the created bet
+ */
+export const addGroupBet = placeBet;
+
+/**
  * Fetch all betting events for a specific group
  * @param {number} groupId - The ID of the group to fetch events for
  * @returns {Promise<Array>} - A promise that resolves to an array of group events

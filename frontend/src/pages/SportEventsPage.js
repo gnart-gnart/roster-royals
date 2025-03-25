@@ -69,6 +69,10 @@ function SportEventsPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
   const [competitionEvents, setCompetitionEvents] = useState([]);
+  const [isGroupPresident, setIsGroupPresident] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedMarket, setSelectedMarket] = useState(null);
+  const [addBetDialogOpen, setAddBetDialogOpen] = useState(false);
   const user = JSON.parse(localStorage.getItem('user')) || { username: '' };
   const [profileAnchorEl, setProfileAnchorEl] = useState(null);
   const profileMenuOpen = Boolean(profileAnchorEl);
