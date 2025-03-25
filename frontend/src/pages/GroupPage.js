@@ -427,6 +427,7 @@ function GroupPage() {
                           <Button
                             variant="outlined"
                             size="small"
+                            onClick={() => navigate(`/group/${id}/event/${bet.event_key}/place-user-bet`)}
                             sx={{
                               borderColor: '#8B5CF6',
                               color: '#8B5CF6',
@@ -436,7 +437,7 @@ function GroupPage() {
                               },
                             }}
                           >
-                            View Details
+                            Place Your Bet
                           </Button>
                         </Box>
                       </CardContent>

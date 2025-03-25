@@ -19,7 +19,7 @@ import {
 import NavBar from '../components/NavBar';
 import { placeBet, getCompetitionEvents } from '../services/api';
 
-function PlaceBetPage() {
+function AddBetPage() {
   const { groupId, eventKey } = useParams();
   const navigate = useNavigate();
 
@@ -310,4 +310,4 @@ function PlaceBetPage() {
   );
 }
 
-export default PlaceBetPage;
+export default AddBetPage; 
