@@ -4,8 +4,8 @@ from .models import User, FriendRequest
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'points')
-        read_only_fields = ('points',)
+        fields = ('id', 'username', 'email', 'points', 'money')
+        read_only_fields = ('points', 'money')
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

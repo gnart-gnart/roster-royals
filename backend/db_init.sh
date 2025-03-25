@@ -45,7 +45,8 @@ admin = User.objects.create_superuser(
     email='admin@example.com',
     password='admin',
     is_staff=True,
-    is_superuser=True
+    is_superuser=True,
+    money=1000.00  # $1000 starting balance
 )
 print("Admin superuser created.")
 
@@ -53,17 +54,20 @@ print("Admin superuser created.")
 judy = User.objects.create_user(
     username='judy',
     email='judy@example.com',
-    password='judy'
+    password='judy',
+    money=1000.00  # $1000 starting balance
 )
 grant = User.objects.create_user(
     username='grant',
     email='grant@example.com',
-    password='grant'
+    password='grant',
+    money=1000.00  # $1000 starting balance
 )
 buddy = User.objects.create_user(
     username='buddy',
     email='buddy@example.com',
-    password='buddy'
+    password='buddy',
+    money=1000.00  # $1000 starting balance
 )
 print("Test users created.")
 
