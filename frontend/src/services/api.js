@@ -2,7 +2,6 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 const getHeaders = () => {
   const token = localStorage.getItem('token');
-  console.log('Using token:', token); // Debug log
   return {
     'Content-Type': 'application/json',
     'Authorization': `Token ${token}`,

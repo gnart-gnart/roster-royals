@@ -38,89 +38,34 @@ function ChooseBetsPage() {
       try {
         setLoading(true);
         const data = await getAvailableSports();
-        setSports(data);
         
-        // Now fetch events for each sport to determine which ones have valid events
-        let sportsWithValidEvents = [];
-        // Track valid event counts for all sports
-        const sportValidCounts = {};
-        
-        for (const sport of data) {
-          try {
-            // Skip sports with no events
-            if (!sport.eventCount || sport.eventCount === 0) {
-              sportValidCounts[sport.key] = 0;
-              continue;
-            }
-            
-            // Get detailed sport data to check for valid events
-            const sportData = await getAvailableSportEvents(sport.key);
-            
-            // Track if this sport has any valid events
-            let hasValidEvents = false;
-            let validEventCount = 0;
-            
-            // Check categories and competitions for valid events
-            if (sportData && sportData.categories) {
-              for (const category of sportData.categories) {
-                if (category.competitions) {
-                  // For each competition, check if it has events that meet our betting criteria
-                  for (const competition of category.competitions) {
-                    if (competition.eventCount > 0) {
-                      try {
-                        // Actually fetch the events to check if they're valid for betting
-                        const compEvents = await getCompetitionEvents(competition.key);
-                        if (compEvents && compEvents.events) {
-                          // Check if any events have home and away teams and TRADING status
-                          const validBettingEvents = compEvents.events.filter(event => 
-                            event.home && 
-                            event.away && 
-                            event.status === 'TRADING'
-                          );
-                          
-                          validEventCount += validBettingEvents.length;
-                          
-                          if (validBettingEvents.length > 0) {
-                            hasValidEvents = true;
-                          }
-                        }
-                      } catch (err) {
-                        console.error(`Error checking events for competition ${competition.key}:`, err);
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            
-            // Store the valid event count for this sport
-            sportValidCounts[sport.key] = validEventCount;
-            
-            // Only add sports with valid events to the filtered list
-            if (hasValidEvents) {
-              const sportWithCount = {
-                ...sport,
-                validEventCount: validEventCount
-              };
-              sportsWithValidEvents.push(sportWithCount);
-            }
-          } catch (err) {
-            console.error(`Error checking events for sport ${sport.key}:`, err);
-            sportValidCounts[sport.key] = 0;
-          }
+        // If we don't get data back, handle that case gracefully
+        if (!Array.isArray(data)) {
+          console.error("Invalid data returned from getAvailableSports", data);
+          setSports([]);
+          setFilteredSports([]);
+          setLoading(false);
+          return;
         }
         
-        // Add validEventCount property to all sports
-        const allSportsWithCounts = data.map(sport => ({
+        // Just use the data from the API directly instead of fetching events for each sport
+        // This significantly reduces API calls and prevents infinite loops
+        const sportsWithCounts = data.map(sport => ({
           ...sport,
-          validEventCount: sportValidCounts[sport.key] || 0
+          validEventCount: sport.eventCount || 0
         }));
         
-        setSports(allSportsWithCounts);
-        setFilteredSports(sportsWithValidEvents);
+        setSports(sportsWithCounts);
+        
+        // Filter to only sports with events
+        const filtered = sportsWithCounts.filter(sport => sport.eventCount > 0);
+        setFilteredSports(filtered);
         setLoading(false);
       } catch (err) {
+        console.error('Failed to load sports:', err);
         setError('Failed to load sports. Please try again.');
+        setSports([]);
+        setFilteredSports([]);
         setLoading(false);
       }
     };

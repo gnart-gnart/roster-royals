@@ -180,20 +180,28 @@ function SportEventsPage() {
       try {
         setLoading(true);
         const events = await getCompetitionEvents(selectedCompetition.key);
-        if (events && events.events) {
-          // Filter events to only include valid ones that would have "Add Bet" button
-          const validEvents = events.events.filter(event => 
-            // Must have home and away teams
-            event.home && event.away &&
-            // Must have TRADING status (valid for betting)
-            event.status === 'TRADING'
-          );
-          
-          setCompetitionEvents(validEvents);
+        
+        // Add better error handling - if events is undefined or doesn't have events array
+        if (!events || !events.events) {
+          console.error('Invalid response format for competition events', events);
+          setCompetitionEvents([]);
+          setLoading(false);
+          return;
         }
+        
+        // Filter events to only include valid ones that would have "Add Bet" button
+        const validEvents = events.events.filter(event => 
+          // Must have home and away teams
+          event.home && event.away &&
+          // Must have TRADING status (valid for betting)
+          event.status === 'TRADING'
+        );
+        
+        setCompetitionEvents(validEvents);
       } catch (err) {
         console.error('Error fetching competition events:', err);
         setError('Failed to load events. Please try again later.');
+        setCompetitionEvents([]); // Set empty array to prevent undefined issues
       } finally {
         setLoading(false);
       }
