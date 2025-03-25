@@ -48,14 +48,14 @@ class CloudbetClient:
             ]
         response.raise_for_status()
 
-    def get_events(self, sport):
-        """Get events for a specific sport"""
-        print(f"\nDEBUG Response Specific Sport:")
-        url = f'{self.base_url}/odds/sports/{sport}'
+    def get_competitions_for_sport(self, sport_key):
+        """Get competitions for a specific sport, grouped by categories using the endpoint /odds/sports/{key}"""
+        url = f'{self.base_url}/odds/sports/{sport_key}'
+        print(f"\nDEBUG: Fetching competitions for sport: {sport_key} from {url}")
         response = requests.get(url, headers=self.headers)
         response.raise_for_status()
         return response.json()
-    
+
     def get_competition_events(self, competition_key):
         """Get events for a specific competition"""
         url = f'{self.base_url}/odds/competitions/{competition_key}'
@@ -64,10 +64,10 @@ class CloudbetClient:
         response.raise_for_status()
         return response.json()
 
-    def get_event_markets(self, event_key):
-        """Get detailed markets for a specific event"""
-        url = f'{self.base_url}/odds/events/{event_key}'
-        print(f"Fetching event markets from: {url}")
+    def get_event_details(self, event_id):
+        """Get detailed information for a specific event using the endpoint /odds/events/{id}"""
+        url = f'{self.base_url}/odds/events/{event_id}'
+        print(f"Fetching event details from: {url}")
         response = requests.get(url, headers=self.headers)
         response.raise_for_status()
         return response.json()

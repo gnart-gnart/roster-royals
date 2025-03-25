@@ -141,3 +141,4 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',  # For login/register endpoints
     ],
 }
+

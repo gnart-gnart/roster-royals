@@ -70,3 +70,60 @@ Please follow this workflow:
 3. Submit a pull request with a description of your changes.
 
 **Note**: If you are contributing by adding a feature, you can create issues on the project page here: https://github.com/users/gnart-gnart/projects/1.
+
+## Rebuild and Testing Guide
+
+Depending on what parts of the application you change, different rebuild and test commands might be required:
+
+### Backend Changes
+
+- **Model or Migration Changes** (e.g. changes to Django models or migration files):
+  1. Run:
+     ```bash
+     python manage.py makemigrations
+     ```
+  2. Then:
+     ```bash
+     python manage.py migrate
+     ```
+  3. If you need a completely fresh database (common during development), remove the Postgres volume using:
+     ```bash
+     docker compose down -v
+     ```
+  4. Re-run the database initialization script (e.g., `backend/db_init.sh`) to recreate test data.
+
+- **Other Backend Changes** (e.g. views, serializers, business logic):
+  - Rebuild the Django container with:
+     ```bash
+     docker compose build django
+     ```
+  - Then restart the containers with:
+     ```bash
+     docker compose up -d
+     ```
+
+### Frontend Changes
+
+- **React Component, Style, or Service Changes**:
+  - Rebuild the React container using:
+     ```bash
+     docker compose build react-app
+     ```
+  - Restart the containers:
+     ```bash
+     docker compose up -d
+     ```
+  - *Note*: If only static file changes were made, a container restart might suffice.
+
+### Nginx Configuration Changes
+
+- If you modify the Nginx configuration (e.g. `nginx/nginx.conf.template`), rebuild the Nginx container with:
+  ```bash
+  docker compose build nginx
+  ```
+  and then restart with:
+  ```bash
+  docker compose up -d
+  ```
+
+This guide should help ensure that after making changes, you use the appropriate commands to see your updates reflected in the running application.

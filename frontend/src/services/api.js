@@ -201,16 +201,19 @@ export const getAvailableSports = async () => {
 }; 
 
 export const getAvailableSportEvents = async (sport) => {
-  // If sport parameter is provided, fetch events for that sport
+  // If sport parameter is provided, fetch data for that sport using the new endpoint
   const endpoint = sport ? 
     `${API_URL}/groups/bets/${sport}/` : 
     `${API_URL}/groups/bets/`;
-    
+  
   const response = await fetch(endpoint, {
     headers: getHeaders(),
   });
   
-  return handleResponse(response);
+  const data = await handleResponse(response);
+  
+  // Previously filtered events, now removed because data contains sport info with categories.
+  return data;
 };
 
 export const getCompetitionEvents = async (competitionKey) => {
@@ -221,22 +224,62 @@ export const getCompetitionEvents = async (competitionKey) => {
   return handleResponse(response);
 };
 
-export const addGroupBet = async (betData) => {
-  const response = await fetch(`${API_URL}/bets/add/`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify(betData),
-  });
-  
-  return handleResponse(response);
+/**
+ * Place a bet in a group
+ * @param {Object} betData - The bet data
+ * @returns {Promise<Object>} - A promise that resolves to the created bet
+ */
+export const placeBet = async (betData) => {
+  try {
+    console.log(`Placing bet with data:`, betData);
+
+    // Use getHeaders to stay consistent with other API calls
+    const response = await fetch(`${API_URL}/groups/bets/post_group_event/`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        group_id: betData.groupId,
+        event_key: betData.eventKey,
+        event_name: betData.eventName,
+        sport: betData.sport,
+        market_data: {
+          marketKey: betData.marketKey,
+          outcomeKey: betData.outcomeKey,
+          odds: betData.odds,
+          amount: betData.amount
+        }
+      })
+    });
+
+    // Debug log the response
+    console.log(`API Response status:`, response.status);
+    
+    // Use the common handler to process errors
+    return handleResponse(response);
+  } catch (error) {
+    console.error('Error placing bet:', error);
+    throw error;
+  }
 };
 
-export const getGroupBets = async (groupId) => {
-  const response = await fetch(`${API_URL}/groups/${groupId}/bets/`, {
-    headers: getHeaders(),
-  });
-  
-  return handleResponse(response);
+/**
+ * Fetch all betting events for a specific group
+ * @param {number} groupId - The ID of the group to fetch events for
+ * @returns {Promise<Array>} - A promise that resolves to an array of group events
+ */
+export const getGroupEvents = async (groupId) => {
+  try {
+    console.log(`Fetching events for group ${groupId}`);
+    const response = await fetch(`${API_URL}/groups/${groupId}/events/`, {
+      method: 'GET',
+      headers: getHeaders()
+    });
+    
+    console.log(`Group events response status:`, response.status);
+    return handleResponse(response);
+  } catch (error) {
+    console.error('Error fetching group events:', error);
+    throw error;
+  }
 };
-
 

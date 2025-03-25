@@ -1,0 +1,7227 @@
+{
+	"american_football.1x2_period_first_half": {
+		"Name": "1st half - 1x2",
+		"Description": "3-way market for the 1st half only: 1 = home win, X = tie and the 2 = away win (1=1st named team if neutral venue)",
+		"Variables": [],
+		"Split": "period=1h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"american_football.double_chance": {
+		"Name": "Double chance",
+		"Variables": [],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"draw_away": "Draw or {{away}}",
+			"home_away": "{{home}} or {{away}}",
+			"home_draw": "{{home}} or Draw"
+		}
+	},
+	"american_football.draw_no_bet": {
+		"Name": "Draw no bet (Incl. Overtime)",
+		"Description": "In the result of a tie after OT, all bets pushed",
+		"Variables": [],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"american_football.halftime_fulltime_result": {
+		"Name": "Halftime/fulltime",
+		"Description": "Market on both the result at half-time and the result at the end of the 4th quarter, excluding overtime",
+		"Variables": [],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"away_away": "{{away}}/{{away}}",
+			"away_draw": "{{away}}/Draw",
+			"away_home": "{{away}}/{{home}}",
+			"draw_away": "Draw/{{away}}",
+			"draw_draw": "Draw/Draw",
+			"draw_home": "Draw/{{home}}",
+			"home_away": "{{home}}/{{away}}",
+			"home_draw": "{{home}}/Draw",
+			"home_home": "{{home}}/{{home}}"
+		}
+	},
+	"american_football.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"american_football.handicap_period_first_half": {
+		"Name": "1st half - handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=1h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"american_football.highest_scoring_quarter": {
+		"Name": "Highest scoring quarter",
+		"Description": "Which quarter will produce the most points scored by both teams, excluding overtime?",
+		"Variables": [],
+		"Split": "period=ot\u0026period=ft\u0026period=q1\u0026period=q2\u0026period=q3\u0026period=q4",
+		"Outcomes": {
+			"1st_quarter": "1st quarter",
+			"2nd_quarter": "2nd quarter",
+			"3rd_quarter": "3rd quarter",
+			"4th_quarter": "4th quarter",
+			"equal": "equal"
+		}
+	},
+	"american_football.moneyline": {
+		"Name": "Money Line",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"american_football.next_scoring_type": {
+		"Name": "Next scoring type at {{score}} (Incl. Overtime)",
+		"Variables": [
+			"score"
+		],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"field_goal": "Field Goal",
+			"none": "None",
+			"safety": "Safety",
+			"touchdown": "Touchdown"
+		}
+	},
+	"american_football.odd_even": {
+		"Name": "Odd/even",
+		"Variables": [],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"american_football.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"american_football.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"american_football.player_anytime_touchdown": {
+		"Name": "{{player}} (Anytime Touchdown)",
+		"Variables": [
+			"player"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"american_football.player_first_touchdown_scorer": {
+		"Name": "{{player}} (1st Touchdown Scorer)",
+		"Variables": [
+			"player"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"american_football.player_last_touchdown_scorer": {
+		"Name": "{{player}} (Last Touchdown Scorer)",
+		"Variables": [
+			"player"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"american_football.player_pass_yards": {
+		"Name": "{{player}} (Pass Yds)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.player_receiving_yards": {
+		"Name": "{{player}} (Receiving Yds)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.player_receptions": {
+		"Name": "{{player}} (Receptions)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.player_rush_touchdown": {
+		"Name": "{{player}} (Rush TD)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.player_rush_yards": {
+		"Name": "{{player}} (Rush Yds)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.player_total_points_score_period_2nd_half_incl_ot": {
+		"Name": "{{player}} (Total Points scored in 2nd Half + OT)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.player_touchdown": {
+		"Name": "{{player}} (Score a Touchdown)",
+		"Variables": [
+			"player"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"american_football.player_touchdown_passes": {
+		"Name": "{{player}} (TD Passes)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.player_touchdown_receptions": {
+		"Name": "{{player}} (TD Receptions)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.quarter_1x2": {
+		"Name": "Quarter {{quarter}} - 1x2",
+		"Description": "3-way market: 1 = home win, X = draw and the 2 = away win at the end of the 4th quarter (1=1st named team if neutral venue)",
+		"Variables": [
+			"quarter"
+		],
+		"Split": "period=q{{quarter}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"american_football.quarter_handicap": {
+		"Name": "Quarter {{quarter}} - handicap",
+		"Variables": [
+			"handicap",
+			"quarter"
+		],
+		"Split": "period=q{{quarter}}",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"american_football.quarter_handicap_incl_ot": {
+		"Name": "Quarter {{quarter}} - handicap (Incl. Overtime)",
+		"Variables": [
+			"quarter",
+			"handicap"
+		],
+		"Split": "period=q{{quarter}}\u0026period=ot",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"american_football.quarter_total": {
+		"Name": "Quarter {{quarter}} - total",
+		"Variables": [
+			"total",
+			"quarter"
+		],
+		"Split": "period=q{{quarter}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.quarter_totals_incl_ot": {
+		"Name": "Quarter {{quarter}} - total (Incl. Overtime)",
+		"Variables": [
+			"total",
+			"quarter"
+		],
+		"Split": "period=q{{quarter}}\u0026period=ot",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.race_to_points": {
+		"Name": "Race to {{point}} points (Incl. Overtime)",
+		"Variables": [
+			"point"
+		],
+		"Split": "period=ot\u0026period=ft\u0026points={{point}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"american_football.team_odd_even": {
+		"Name": "{{team}} odd/even",
+		"Variables": [
+			"team"
+		],
+		"Split": "period=ot\u0026period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"american_football.team_total_period_first_half": {
+		"Name": "1st half - {{team}} total",
+		"Description": "The total number of points scored by the named team in the 1st half only",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=1h\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.team_totals": {
+		"Name": "{{team}} Total ",
+		"Description": "Total number of points scored by the named team, including overtime",
+		"Variables": [
+			"total",
+			"team"
+		],
+		"Split": "period=ot\u0026period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.totals": {
+		"Name": "Totals",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.totals_period_first_half": {
+		"Name": "1st half - total",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=1h",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"american_football.totals_period_second_half": {
+		"Name": "2nd half - total (Incl. Overtime)",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=2h\u0026period=1h\u0026period=ot\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"archery.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"archery.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"athletics.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"athletics.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"aussie_rules.1st_half_1x2": {
+		"Name": "1st half - 1x2",
+		"Description": "3-way market: 1 = home win, X = draw and the 2 = away win (1=1st named team if neutral venue)",
+		"Variables": [],
+		"Split": "period=1h",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"aussie_rules.1st_half_double_chance": {
+		"Name": "1st half - double chance",
+		"Variables": [],
+		"Split": "period=1h",
+		"Outcomes": {
+			"draw_or_away": "draw or {{away}}",
+			"home_or_away": "{{home}} or {{away}}",
+			"home_or_draw": "{{home}} or draw"
+		}
+	},
+	"aussie_rules.1st_half_draw_no_bet": {
+		"Name": "1st half - draw no bet",
+		"Variables": [],
+		"Split": "period=1h",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"aussie_rules.1st_half_handicap": {
+		"Name": "1st half - handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=1h",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"aussie_rules.1st_half_odd_even": {
+		"Name": "1st half - odd/even",
+		"Variables": [],
+		"Split": "period=1h",
+		"Outcomes": {
+			"even": "even",
+			"odd": "odd"
+		}
+	},
+	"aussie_rules.1st_half_team_total": {
+		"Name": "1st half - {{team}} total",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=1h\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"aussie_rules.1st_half_total": {
+		"Name": "1st half - total",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=1h",
+		"Outcomes": {
+			"over": "over {{total}}",
+			"under": "under {{total}}"
+		}
+	},
+	"aussie_rules.double_chance": {
+		"Name": "Double chance",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"draw_away": "Draw or {{away}}",
+			"home_away": "{{home}} or {{away}}",
+			"home_draw": "{{home}} or Draw"
+		}
+	},
+	"aussie_rules.draw_no_bet": {
+		"Name": "Draw no bet",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"aussie_rules.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"aussie_rules.match_odds": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"aussie_rules.odd_even": {
+		"Name": "Odd/even",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"aussie_rules.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"aussie_rules.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"aussie_rules.quarter_1x2": {
+		"Name": "Quarter {{quarter}} - 1x2",
+		"Variables": [
+			"quarter"
+		],
+		"Split": "period=q{{quarter}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"aussie_rules.quarter_draw_no_bet": {
+		"Name": "Quarter {{quarter}} - draw no bet",
+		"Variables": [
+			"quarter"
+		],
+		"Split": "period=q{{quarter}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"aussie_rules.quarter_handicap": {
+		"Name": "Quarter {{quarter}} - handicap",
+		"Variables": [
+			"handicap",
+			"quarter"
+		],
+		"Split": "period=q{{quarter}}",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"aussie_rules.quarter_team_total": {
+		"Name": "Quarter {{quarter}} - {{team}} total",
+		"Variables": [
+			"team",
+			"total",
+			"quarter"
+		],
+		"Split": "period=q{{quarter}}\u0026team={{team}}",
+		"Outcomes": {
+			"over": "over {{total}}",
+			"under": "under {{total}}"
+		}
+	},
+	"aussie_rules.quarter_total": {
+		"Name": "Quarter {{quarter}} - total",
+		"Variables": [
+			"quarter",
+			"total"
+		],
+		"Split": "period=q{{quarter}}",
+		"Outcomes": {
+			"over": "over {{total}}",
+			"under": "under {{total}}"
+		}
+	},
+	"aussie_rules.team_total": {
+		"Name": "{{team}} total",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "over {{total}}",
+			"under": "under {{total}}"
+		}
+	},
+	"aussie_rules.totals": {
+		"Name": "Total",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"aussie_rules.which_team_wins_the_rest_of_the_match_period_ft": {
+		"Name": "Which team wins the rest of the match at {{score}}",
+		"Variables": [
+			"score"
+		],
+		"Split": "period=ft\u0026score={{score}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"aussie_rules.winner": {
+		"Name": "Winner",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"aussie_rules.winning_margin_period_ft": {
+		"Name": "Winning margin",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"badminton.correct_score": {
+		"Name": "Correct score",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"badminton.exact_games": {
+		"Name": "Exact games",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"badminton.game_point_handicap": {
+		"Name": "Game {{game}} - point handicap",
+		"Variables": [
+			"handicap",
+			"game"
+		],
+		"Split": "period=default\u0026game={{game}}",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"badminton.game_total_points": {
+		"Name": "Game {{game}} - total points",
+		"Variables": [
+			"total",
+			"game"
+		],
+		"Split": "period=default\u0026game={{game}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"badminton.game_winner": {
+		"Name": "Game {{game}} - winner",
+		"Variables": [
+			"game"
+		],
+		"Split": "period=default\u0026game={{game}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"badminton.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default\u0026period=set1\u0026period=set2\u0026period=set3",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"badminton.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"badminton.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"badminton.totals": {
+		"Name": "Total",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default\u0026period=set1\u0026period=set2\u0026period=set3",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"badminton.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"bandy.match_odds": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"bandy.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"bandy.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"bandy.totals": {
+		"Name": "Total",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"baseball.both_teams_to_score_in_inning": {
+		"Name": "Inning {{inning}} - Both teams to score",
+		"Variables": [
+			"inning"
+		],
+		"Split": "period=inning{{inning}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"baseball.handicap_innings_1_to_5": {
+		"Name": "Innings 1 to 5 - handicap",
+		"Variables": [
+			"handicap",
+			"optional.home_pitcher",
+			"optional.away_pitcher"
+		],
+		"Split": "period=inning1\u0026period=inning2\u0026period=inning3\u0026period=inning4\u0026period=inning5",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"baseball.highest_scoring_inning": {
+		"Name": "Highest scoring inning",
+		"Variables": [],
+		"Split": "period=ft\u0026period=ot\u0026period=innings1\u0026period=inning2\u0026period=inning3\u0026period=inning4\u0026period=inning5\u0026period=inning6\u0026period=inning7\u0026period=inning8\u0026period=inning9",
+		"Outcomes": {
+			"1st_inning": "1st inning",
+			"2nd_inning": "2nd inning",
+			"3rd_inning": "3rd inning",
+			"4th_inning": "4th inning",
+			"5th_inning": "5th inning",
+			"6th_inning": "6th inning",
+			"7th_inning": "7th inning",
+			"8th_inning": "8th inning",
+			"9th_inning": "9th inning",
+			"equal": "Equal"
+		}
+	},
+	"baseball.inning_1x2": {
+		"Name": "Inning {{inning}} - 1x2",
+		"Variables": [
+			"inning"
+		],
+		"Split": "period=inning{{inning}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"baseball.moneyline": {
+		"Name": "Money Line",
+		"Primary": true,
+		"Variables": [
+			"optional.home_pitcher",
+			"optional.away_pitcher"
+		],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"baseball.moneyline_innings_1_to_5": {
+		"Name": "Innings 1 to 5 - Moneyline",
+		"Description": "Which team will be leading at the end of the 5th inning?",
+		"Variables": [
+			"optional.home_pitcher",
+			"optional.away_pitcher"
+		],
+		"Split": "period=inning1\u0026period=inning2\u0026period=inning3\u0026period=inning4\u0026period=inning5",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"baseball.odd_even": {
+		"Name": "Odd/even (Incl. extra innings)",
+		"Variables": [],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"baseball.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"baseball.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"baseball.race_to_runs": {
+		"Name": "Race to {{run}} runs (Incl. extra innings)",
+		"Variables": [
+			"run"
+		],
+		"Split": "period=ot\u0026run={{run}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"baseball.result_of_pitch": {
+		"Name": "Result of pitch {{pitchnr}}",
+		"Variables": [
+			"pitchnr"
+		],
+		"Split": "pitchnr={{pitchnr}}",
+		"Outcomes": {
+			"ball": "Ball",
+			"hit": "Hit",
+			"other": "Other",
+			"strike": "Strike"
+		}
+	},
+	"baseball.run_line": {
+		"Name": "Run Line",
+		"Primary": true,
+		"Variables": [
+			"handicap",
+			"optional.home_pitcher",
+			"optional.away_pitcher"
+		],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"baseball.team_total_home_runs_period_ot": {
+		"Name": "{{team}} total home runs (Incl. extra innings)",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "team={{team}}\u0026period=ft_home_runs\u0026period=ot_home_runs",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"baseball.team_totals": {
+		"Name": "{{team}} Total (Incl. extra innings)",
+		"Variables": [
+			"total",
+			"team",
+			"optional.home_pitcher",
+			"optional.away_pitcher"
+		],
+		"Split": "period=ot\u0026period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"baseball.total_hits_period_ot": {
+		"Name": "Total hits (Incl. extra innings)",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft_hits\u0026period=ot_hits",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"baseball.total_home_runs_period_ot": {
+		"Name": "Total home runs (Incl. extra innings)",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ot_home_runs\u0026period=ft_home_runs",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"baseball.totals": {
+		"Name": "Totals",
+		"Primary": true,
+		"Variables": [
+			"total",
+			"optional.home_pitcher",
+			"optional.away_pitcher"
+		],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"baseball.totals_innings_1_to_5": {
+		"Name": "Innings 1 to 5 - total",
+		"Variables": [
+			"total",
+			"optional.home_pitcher",
+			"optional.away_pitcher"
+		],
+		"Split": "period=inning1\u0026period=inning2\u0026period=inning3\u0026period=inning4\u0026period=inning5",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"baseball.which_team_wins_the_rest_of_the_match": {
+		"Name": "Which team wins the rest of the match at {{score}} (Incl. extra innings)",
+		"Variables": [
+			"score"
+		],
+		"Split": "period=ot",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"baseball.with_extra_inning": {
+		"Name": "Will there be an extra inning",
+		"Description": "Extra inning occurs when the scores are tied at the end of the 9th inning",
+		"Variables": [],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"basketball.1st_half_1x2": {
+		"Name": "1st half - 1x2",
+		"Description": "3-way market for the 1st half only: 1 = home win, X = tie and the 2 = away win (1=1st named team if neutral venue)",
+		"Variables": [],
+		"Split": "period=1h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"basketball.1st_half_draw_no_bet": {
+		"Name": "1st half - draw no bet",
+		"Variables": [],
+		"Split": "period=1h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"basketball.1st_half_team_total": {
+		"Name": "1st half - {{team}} total",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=1h\u0026period=q1\u0026period=q2\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.1st_half_winning_margin": {
+		"Name": "1st half - winning margin",
+		"Variables": [],
+		"Split": "period=1h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"basketball.1x2": {
+		"Name": "1x2 (Excl. Overtime)",
+		"Description": "3-way market: 1 = home win, X = tie and the 2 = away win, excluding overtime (1=1st named team if neutral venue)",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"basketball.2nd_half_1x2": {
+		"Name": "2nd half - 1x2",
+		"Description": "3-way market for the 2nd half only: 1 = home win, X = tie and the 2 = away win excluding overtime (1=1st named team if neutral venue)",
+		"Variables": [],
+		"Split": "period=2h",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"basketball.2nd_half_1x2_incl_ot": {
+		"Name": "2nd half - 1x2 (incl. overtime)",
+		"Description": "3-way market for the 2nd half only: 1 = home win, X = tie and the 2 = away win including overtime (1=1st named team if neutral venue)",
+		"Variables": [],
+		"Split": "period=ot\u0026period=2h\u0026period=1h\u0026period=q3\u0026period=q4",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"basketball.2nd_half_handicap": {
+		"Name": "2nd half - handicap (Excl. Overtime)",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=2h",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"basketball.2nd_half_total": {
+		"Name": "2nd half - total (Excl. Overtime)",
+		"Description": "Points scored in the 2nd half only by both teams, excluding overtime",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=2h",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.any_team_to_lead_by_points": {
+		"Name": "Any team to lead by {{point}}",
+		"Variables": [
+			"point"
+		],
+		"Split": "period=ot\u0026points={{point}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"basketball.any_team_total_maximum_consecutive_points": {
+		"Name": "Any team total maximum consecutive points",
+		"Description": "Most number of points scored by either team consecutively",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ot",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.halftime_fulltime": {
+		"Name": "Halftime/fulltime",
+		"Description": "Market on both the result at half-time and the result at the end of the 2nd half, excluding overtime",
+		"Variables": [],
+		"Split": "period=ht\u0026period=ft",
+		"Outcomes": {
+			"away_away": "{{away}}/{{away}}",
+			"away_draw": "{{away}}/draw",
+			"away_home": "{{away}}/{{home}}",
+			"draw_away": "draw/{{away}}",
+			"draw_draw": "draw/draw",
+			"draw_home": "draw/{{home}}",
+			"home_away": "{{home}}/{{away}}",
+			"home_draw": "{{home}}/draw",
+			"home_home": "{{home}}/{{home}}"
+		}
+	},
+	"basketball.handicap": {
+		"Name": "Spread",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"basketball.handicap_period_2h_incl_ot": {
+		"Name": "2nd half - handicap (Incl. Overtime)",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=2h_incl_ot",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"basketball.handicap_period_first_half": {
+		"Name": "1st half - handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=q1\u0026period=q2\u0026period=1h",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"basketball.handicap_period_second_half": {
+		"Name": "2nd half - handicap (excl. overtime)",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ot\u0026period=2h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"basketball.highest_scoring_quarter": {
+		"Name": "Highest scoring quarter",
+		"Variables": [],
+		"Split": "period=ot\u0026period=q1\u0026period=q2\u0026period=q3\u0026period=q4",
+		"Outcomes": {
+			"1st_quarter": "1st quarter",
+			"2nd_quarter": "2nd quarter",
+			"3rd_quarter": "3rd quarter",
+			"4th_quarter": "4th quarter",
+			"equal": "Equal"
+		}
+	},
+	"basketball.moneyline": {
+		"Name": "Money Line",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"basketball.odd_even": {
+		"Name": "Odd/Even",
+		"Variables": [],
+		"Split": "period=ot",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"basketball.odd_even_period_first_half": {
+		"Name": "1st half - odd/even",
+		"Variables": [],
+		"Split": "period=1h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"basketball.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"basketball.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"basketball.player_assists": {
+		"Name": "{{player}} (Assists)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.player_blocks": {
+		"Name": "{{player}} (Blocks)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.player_double_double": {
+		"Name": "{{player}} (Double+Double)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.player_points": {
+		"Name": "{{player}} (Points)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.player_points_rebounds_assists": {
+		"Name": "{{player}} (Pts+Rebs+Asts)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.player_rebounds": {
+		"Name": "{{player}} (Rebounds)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.player_steals_blocks": {
+		"Name": "{{player}} (Steals+Blocks)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.player_three_point_field_goals": {
+		"Name": "{{player}} (3 Point FG)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.quarter_1x2": {
+		"Name": "Quarter {{quarter}} - 1x2",
+		"Variables": [
+			"quarter"
+		],
+		"Split": "period=q{{quarter}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"basketball.quarter_handicap": {
+		"Name": "Quarter {{quarter}} - handicap",
+		"Variables": [
+			"quarter",
+			"handicap"
+		],
+		"Split": "period=ot\u0026period=q{{quarter}}",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"basketball.quarter_totals": {
+		"Name": "Quarter {{quarter}} totals",
+		"Variables": [
+			"total",
+			"quarter"
+		],
+		"Split": "period=q{{quarter}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.race_to_points": {
+		"Name": "Race to {{point}} points",
+		"Variables": [
+			"point"
+		],
+		"Split": "period=ot\u0026period=ft\u0026points={{point}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"basketball.team_to_lead_by_points": {
+		"Name": "{{team}} to lead by {{point}}",
+		"Variables": [
+			"team",
+			"point"
+		],
+		"Split": "period=ot\u0026team={{team}}\u0026points={{point}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"basketball.team_total_maximum_consecutive_points": {
+		"Name": "{{team}} total maximum consecutive points",
+		"Description": "Most number of points scored by named team consecutively",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=ot\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.team_totals": {
+		"Name": "{{team}} Total ",
+		"Variables": [
+			"total",
+			"team"
+		],
+		"Split": "period=ot\u0026period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.total_period_first_half": {
+		"Name": "1st half - total",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=1h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.total_period_second_half": {
+		"Name": "2nd half - total (Incl. Overtime)",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ot\u0026period=2h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.totals": {
+		"Name": "Totals",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"basketball.winning_margin": {
+		"Name": "Winning margin (Incl. Overtime)",
+		"Variables": [],
+		"Split": "period=ot",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"beach_soccer.match_odds": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"beach_soccer.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"beach_soccer.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"beach_soccer.totals": {
+		"Name": "Total",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"beach_volleyball.handicap": {
+		"Name": "Point handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"beach_volleyball.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"beach_volleyball.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"beach_volleyball.totals": {
+		"Name": "Total points",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"beach_volleyball.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"bowls.correct_score": {
+		"Name": "Correct score",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"bowls.handicap": {
+		"Name": "Set handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"bowls.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"bowls.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"bowls.totals": {
+		"Name": "Total sets",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"bowls.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"boxing.1x2": {
+		"Name": "1x2",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"boxing.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"boxing.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"boxing.totals": {
+		"Name": "Total Rounds",
+		"Primary": true,
+		"Description": "How many rounds will the bout last? 1/2 (half) round represents 1 minute and 30 seconds",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"boxing.will_the_fight_go_the_distance": {
+		"Name": "Will the fight go the distance",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"boxing.winner": {
+		"Name": "To Win Fight",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"boxing.winner_exact_rounds": {
+		"Name": "Winner \u0026 exact rounds",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"boxing.winning_method": {
+		"Name": "Winning method",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"call_of_duty.correct_score": {
+		"Name": "Correct Score",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"call_of_duty.handicap": {
+		"Name": "Map Handicap",
+		"Primary": true,
+		"Description": "The handicap provides one team with a map advantage to make games with a superior team more equal and interesting.",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"call_of_duty.map_winner": {
+		"Name": "Map {{map}} - Winner",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"call_of_duty.map_winner_v2": {
+		"Name": "Map {{map}} - Winner",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"call_of_duty.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"call_of_duty.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"call_of_duty.totals": {
+		"Name": "Total maps",
+		"Primary": true,
+		"Description": "Bet on the total amount of maps played.",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"call_of_duty.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"chess.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"chess.match_odds": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"chess.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"chess.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"counter_strike.correct_score_in_maps": {
+		"Name": "Correct score (in maps)",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"counter_strike.map_1st_half_winner": {
+		"Name": "Map {{map}} 1st half - winner",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=default\u0026map={{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"counter_strike.map_1x2": {
+		"Name": "Map {{map}} - 1x2",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=default\u0026map={{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"counter_strike.map_handicap": {
+		"Name": "Map handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"counter_strike.map_odd_even_rounds": {
+		"Name": "Map {{map}} - odd/even rounds (incl. overtime)",
+		"Variables": [
+			"map"
+		],
+		"Split": "period={{map}}",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"counter_strike.map_odd_even_rounds.v2": {
+		"Name": "Map {{map}} - odd/even rounds (Incl. Overtime)",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"counter_strike.map_round_handicap": {
+		"Name": "Map {{map}} - round handicap (incl. overtime)",
+		"Variables": [
+			"handicap",
+			"map"
+		],
+		"Split": "period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"counter_strike.map_round_handicap.v2": {
+		"Name": "Map {{map}} - round handicap (Incl. Overtime)",
+		"Variables": [
+			"handicap",
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"counter_strike.map_round_kill_handicap": {
+		"Name": "Map {{map}} round {{round}} - kill handicap",
+		"Variables": [
+			"handicap",
+			"map",
+			"round"
+		],
+		"Split": "period=default\u0026map={{map}}\u0026round={{round}}",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"counter_strike.map_round_kill_number": {
+		"Name": "Map {{map}} round {{round}} - {{kill}} kill",
+		"Variables": [
+			"map",
+			"round",
+			"kill"
+		],
+		"Split": "period=default\u0026map={{map}}\u0026round={{round}}\u0026kill={{kill}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"counter_strike.map_round_team_total_kills": {
+		"Name": "Map {{map}} round {{round}} - {{team}} total kills",
+		"Variables": [
+			"team",
+			"map",
+			"round",
+			"total"
+		],
+		"Split": "period=default\u0026team={{team}}\u0026map={{map}}\u0026round={{round}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"counter_strike.map_round_total_kills": {
+		"Name": "Map {{map}} round {{round}} - total kills",
+		"Variables": [
+			"total",
+			"map",
+			"round"
+		],
+		"Split": "period=default\u0026map={{map}}\u0026round={{round}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"counter_strike.map_round_winner": {
+		"Name": "Map {{map}} round {{round}} - winner",
+		"Variables": [
+			"map",
+			"round"
+		],
+		"Split": "period=default\u0026map={{map}}\u0026round={{round}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"counter_strike.map_team_total": {
+		"Name": "Map {{map}} - {{team}} total",
+		"Variables": [
+			"total",
+			"team",
+			"map"
+		],
+		"Split": "period=map{{map}}\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"counter_strike.map_total_rounds": {
+		"Name": "Map {{map}} - total rounds (Incl. Overtime)",
+		"Variables": [
+			"map",
+			"total"
+		],
+		"Split": "period=map{{map}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"counter_strike.map_will_there_be_overtime": {
+		"Name": "Map {{map}} - will there be Overtime",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=default\u0026map={{map}}",
+		"Outcomes": {
+			"no": "no",
+			"yes": "yes"
+		}
+	},
+	"counter_strike.map_winner": {
+		"Name": "Map {{map}} - winner (Incl. Overtime)",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"counter_strike.match_odds": {
+		"Name": "Match Odds",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"counter_strike.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"counter_strike.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"counter_strike.total_maps": {
+		"Name": "Total maps",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"counter_strike.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"cricket.any_player_to_score_milestone.v2": {
+		"Name": "Innings {{innings}} - Any player to score {{milestone}} runs",
+		"Variables": [
+			"innings",
+			"milestone"
+		],
+		"Split": "period=innings{{innings}}\u0026milestone={{milestone}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"cricket.day_session_total": {
+		"Name": "Day {{day}} session {{session}} total",
+		"Description": "How many runs in that session of that day?",
+		"Variables": [
+			"day",
+			"session",
+			"total"
+		],
+		"Split": "period=ft\u0026day={{day}}\u0026session={{session}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.innings_player_to_score_milestone": {
+		"Name": "Innings {{innings}} - {{player}} to score {{milestone}}",
+		"Description": "Will the batter score that many runs?",
+		"Variables": [
+			"innings",
+			"player",
+			"milestone"
+		],
+		"Split": "period=ft\u0026period=innings{{innings}}\u0026player={{player}}\u0026milestone={{milestone}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"cricket.innings_player_total_fours": {
+		"Name": "Innings {{innings}} - {{player}} total fours",
+		"Description": "Fours scored by the batter",
+		"Variables": [
+			"innings",
+			"player",
+			"total"
+		],
+		"Split": "period=ft\u0026period=innings{{innings}}\u0026player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.innings_team_total_fours": {
+		"Name": "Innings {{innings}} - {{team}} total fours",
+		"Description": "How many fours will the team score?",
+		"Variables": [
+			"innings",
+			"team",
+			"total"
+		],
+		"Split": "period=ft\u0026period=innings{{innings}}\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.innings_team_total_sixes": {
+		"Name": "Innings {{innings}} - {{team}} total sixes",
+		"Description": "How many sixes will the team score?",
+		"Variables": [
+			"innings",
+			"team",
+			"total"
+		],
+		"Split": "period=ft\u0026period=innings{{innings}}\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.innings_total_v2": {
+		"Name": "Total Runs",
+		"Variables": [
+			"innings",
+			"total"
+		],
+		"Split": "period=ft\u0026period=innings{{innings}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"cricket.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"cricket.over_team_total": {
+		"Name": "Over {{over}} - {{team}} total",
+		"Variables": [
+			"over",
+			"total",
+			"team"
+		],
+		"Split": "team={{team}}\u0026period=over{{over}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.over_total_runs_spread": {
+		"Name": "Over {{over}} - total runs spread",
+		"Variables": [
+			"over"
+		],
+		"Split": "over={{over}}",
+		"Outcomes": {
+			"buy": "Buy",
+			"mid": "Mid",
+			"sell": "Sell"
+		}
+	},
+	"cricket.player_to_score_milestone": {
+		"Name": "{{player}} to score {{milestone}}",
+		"Description": "Will the batter score that many runs?",
+		"Variables": [
+			"player",
+			"milestone"
+		],
+		"Split": "period=ft\u0026player={{player}}\u0026milestone={{milestone}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"cricket.player_total": {
+		"Name": "{{player}} total",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "period=ft\u0026player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.player_total_fours": {
+		"Name": "{{player}} total fours",
+		"Description": "Fours scored by the batter",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "period=ft\u0026player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.player_total_player_performance": {
+		"Name": "{{player}} total player performance",
+		"Description": "The player performance points (1pt/run, 20pts/wicket, 10pts/catch, 25pts/stumping)",
+		"Variables": [
+			"player",
+			"total"
+		],
+		"Split": "period=ft\u0026player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.team_run_range": {
+		"Name": "{{team}} run range",
+		"Variables": [
+			"team"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"cricket.team_total_at_dismissal": {
+		"Name": "{{team}} total at dismissal {{dismissal}}",
+		"Variables": [
+			"team",
+			"total",
+			"dismissal"
+		],
+		"Split": "period=ft\u0026team={{team}}\u0026dismissal={{dismissal}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.team_total_fours": {
+		"Name": "{{team}} total fours",
+		"Description": "How many fours will the team score?",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.team_total_from_0_over_to_x_over": {
+		"Name": "Overs 0 to {{to_over}} - {{team}} total",
+		"Variables": [
+			"to_over",
+			"team",
+			"total"
+		],
+		"Split": "period=ft\u0026to_over={{to_over}}\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.team_total_in_highest_scoring_over": {
+		"Name": "{{team}} total in the highest scoring over",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.team_total_sixes": {
+		"Name": "{{team}} total sixes",
+		"Description": "How many sixes will the team score?",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.team_totals": {
+		"Name": "{{team}} total",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.test_1x2": {
+		"Name": "1x2",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"cricket.test_innings_team_total": {
+		"Name": "Innings {{innings}} - {{team}} total",
+		"Description": "Total runs by team in innings number",
+		"Variables": [
+			"team",
+			"innings",
+			"total"
+		],
+		"Split": "period=ft\u0026period=innings{{innings}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.test_match_inning_over_total_runs_spread": {
+		"Name": "Innings {{innings}} Over {{over}} - total runs spread",
+		"Variables": [
+			"innings",
+			"over"
+		],
+		"Split": "period=innings{{innings}}\u0026period=over{{over}}",
+		"Outcomes": {
+			"buy": "Buy",
+			"mid": "Mid",
+			"sell": "Sell"
+		}
+	},
+	"cricket.test_match_innings_any_player_score_milestone": {
+		"Name": "Innings {{innings}} - any player to score {{milestone}}",
+		"Variables": [
+			"innings",
+			"milestone"
+		],
+		"Split": "period=innings{{innings}}\u0026milestone={{milestone}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"cricket.test_match_innings_team_total_at_dismissal": {
+		"Name": "Innings {{innings}} - {{team}} total at dismissal {{dismissal}}",
+		"Variables": [
+			"innings",
+			"team",
+			"dismissal",
+			"total"
+		],
+		"Split": "period=innings{{innings}}\u0026team={{team}}\u0026dismissal={{dismissal}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.test_match_innings_team_totals": {
+		"Name": "Innings {{innings}} - {{team}} total",
+		"Variables": [
+			"innings",
+			"team",
+			"total"
+		],
+		"Split": "period=ft\u0026period=innings{{innings}}\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.test_match_innings_totals": {
+		"Name": "Innings {{innings}} - total",
+		"Variables": [
+			"innings",
+			"total"
+		],
+		"Split": "period=ft\u0026period=innings{{innings}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.test_match_player_total": {
+		"Name": "Innings {{innings}} - {{player}} total",
+		"Variables": [
+			"innings",
+			"player",
+			"total"
+		],
+		"Split": "period=ft\u0026period=innings{{innings}}\u0026player={{player}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.test_match_team_run_range": {
+		"Name": "Innings {{innings}} - {{team}} run range",
+		"Variables": [
+			"innings",
+			"team"
+		],
+		"Split": "period=ft\u0026period=innnings{{innings}}\u0026team={{team}}",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"cricket.test_match_team_total_in_highest_scoring_over": {
+		"Name": "Innings {{innings}} - {{team}} total in the highest scoring over",
+		"Variables": [
+			"innings",
+			"team",
+			"total"
+		],
+		"Split": "period=ft\u0026period=innings{{innings}}\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.test_winner": {
+		"Name": "Match Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft\u0026period=ot",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"cricket.top_batter_total": {
+		"Name": "Top batter total",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.total_in_highest_scoring_over": {
+		"Name": "Total in the highest scoring over",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.total_sixes": {
+		"Name": "Total sixes",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"cricket.will_there_be_a_tie": {
+		"Name": "Will there be a tie",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"cricket.winner": {
+		"Name": "Match Winner (Incl. Superovers)",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"crossfire.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"curling.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"curling.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"cycling.head2head": {
+		"Name": "Head2head",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"cycling.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"cycling.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"darts.180s_handicap": {
+		"Name": "180s handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"darts.correct_score_in_sets": {
+		"Name": "Correct score (in sets)",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"darts.handicap_legs": {
+		"Name": "Leg handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"darts.handicap_sets": {
+		"Name": "Set handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"darts.most_180s": {
+		"Name": "Most 180s",
+		"Description": "Which player will record the most 180's? i.e. 180 = 3 triple 20's in one turn",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"darts.odd_even_sets": {
+		"Name": "Odd/Even Sets",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"darts.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"darts.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"darts.set_correct_score_in_legs": {
+		"Name": "Set {{set}} - correct score (in legs)",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"darts.set_leg_handicap": {
+		"Name": "Set {{set}} - leg handicap",
+		"Variables": [
+			"set",
+			"handicap"
+		],
+		"Split": "period=default\u0026set={{set}}",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"darts.set_most_180s": {
+		"Name": "Set {{set}} - most 180s",
+		"Variables": [
+			"set"
+		],
+		"Split": "period=default\u0026set={{set}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"darts.set_total_180s": {
+		"Name": "Set {{set}} - total 180s",
+		"Variables": [
+			"total",
+			"set"
+		],
+		"Split": "period=default\u0026set={{set}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"darts.set_winner": {
+		"Name": "Set {{set}} - winner",
+		"Variables": [
+			"set"
+		],
+		"Split": "period=default\u0026set={{set}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"darts.total_180s": {
+		"Name": "Total 180s",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"darts.total_legs": {
+		"Name": "Total legs",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"darts.total_sets": {
+		"Name": "Total Sets",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"darts.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"dota_2.correct_score_in_maps": {
+		"Name": "Correct score (in maps)",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"dota_2.map_handicap": {
+		"Name": "Map handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"dota_2.map_kill_draw_no_bet": {
+		"Name": "Map {{map}} - kill draw no bet",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=default\u0026map={{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"dota_2.map_kill_handicap_v2": {
+		"Name": "Map {{map}} - kill handicap",
+		"Variables": [
+			"handicap",
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}kills",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"dota_2.map_most_kills": {
+		"Name": "Map {{map}} - Most Kills",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}kills",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"dota_2.map_race_to_xth_kills": {
+		"Name": "Map {{map}} - race to {{xth}} kills",
+		"Variables": [
+			"map",
+			"xth"
+		],
+		"Split": "period=default\u0026map={{map}}\u0026xth={{xth}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"dota_2.map_team_total_kills": {
+		"Name": "Map {{map}} - {{team}} total kills",
+		"Variables": [
+			"team",
+			"map",
+			"total"
+		],
+		"Split": "period=default\u0026period=map{{map}}kills\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"dota_2.map_total_kills_v2": {
+		"Name": "Map {{map}} - total kills",
+		"Variables": [
+			"total",
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}kills",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"dota_2.map_winner": {
+		"Name": "Map {{map}} - Winner",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"dota_2.map_winner_v2": {
+		"Name": "Map {{map}} - Winner",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"dota_2.map_xth_kill": {
+		"Name": "Map {{map}} - {{xth}} kill",
+		"Variables": [
+			"map",
+			"xth"
+		],
+		"Split": "period=default\u0026map={{map}}\u0026xth={{xth}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"dota_2.match_odds": {
+		"Name": "Match Odds",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"dota_2.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"dota_2.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"dota_2.total_maps": {
+		"Name": "Total maps",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"dota_2.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"entertainment.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"entertainment.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"esport_aoe.correct_score": {
+		"Name": "Correct Score",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"esport_aoe.handicap": {
+		"Name": "Handicap",
+		"Description": "The handicap provides one team with a map advantage to make games with a superior team more equal and interesting.",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_aoe.total_maps": {
+		"Name": "Total maps",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_aoe.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"esport_arena_of_valor.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_arena_of_valor.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"esport_arena_of_valor.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"esport_arena_of_valor.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"esport_bga.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"esport_bga.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"esport_brawl_stars.correct_score": {
+		"Name": "Correct Score",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"esport_brawl_stars.handicap": {
+		"Name": "Handicap",
+		"Description": "The handicap provides one team with a map advantage to make games with a superior team more equal and interesting.",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_brawl_stars.total_maps": {
+		"Name": "Total maps",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_brawl_stars.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"esport_fifa.asian_handicap": {
+		"Name": "Asian Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap",
+			"optional.side"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_fifa.asian_handicap_period_first_half": {
+		"Name": "1st Half Asian Handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=1h",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_fifa.asian_handicap_period_second_half": {
+		"Name": "2nd Half Asian Handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=2h\u0026period=ft\u0026period=1h",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_fifa.both_teams_to_score": {
+		"Name": "Both teams to score",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"esport_fifa.corner_match_odds": {
+		"Name": "Corner Match odds",
+		"Variables": [],
+		"Split": "period=ft_corners",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"esport_fifa.correct_score": {
+		"Name": "Correct Score",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"dynamic.other": "Other",
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"esport_fifa.correct_score_period_1st_half": {
+		"Name": "1st half - Correct Score",
+		"Variables": [],
+		"Split": "period=ft\u0026period=1h\u0026period=2h",
+		"Outcomes": {
+			"dynamic.other": "Other",
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"esport_fifa.correct_score_period_2nd_half": {
+		"Name": "2nd half - correct score",
+		"Variables": [],
+		"Split": "period=ft\u0026period=1h\u0026period=2h",
+		"Outcomes": {
+			"dynamic.other": "Other",
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"esport_fifa.double_chance": {
+		"Name": "Double chance",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"draw_away": "Draw or {{away}}",
+			"home_away": "{{home}} or {{away}}",
+			"home_draw": "{{home}} or Draw"
+		}
+	},
+	"esport_fifa.draw_no_bet": {
+		"Name": "Draw no bet",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"esport_fifa.exact_total_goals_period_first_half": {
+		"Name": "1st Half Exact Total Goals",
+		"Variables": [
+			"goals"
+		],
+		"Split": "period=1h",
+		"Outcomes": {
+			"dynamic.goals": "{{goals}}"
+		}
+	},
+	"esport_fifa.exact_total_goals_period_second_half": {
+		"Name": "2nd Half Exact Total Goals",
+		"Variables": [
+			"goals"
+		],
+		"Split": "period=2h\u0026period=ft\u0026period=1h",
+		"Outcomes": {
+			"dynamic.goals": "{{goals}}"
+		}
+	},
+	"esport_fifa.goal_nr": {
+		"Name": "Goal {{goal}}",
+		"Variables": [
+			"goal"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}",
+			"none": "None"
+		}
+	},
+	"esport_fifa.halftime_fulltime_result": {
+		"Name": "Halftime / Fulltime",
+		"Variables": [],
+		"Split": "period=1h\u0026period=ft",
+		"Outcomes": {
+			"away_away": "{{away}} / {{away}}",
+			"away_draw": "{{away}} / Draw",
+			"away_home": "{{away}} / {{home}}",
+			"draw_away": "Draw / {{away}}",
+			"draw_draw": "Draw / Draw",
+			"draw_home": "Draw / {{home}}",
+			"home_away": "{{home}} / {{away}}",
+			"home_draw": "{{home}} / Draw",
+			"home_home": "{{home}} / {{home}}"
+		}
+	},
+	"esport_fifa.match_odds": {
+		"Name": "Full Time Result",
+		"Primary": true,
+		"Variables": [
+			"optional.side"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"esport_fifa.match_odds_period_extratime": {
+		"Name": "Match Odds - Extra Time",
+		"Variables": [],
+		"Split": "period=et",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"esport_fifa.match_odds_period_first_half": {
+		"Name": "Half Time Result",
+		"Variables": [],
+		"Split": "period=1h",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"esport_fifa.match_odds_period_second_half": {
+		"Name": "Match Odds - 2nd half",
+		"Variables": [],
+		"Split": "period=ft\u0026period=2h\u0026period=1h",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"esport_fifa.odd_even.penalty_shootout": {
+		"Name": "Penalty shootout - odd/even",
+		"Variables": [],
+		"Split": "period=penalty_shootout",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"esport_fifa.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"esport_fifa.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"esport_fifa.penalty_shootout_odd_even": {
+		"Name": "Penalty shootout - odd/even",
+		"Variables": [],
+		"Split": "period=penalty",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"esport_fifa.team_clean_sheet": {
+		"Name": "{{team}} clean sheet",
+		"Variables": [
+			"team"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"esport_fifa.team_total_goals": {
+		"Name": "{{team}} Total Goals",
+		"Variables": [
+			"total",
+			"team"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_fifa.team_total_goals_period_first_half": {
+		"Name": "{{team}} 1st Half Total Goals",
+		"Variables": [
+			"total",
+			"team"
+		],
+		"Split": "period=1h\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_fifa.team_total_goals_period_second_half": {
+		"Name": "{{team}} 2nd Half Total Goals",
+		"Variables": [
+			"total",
+			"team"
+		],
+		"Split": "period=2h\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_fifa.team_win_to_nil": {
+		"Name": "{{team}} win to nil",
+		"Variables": [
+			"team"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"esport_fifa.total_goals": {
+		"Name": "Total Goals",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_fifa.total_goals_period_extratime": {
+		"Name": "Total Goals - Extra Time",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=et",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_fifa.total_goals_period_first_half": {
+		"Name": "1st Half Total Goals",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=1h",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_fifa.total_goals_period_second_half": {
+		"Name": "2nd Half Total Goals",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=2h\u0026period=ft\u0026period=1h",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_free_fire.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"esport_free_fire.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"esport_king_of_glory.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"esport_king_of_glory.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"esport_king_of_glory.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"esport_nba2k.1st_half_1x2": {
+		"Name": "1st half - 1x2",
+		"Description": "3-way market for the 1st half only: 1 = home win, X = tie and the 2 = away win",
+		"Variables": [],
+		"Split": "period=1h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"esport_nba2k.1st_half_draw_no_bet": {
+		"Name": "1st half - draw no bet",
+		"Variables": [],
+		"Split": "period=1h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"esport_nba2k.1st_half_team_total": {
+		"Name": "1st half - {{team}} total",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=1h\u0026period=q1\u0026period=q2\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_nba2k.1x2": {
+		"Name": "1x2",
+		"Description": "3-way market, excluding Overtime: 1 = home win, X = tie and the 2 = away win",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"esport_nba2k.2nd_half_1x2": {
+		"Name": "2nd half - 1x2",
+		"Description": "3-way market for the 2nd half only, excluding Overtime: 1 = home win, X = tie and the 2 = away win",
+		"Variables": [],
+		"Split": "period=2h",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"esport_nba2k.2nd_half_1x2_incl_ot": {
+		"Name": "2nd half - 1x2 (incl. overtime)",
+		"Description": "3-way market for the 2nd half only, including overtime: 1 = home win, X = tie and the 2 = away win",
+		"Variables": [],
+		"Split": "period=ot\u0026period=2h\u0026period=1h\u0026period=q3\u0026period=q4",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"esport_nba2k.2nd_half_handicap": {
+		"Name": "2nd half - handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=2h",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_nba2k.2nd_half_total": {
+		"Name": "2nd half - total",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=2h",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_nba2k.halftime_fulltime": {
+		"Name": "Halftime/fulltime",
+		"Variables": [],
+		"Split": "period=ht\u0026period=ft",
+		"Outcomes": {
+			"away_away": "{{away}}/{{away}}",
+			"away_draw": "{{away}}/draw",
+			"away_home": "{{away}}/{{home}}",
+			"draw_away": "draw/{{away}}",
+			"draw_draw": "draw/draw",
+			"draw_home": "draw/{{home}}",
+			"home_away": "{{home}}/{{away}}",
+			"home_draw": "{{home}}/draw",
+			"home_home": "{{home}}/{{home}}"
+		}
+	},
+	"esport_nba2k.handicap": {
+		"Name": "Spread",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_nba2k.handicap_period_first_half": {
+		"Name": "1st half - handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=q1\u0026period=q2\u0026period=1h",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_nba2k.handicap_period_second_half": {
+		"Name": "2nd half - handicap (Incl. Overtime)",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ot\u0026period=2h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_nba2k.odd_even": {
+		"Name": "Odd/Even",
+		"Variables": [],
+		"Split": "period=ot",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"esport_nba2k.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"esport_nba2k.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"esport_nba2k.quarter_1x2": {
+		"Name": "Quarter {{quarter}} - 1x2",
+		"Variables": [
+			"quarter"
+		],
+		"Split": "period=q{{quarter}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"esport_nba2k.quarter_handicap": {
+		"Name": "Quarter {{quarter}} - handicap",
+		"Variables": [
+			"quarter",
+			"handicap"
+		],
+		"Split": "period=ot\u0026period=q{{quarter}}",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_nba2k.quarter_totals": {
+		"Name": "Quarter {{quarter}} totals",
+		"Variables": [
+			"total",
+			"quarter"
+		],
+		"Split": "period=q{{quarter}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_nba2k.race_to_points": {
+		"Name": "Race to {{point}} points",
+		"Variables": [
+			"point"
+		],
+		"Split": "period=ot\u0026period=ft\u0026points={{point}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"esport_nba2k.team_total_maximum_consecutive_points": {
+		"Name": "{{team}} total maximum consecutive points",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=ot\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_nba2k.team_totals": {
+		"Name": "{{team}} Total",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=ot\u0026period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_nba2k.total_period_first_half": {
+		"Name": "1st half - total",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=1h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_nba2k.total_period_second_half": {
+		"Name": "2nd half - total (Incl. Overtime)",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ot\u0026period=2h\u0026period=q1\u0026period=q2",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_nba2k.totals": {
+		"Name": "Totals",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_nba2k.winner_incl_overtime": {
+		"Name": "Winner (Incl. Overtime)",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ot",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"esport_nba2k.winning_margin": {
+		"Name": "Winning margin (Incl. Overtime)",
+		"Variables": [],
+		"Split": "period=ot",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"esport_valorant.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Description": "The handicap provides one team with a map advantage to make games with a superior team more equal and interesting.",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_valorant.totals": {
+		"Name": "Total maps",
+		"Primary": true,
+		"Description": "Bet on the total amount of maps played.",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_valorant.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"esport_warcraft.correct_score": {
+		"Name": "Correct Score",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"esport_warcraft.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"esport_warcraft.totals": {
+		"Name": "Totals",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"esport_warcraft.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"field_hockey.match_odds": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"field_hockey.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"field_hockey.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"field_hockey.totals": {
+		"Name": "Total",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"floorball.match_odds": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"floorball.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"floorball.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"floorball.totals": {
+		"Name": "Total",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"formula_1.outright": {
+		"Name": "{{market_name}}",
+		"Variables": [
+			"market_name"
+		],
+		"Split": "market_name={{market_name}}",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"formula_1.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"formula_1.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"formula_e.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"formula_e.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"futsal.double_chance": {
+		"Name": "Double chance",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"draw_away": "Draw or {{away}}",
+			"home_away": "{{home}} or {{away}}",
+			"home_draw": "{{home}} or Draw"
+		}
+	},
+	"futsal.draw_no_bet": {
+		"Name": "Draw no bet",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"futsal.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"futsal.match_odds": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"futsal.odd_even": {
+		"Name": "Odd/even",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"futsal.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"futsal.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"futsal.totals": {
+		"Name": "Total",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"golf.outright": {
+		"Name": "{{market_name}}",
+		"Variables": [
+			"market_name"
+		],
+		"Split": "market_name={{market_name}}",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"golf.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"golf.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"golf.winner": {
+		"Name": "Match up",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"greyhound.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"greyhound.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"greyhounds.place": {
+		"Name": "Place ({{position}} TBP)",
+		"Primary": true,
+		"Description": "Betting on a dog finishing in one of the designated places. e.g 3TBP means your selection will be a win if it finishes at one of the top 3 places.",
+		"Variables": [
+			"position"
+		],
+		"Split": "period=default\\u0026position={{position}}",
+		"Outcomes": {
+			"dynamic.player": "{{player}}"
+		}
+	},
+	"greyhounds.win": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.player": "{{player}}"
+		}
+	},
+	"greyhounds.win_sp": {
+		"Name": "Winner (SP)",
+		"Description": "The starting price (SP) will be the official odds declared by the on-course bookmakers at the start of the race.",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.player": "{{player}}"
+		}
+	},
+	"handball.1st_half_total": {
+		"Name": "Total - 1st half",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=1h",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"handball.double_chance": {
+		"Name": "Double chance",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"draw_away": "Draw or {{away}}",
+			"home_away": "{{home}} or {{away}}",
+			"home_draw": "{{home}} or Draw"
+		}
+	},
+	"handball.draw_no_bet": {
+		"Name": "Draw no bet",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"handball.halftime_fulltime_result": {
+		"Name": "Halftime / Fulltime",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away_away": "{{away}}/{{away}}",
+			"away_draw": "{{away}}/Draw",
+			"away_home": "{{away}}/{{home}}",
+			"draw_away": "Draw/{{away}}",
+			"draw_draw": "Draw/Draw",
+			"draw_home": "Draw/{{home}}",
+			"home_away": "{{home}}/{{away}}",
+			"home_draw": "{{home}}/Draw",
+			"home_home": "{{home}}/{{home}}"
+		}
+	},
+	"handball.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"handball.match_odds": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"handball.odd_even": {
+		"Name": "Odd/even",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"handball.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"handball.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"handball.team_total": {
+		"Name": "{{team}} Total",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"handball.totals": {
+		"Name": "Total",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"handball.winner": {
+		"Name": "Winner (Incl. Overtime and Penalties)",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"hearthstone.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"hearthstone.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"hearthstone.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"heroes_of_the_storm.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"heroes_of_the_storm.total": {
+		"Name": "Total",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"heroes_of_the_storm.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"horse_racing.place": {
+		"Name": "Place ({{position}} TBP)",
+		"Primary": true,
+		"Description": "Betting on a horse finishing in the one of the designated places. e.g 3TBP means your selection will be a win if it finishes at one of the top 3 places.",
+		"Variables": [
+			"position"
+		],
+		"Split": "period=default\u0026position={{position}}",
+		"Outcomes": {
+			"dynamic.player": "{{player}}"
+		}
+	},
+	"horse_racing.win": {
+		"Name": "Winner",
+		"Primary": true,
+		"Description": "Winner of the race",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.player": "{{player}}"
+		}
+	},
+	"horse_racing.win_sp": {
+		"Name": "Winner (SP)",
+		"Description": "The starting price (SP) will be the official odds declared by the on-course bookmakers at the start of the race.",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.player": "{{player}}"
+		}
+	},
+	"ice_hockey.1x2": {
+		"Name": "1x2 (Excl. Overtime)",
+		"Description": "3-way market, excluding Overtime: 1 = home win, X = tie and the 2 = away win (1=1st named team if neutral venue)",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"ice_hockey.1x2_both_teams_to_score": {
+		"Name": "1x2 \u0026 both teams to score (Incl. Overtime and Penalties)",
+		"Variables": [],
+		"Split": "period=ft\u0026period=ot\u0026period=ap",
+		"Outcomes": {
+			"away_no": "{{away}} \u0026 no",
+			"away_yes": "{{away}} \u0026 yes",
+			"home_no": "{{home}} \u0026 no",
+			"home_yes": "{{home}} \u0026 yes"
+		}
+	},
+	"ice_hockey.both_teams_to_score": {
+		"Name": "Both teams to score",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"ice_hockey.correct_score": {
+		"Name": "Correct score",
+		"Description": "The score at the end of regular time i.e. excluding overtime and penalties",
+		"Variables": [],
+		"Split": "period=ft\u0026period=p1\u0026period=p2\u0026period=p3",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"ice_hockey.correct_score_incl_overtime_and_penalties": {
+		"Name": "Correct score (Incl. Overtime and Penalties)",
+		"Variables": [],
+		"Split": "period=ft\u0026period=ot\u0026period=ap",
+		"Outcomes": {
+			"dynamic.other": "other",
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"ice_hockey.double_chance": {
+		"Name": "Double chance (Excl. Overtime)",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"draw_or_away": "draw or {{away}}",
+			"home_or_away": "{{home}} or {{away}}",
+			"home_or_draw": "{{home}} or draw"
+		}
+	},
+	"ice_hockey.exact_goals": {
+		"Name": "Exact goals",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"ice_hockey.exact_goals_period_ft_incl_et_and_penalty_shootout": {
+		"Name": "Exact goals (Incl. Overtime and Penalties)",
+		"Variables": [],
+		"Split": "period=ft\u0026period=ot\u0026period=et\u0026period=penalty_shootout",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"ice_hockey.goal_nr": {
+		"Name": "Goal {{goal}}",
+		"Variables": [
+			"goal"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}",
+			"none": "None"
+		}
+	},
+	"ice_hockey.handicap": {
+		"Name": "Handicap (Incl. Overtime and Penalties)",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"ice_hockey.handicap_regular_time": {
+		"Name": "Handicap (Excl. Overtime and Penalties)",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"ice_hockey.highest_scoring_period": {
+		"Name": "Highest scoring period",
+		"Variables": [],
+		"Split": "period=p1\u0026period=p2\u0026period=p3",
+		"Outcomes": {
+			"1st_period": "1st period",
+			"2nd_period": "2nd period",
+			"3rd_period": "3rd period",
+			"equal": "equal"
+		}
+	},
+	"ice_hockey.last_goal": {
+		"Name": "Last goal",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}",
+			"none": "none"
+		}
+	},
+	"ice_hockey.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"ice_hockey.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"ice_hockey.period_1x2": {
+		"Name": "Period {{period}} - 1x2",
+		"Variables": [
+			"period"
+		],
+		"Split": "period=p{{period}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"ice_hockey.period_correct_score": {
+		"Name": "Period {{period}} - correct score",
+		"Variables": [
+			"period"
+		],
+		"Split": "period=p{{period}}",
+		"Outcomes": {
+			"dynamic.other": "Other",
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"ice_hockey.period_handicap": {
+		"Name": "Period {{period}} - handicap",
+		"Variables": [
+			"handicap",
+			"period"
+		],
+		"Split": "period=p{{period}}",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"ice_hockey.period_total": {
+		"Name": "Period {{period}} - total",
+		"Variables": [
+			"total",
+			"period"
+		],
+		"Split": "period=p{{period}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"ice_hockey.team_clean_sheet": {
+		"Name": "{{team}} clean sheet",
+		"Description": "A clean sheet refers to the named team not conceding a goal",
+		"Variables": [
+			"team"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"ice_hockey.team_exact_goals": {
+		"Name": "{{team}} exact goals (Incl. Overtime and Penalties)",
+		"Variables": [
+			"team"
+		],
+		"Split": "period=ot\u0026period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"ice_hockey.team_to_score_in_all_periods": {
+		"Name": "{{team}} to score in all periods",
+		"Variables": [
+			"team"
+		],
+		"Split": "period=p1\u0026period=p2\u0026period=p3\u0026team={{team}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"ice_hockey.team_total": {
+		"Name": "{{team}} total (Excl. Overtime and Penalties)",
+		"Variables": [
+			"team",
+			"total"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"ice_hockey.total": {
+		"Name": "Total (Excl. Overtime and Penalties)",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"ice_hockey.totals": {
+		"Name": "Total (Incl. Overtime and Penalties)",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"ice_hockey.which_team_wins_the_rest_of_the_match": {
+		"Name": "Which team wins the rest of the match at {{score}}",
+		"Variables": [
+			"score"
+		],
+		"Split": "period=ft\u0026period=ot\u0026period=ap\u0026score={{score}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"ice_hockey.winner": {
+		"Name": "Winner (Incl. Overtime and Penalties)",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ot\u0026period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"ice_hockey.winning_margin": {
+		"Name": "Winning margin",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"ice_hockey.winning_margin_incl_overtime_and_penalties": {
+		"Name": "Winning margin (Incl. Overtime and Penalties)",
+		"Variables": [],
+		"Split": "period=ft\u0026period=ot",
+		"Outcomes": {
+			"away_by_1": "{{away}} by 1",
+			"away_by_2": "{{away}} by 2",
+			"away_by_3": "{{away}} by 3+",
+			"away_by_4": "{{away}} by 4",
+			"away_by_5_plus": "{{away}} by 5+",
+			"away_by_exact_3": "{{away}} by 3",
+			"home_by_1": "{{home}} by 1",
+			"home_by_2": "{{home}} by 2",
+			"home_by_3": "{{home}} by 3+",
+			"home_by_4": "{{home}} by 4",
+			"home_by_5_plus": "{{home}} by 5+",
+			"home_by_exact_3": "{{home}} by 3"
+		}
+	},
+	"kabaddi.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"kabaddi.match_odds": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"kabaddi.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"kabaddi.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"kabaddi.total": {
+		"Name": "Total",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"league_of_legends.correct_score_in_maps": {
+		"Name": "Correct score (in maps)",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"league_of_legends.map_handicap": {
+		"Name": "Map handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"league_of_legends.map_kill_draw_no_bet.v2": {
+		"Name": "Map {{map}} - kill draw no bet",
+		"Description": "Choose the team you think will win. In the result of a draw stakes are returned.",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}kills\u0026map={{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"league_of_legends.map_kill_handicap.v2": {
+		"Name": "Map {{map}} - kill handicap",
+		"Variables": [
+			"handicap",
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}kills\u0026map={{map}}",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"league_of_legends.map_team_total_kills": {
+		"Name": "Map {{map}} - {{team}} total kills",
+		"Variables": [
+			"team",
+			"total",
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}kills\u0026map={{map}}\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"league_of_legends.map_total_kills": {
+		"Name": "Map {{map}} - total kills",
+		"Variables": [
+			"total",
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}kills\u0026map={{map}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"league_of_legends.map_winner": {
+		"Name": "Map {{map}} - winner",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"league_of_legends.map_winner_v2": {
+		"Name": "Map {{map}} - Winner",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"league_of_legends.map_xth_baron": {
+		"Name": "Map {{map}} - baron {{xth}}",
+		"Variables": [
+			"map",
+			"xth"
+		],
+		"Split": "period=default\u0026map={{map}}\u0026xth={{xth}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"league_of_legends.map_xth_dragon": {
+		"Name": "Map {{map}} - dragon {{xth}}",
+		"Variables": [
+			"map",
+			"xth"
+		],
+		"Split": "period=default\u0026map={{map}}\u0026xth={{xth}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"league_of_legends.map_xth_inhibitor": {
+		"Name": "Map {{map}} - inhibitor {{xth}}",
+		"Variables": [
+			"map",
+			"xth"
+		],
+		"Split": "period=default\u0026map={{map}}\u0026xth={{xth}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"league_of_legends.map_xth_kill": {
+		"Name": "Map {{map}} - kill {{xth}}",
+		"Variables": [
+			"map",
+			"xth"
+		],
+		"Split": "period=default\u0026map={{map}}\u0026xth={{xth}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"league_of_legends.map_xth_tower": {
+		"Name": "Map {{map}} - tower {{xth}}",
+		"Variables": [
+			"map",
+			"xth"
+		],
+		"Split": "period=default\u0026map={{map}}\u0026xth={{xth}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"league_of_legends.match_odds": {
+		"Name": "Match Odds",
+		"Description": "Match odds gives you the option to bet on team (A), the draw and team (B).",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"league_of_legends.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"league_of_legends.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"league_of_legends.total_maps": {
+		"Name": "Total maps",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"league_of_legends.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"mma.1x2": {
+		"Name": "1x2",
+		"Description": "3 way market: 1 refers to a home win, the X the draw and the 2 the away win.",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"mma.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"mma.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"mma.totals": {
+		"Name": "Total Rounds",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"mma.will_the_fight_go_the_distance": {
+		"Name": "Will the fight go the distance",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"mma.winner": {
+		"Name": "To Win Fight",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"mma.winner_exact_rounds": {
+		"Name": "Winner \u0026 exact rounds",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"mma.winning_method": {
+		"Name": "Winning method",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"motorsport.head2head": {
+		"Name": "Head2head",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"motorsport.outright": {
+		"Name": "{{market_name}}",
+		"Variables": [
+			"market_name"
+		],
+		"Split": "market_name={{market_name}}",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"motorsport.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"motorsport.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"olympics.outright": {
+		"Name": "{{market_name}}",
+		"Variables": [
+			"market_name"
+		],
+		"Split": "market_name={{market_name}}",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"olympics.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"olympics.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"overwatch.map_handicap": {
+		"Name": "Map Handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"overwatch.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"overwatch.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"overwatch.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"pesapallo.match_odds": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"pesapallo.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"pesapallo.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"politics.government": {
+		"Name": "Government",
+		"Description": "Government after election",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"politics.house_majority": {
+		"Name": "House Majority",
+		"Description": "House Majority",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"politics.most_seats": {
+		"Name": "Most Seats",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"politics.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"politics.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"politics.senate_majority": {
+		"Name": "Senate Majority",
+		"Description": "Senate Majority",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"rainbow_six.correct_score": {
+		"Name": "Correct Score",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"rainbow_six.map_winner": {
+		"Name": "Map {{map}} - Winner",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"rainbow_six.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"rainbow_six.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"rainbow_six.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"rocket_league.correct_score": {
+		"Name": "Correct Score",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"rocket_league.handicap": {
+		"Name": "Map handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"rocket_league.map_winner": {
+		"Name": "Map {{map}} - Winner",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"rocket_league.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"rocket_league.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"rocket_league.total_maps": {
+		"Name": "Total maps",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"rocket_league.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"rugby_league.1x2_period_1st_half": {
+		"Name": "1st half - 1x2",
+		"Variables": [],
+		"Split": "period=ft\u0026period=1h",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"rugby_league.draw_no_bet": {
+		"Name": "Draw no bet",
+		"Description": "Choose the team you think will win. In the result of a draw, stakes are returned.",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"rugby_league.halftime_fulltime_result": {
+		"Name": "Halftime / Fulltime",
+		"Description": "Market on both the result at half-time and the result at the end of the match, excluding extra time",
+		"Variables": [],
+		"Split": "period=ft\u0026period=1h",
+		"Outcomes": {
+			"away_away": "{{away}} / {{away}}",
+			"away_draw": "{{away}} / Draw",
+			"away_home": "{{away}} / {{home}}",
+			"draw_away": "Draw / {{away}}",
+			"draw_draw": "Draw / Draw",
+			"draw_home": "Draw / {{home}}",
+			"home_away": "{{home}} / {{away}}",
+			"home_draw": "{{home}} / Draw",
+			"home_home": "{{home}} / {{home}}"
+		}
+	},
+	"rugby_league.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"rugby_league.handicap_period_1st_half": {
+		"Name": "1st half - handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft\u0026period=1h",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"rugby_league.moneyline": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"rugby_league.next_scoring_play": {
+		"Name": "Next scoring play at {{score}}",
+		"Variables": [
+			"score"
+		],
+		"Split": "period=ft\u0026score={{score}}",
+		"Outcomes": {
+			"away_with_drop_goal": "{{away}} with drop goal",
+			"away_with_penalty": "{{away}} with penalty",
+			"away_with_try": "{{away}} with try",
+			"home_with_drop_goal": "{{home}} with drop goal",
+			"home_with_penalty": "{{home}} with penalty",
+			"home_with_try": "{{home}} with try"
+		}
+	},
+	"rugby_league.odd_even": {
+		"Name": "Odd/Even",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"rugby_league.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"rugby_league.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"rugby_league.race_to_points": {
+		"Name": "Race to {{point}} points",
+		"Variables": [
+			"point"
+		],
+		"Split": "period=ft\u0026point={{point}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}",
+			"none": "None"
+		}
+	},
+	"rugby_league.team_totals": {
+		"Name": "{{team}} Total ",
+		"Variables": [
+			"total",
+			"team"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"rugby_league.total_period_1st_half": {
+		"Name": "1st half - total",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft\u0026period=1h",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"rugby_league.totals": {
+		"Name": "Totals",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"rugby_league.try_handicap": {
+		"Name": "Try handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft\u0026period=ft_tries",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"rugby_league.which_team_wins_the_rest_of_the_match": {
+		"Name": "Which team wins the rest of the match at {{score}}",
+		"Variables": [
+			"score"
+		],
+		"Split": "period=ft\u0026score={{score}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"rugby_league.winner": {
+		"Name": "Money Line",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"rugby_league.winning_margin_period_ft": {
+		"Name": "Winning margin",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"rugby_union.1x2_period_1st_half": {
+		"Name": "1st half - 1x2",
+		"Variables": [],
+		"Split": "period=ft\u0026period=1h",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"rugby_union.draw_no_bet": {
+		"Name": "Draw no bet",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"rugby_union.halftime_fulltime_result": {
+		"Name": "Halftime / Fulltime",
+		"Description": "Market on both the result at half-time and the result at the end of the match, excluding extra time",
+		"Variables": [],
+		"Split": "period=ft\u0026period=1h",
+		"Outcomes": {
+			"away_away": "{{away}} / {{away}}",
+			"away_draw": "{{away}} / Draw",
+			"away_home": "{{away}} / {{home}}",
+			"draw_away": "Draw / {{away}}",
+			"draw_draw": "Draw / Draw",
+			"draw_home": "Draw / {{home}}",
+			"home_away": "{{home}} / {{away}}",
+			"home_draw": "{{home}} / Draw",
+			"home_home": "{{home}} / {{home}}"
+		}
+	},
+	"rugby_union.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"rugby_union.handicap_period_1st_half": {
+		"Name": "1st half - handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft\u0026period=1h",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"rugby_union.moneyline": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"rugby_union.next_scoring_play": {
+		"Name": "Next scoring play at {{score}}",
+		"Variables": [
+			"score"
+		],
+		"Split": "period=ft\u0026score={{score}}",
+		"Outcomes": {
+			"away_with_drop_goal": "{{away}} with drop goal",
+			"away_with_penalty": "{{away}} with penalty",
+			"away_with_try": "{{away}} with try",
+			"home_with_drop_goal": "{{home}} with drop goal",
+			"home_with_penalty": "{{home}} with penalty",
+			"home_with_try": "{{home}} with try"
+		}
+	},
+	"rugby_union.odd_even": {
+		"Name": "Odd/Even",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"rugby_union.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"rugby_union.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"rugby_union.race_to_points": {
+		"Name": "Race to {{point}} points",
+		"Variables": [
+			"point"
+		],
+		"Split": "period=ft\u0026point={{point}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}",
+			"none": "None"
+		}
+	},
+	"rugby_union.team_totals": {
+		"Name": "{{team}} Total ",
+		"Variables": [
+			"total",
+			"team"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"rugby_union.total_period_1st_half": {
+		"Name": "1st half - total",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft\u0026period=1h",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"rugby_union.total_tries": {
+		"Name": "Total tries",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft\u0026period=ft_tries",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"rugby_union.totals": {
+		"Name": "Totals",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"rugby_union.try_handicap": {
+		"Name": "Try handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft\u0026period=ft_tries",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"rugby_union.which_team_wins_the_rest_of_the_match": {
+		"Name": "Which team wins the rest of the match at {{score}}",
+		"Variables": [
+			"score"
+		],
+		"Split": "period=ft\u0026score={{score}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"rugby_union.winner": {
+		"Name": "Money Line",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"sailing.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"sailing.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"snooker.correct_score": {
+		"Name": "Correct score",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"snooker.handicap": {
+		"Name": "Frame handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"snooker.odd_even_frames": {
+		"Name": "Odd/even frames",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"snooker.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"snooker.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"snooker.totals": {
+		"Name": "Total frames",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"snooker.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"soccer.12_booking_handicap": {
+		"Name": "1-2 Booking Handicap",
+		"Description": "1 point=yellow card, 2 points=red card with maximum 3 points per player and only players on the pitch count",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft_yellow_cards\u0026period=ft_red_cards\u0026period=ft_yellow_red_cards",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"soccer.1st_half_total_corners": {
+		"Name": "1st half - total corners",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=1h_corners",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"soccer.anytime_goalscorer": {
+		"Name": "Anytime goalscorer",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"dynamic.no_goal": "No Goal",
+			"dynamic.player": "{{player}}"
+		}
+	},
+	"soccer.asian_handicap": {
+		"Name": "Asian Handicap",
+		"Primary": true,
+		"Description": "See our [article on Asian Handicap](/en/blog/posts/what-are-asian-handicaps)",
+		"Variables": [
+			"handicap",
+			"optional.side"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"soccer.asian_handicap_period_extratime": {
+		"Name": "Asian Handicap - Extra Time",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=et",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"soccer.asian_handicap_period_first_half": {
+		"Name": "1st Half Asian Handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=1h",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"soccer.asian_handicap_period_second_half": {
+		"Name": "2nd Half Asian Handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=2h\u0026period=ft\u0026period=1h",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"soccer.booking_match_odds": {
+		"Name": "10-25 Booking Match odds",
+		"Description": "Which team will receive the most booking points? (10=yellow card, 25=red card with maximum 35 points per player and only players on the pitch count.)",
+		"Variables": [],
+		"Split": "period=ft_yellow_cards\u0026period=ft_red_cards",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"soccer.booking_nr": {
+		"Name": "Booking {{booking}}",
+		"Variables": [
+			"booking"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}",
+			"none": "None"
+		}
+	},
+	"soccer.booking_point_range_period_ft": {
+		"Name": "Booking Point Range",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"soccer.both_teams_to_score": {
+		"Name": "Both teams to score",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"soccer.both_teams_to_score_period_1h": {
+		"Name": "1st Half Both Teams To Score",
+		"Variables": [],
+		"Split": "period=1h",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"soccer.corner_handicap": {
+		"Name": "Corner handicap",
+		"Description": "Match bet between teams including the corner handicap. To count, a corner must be taken.",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft_corners",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"soccer.corner_handicap_period_1h": {
+		"Name": "1st half - corner handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=1h_corners",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"soccer.corner_match_odds": {
+		"Name": "Corner Match odds",
+		"Variables": [],
+		"Split": "period=ft_corners",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"soccer.corner_nr": {
+		"Name": "Corner {{corner}}",
+		"Variables": [
+			"corner"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}",
+			"none": "None"
+		}
+	},
+	"soccer.correct_score": {
+		"Name": "Correct Score",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"dynamic.other": "Other",
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"soccer.correct_score_period_1st_half": {
+		"Name": "1st half - Correct Score",
+		"Variables": [],
+		"Split": "period=ft\u0026period=1h\u0026period=2h",
+		"Outcomes": {
+			"dynamic.other": "Other",
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"soccer.correct_score_period_2nd_half": {
+		"Name": "2nd half - correct score",
+		"Variables": [],
+		"Split": "period=ft\u0026period=1h\u0026period=2h",
+		"Outcomes": {
+			"dynamic.other": "Other",
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"soccer.double_chance": {
+		"Name": "Double chance",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"draw_away": "Draw or {{away}}",
+			"home_away": "{{home}} or {{away}}",
+			"home_draw": "{{home}} or Draw"
+		}
+	},
+	"soccer.double_chance_period_1h": {
+		"Name": "1st Half Double Chance",
+		"Variables": [],
+		"Split": "period=1h",
+		"Outcomes": {
+			"draw_or_away": "Draw or {{away}}",
+			"home_or_away": "{{home}} or {{away}}",
+			"home_or_draw": "{{home}} or Draw"
+		}
+	},
+	"soccer.draw_no_bet": {
+		"Name": "Draw no bet",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"soccer.draw_no_bet_period_1h": {
+		"Name": "1st Half Draw No Bet",
+		"Variables": [],
+		"Split": "period=1h",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"soccer.exact_total_goals_period_first_half": {
+		"Name": "1st Half Exact Total Goals",
+		"Variables": [
+			"goals"
+		],
+		"Split": "period=1h",
+		"Outcomes": {
+			"dynamic.goals": "{{goals}}"
+		}
+	},
+	"soccer.exact_total_goals_period_second_half": {
+		"Name": "2nd Half Exact Total Goals",
+		"Variables": [
+			"goals"
+		],
+		"Split": "period=2h\u0026period=ft\u0026period=1h",
+		"Outcomes": {
+			"dynamic.goals": "{{goals}}"
+		}
+	},
+	"soccer.goal_nr": {
+		"Name": "Goal {{goal}}",
+		"Variables": [
+			"goal"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}",
+			"none": "None"
+		}
+	},
+	"soccer.halftime_fulltime_result": {
+		"Name": "Halftime / Fulltime",
+		"Description": "Market on both the result at half-time and the result at the end of 90 minutes",
+		"Variables": [],
+		"Split": "period=1h\u0026period=ft",
+		"Outcomes": {
+			"away_away": "{{away}} / {{away}}",
+			"away_draw": "{{away}} / Draw",
+			"away_home": "{{away}} / {{home}}",
+			"draw_away": "Draw / {{away}}",
+			"draw_draw": "Draw / Draw",
+			"draw_home": "Draw / {{home}}",
+			"home_away": "{{home}} / {{away}}",
+			"home_draw": "{{home}} / Draw",
+			"home_home": "{{home}} / {{home}}"
+		}
+	},
+	"soccer.handicap.penalty_shootout": {
+		"Name": "Handicap - Penalty Shootout",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=penalty_shootout",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"soccer.handicap_1x2_period_1h": {
+		"Name": "1st Half Handicap (1x2) {{handicap_score}}",
+		"Description": "Home Team 0:1 = home team must win by 2 goals or more. Draw 0:1 = home team win by exactly one goal to win. Away Team 0:1 = away team must draw or win.",
+		"Variables": [
+			"handicap_score"
+		],
+		"Split": "period=1h\u0026handicap_score={{handicap_score}}",
+		"Outcomes": {
+			"away": "{{away}} {{handicap_score}}",
+			"draw": "Draw {{handicap_score}}",
+			"home": "{{home}} {{handicap_score}}"
+		}
+	},
+	"soccer.last_corner": {
+		"Name": "Last corner",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}",
+			"none": "none"
+		}
+	},
+	"soccer.last_goalscorer": {
+		"Name": "Last goalscorer",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"dynamic.no_goal": "No Goal",
+			"dynamic.player": "{{player}}"
+		}
+	},
+	"soccer.match_odds": {
+		"Name": "Full Time Result",
+		"Primary": true,
+		"Description": "The winner at the end of the regulation 90 minutes",
+		"Variables": [
+			"optional.side"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"soccer.match_odds_period_extratime": {
+		"Name": "Match Odds - Extra Time",
+		"Variables": [],
+		"Split": "period=et",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"soccer.match_odds_period_first_half": {
+		"Name": "Half Time Result",
+		"Variables": [],
+		"Split": "period=1h",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"soccer.match_odds_period_second_half": {
+		"Name": "Match Odds - 2nd half",
+		"Variables": [],
+		"Split": "period=ft\u0026period=2h\u0026period=1h",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"soccer.odd_even.penalty_shootout": {
+		"Name": "Penalty shootout - odd/even",
+		"Variables": [],
+		"Split": "period=penalty_shootout",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"soccer.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"soccer.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"soccer.penalty_shootout_odd_even": {
+		"Name": "Penalty shootout - odd/even",
+		"Variables": [],
+		"Split": "period=penalty",
+		"Outcomes": {
+			"even": "Even",
+			"odd": "Odd"
+		}
+	},
+	"soccer.team_clean_sheet": {
+		"Name": "{{team}} clean sheet",
+		"Variables": [
+			"team"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"soccer.team_total_goals": {
+		"Name": "{{team}} Total Goals",
+		"Variables": [
+			"total",
+			"team"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"soccer.team_total_goals_period_first_half": {
+		"Name": "{{team}} 1st Half Total Goals",
+		"Variables": [
+			"total",
+			"team"
+		],
+		"Split": "period=1h\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"soccer.team_total_goals_period_second_half": {
+		"Name": "{{team}} 2nd Half Total Goals",
+		"Variables": [
+			"total",
+			"team"
+		],
+		"Split": "period=2h\u0026team={{team}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"soccer.team_win_to_nil": {
+		"Name": "{{team}} win to nil",
+		"Variables": [
+			"team"
+		],
+		"Split": "period=ft\u0026team={{team}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"soccer.to_qualify.v2": {
+		"Name": "To Qualify / To Win Final",
+		"Variables": [],
+		"Split": "period=default\u0026period=ft\u0026period=ot\u0026period=ap",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"soccer.total_booking_points": {
+		"Name": "10-25 Total Booking Points",
+		"Description": "10 points=yellow card, 25 points=red card with maximum 35 points per player and only players on the pitch count",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft_yellow_cards\u0026period=ft_red_cards\u0026period=ft_yellow_red_cards",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"soccer.total_bookings": {
+		"Name": "1-2 Total booking Points",
+		"Description": "1 point=yellow card, 2 points=red card with maximum 3 points per player and only players on the pitch count",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft_yellow_cards\u0026period=ft_red_cards\u0026period=ft_yellow_red_cards",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"soccer.total_corners": {
+		"Name": "Total corners",
+		"Description": "Total number of corner kicks taken during regular time.",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft_corners",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"soccer.total_goals": {
+		"Name": "Total Goals",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"soccer.total_goals_period_extratime": {
+		"Name": "Total Goals - Extra Time",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=et",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"soccer.total_goals_period_first_half": {
+		"Name": "1st Half Total Goals",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=1h",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"soccer.total_goals_period_second_half": {
+		"Name": "2nd Half Total Goals",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=2h\u0026period=ft\u0026period=1h",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"soccer.when_will_goal_be_scored_intervals": {
+		"Name": "When will goal {{goal}} be scored (10 min interval)",
+		"Variables": [
+			"goal"
+		],
+		"Split": "goal={{goal}}",
+		"Outcomes": {
+			"11_20": "11-20",
+			"1_10": "1-10",
+			"21_30": "21-30",
+			"31_40": "31-40",
+			"41_50": "41-50",
+			"51_60": "51-60",
+			"61_70": "61-70",
+			"71_80": "71-80",
+			"81_90": "81-90",
+			"none": "none"
+		}
+	},
+	"soccer.which_team_wins_the_rest_of_the_match": {
+		"Name": "Which team wins the rest of the match",
+		"Variables": [
+			"score"
+		],
+		"Split": "period=ft\u0026score={{score}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"soccer.will_there_be_penalty_shootout": {
+		"Name": "Will there be a Penalty Shootout?",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"soccer.winner_period_penalty_shootout": {
+		"Name": "Winner - Penalty Shootout",
+		"Variables": [],
+		"Split": "period=penalty_shootout",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"soccer.winning_method": {
+		"Name": "Winning Method",
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away_overtime": "{{away}} Overtime",
+			"away_penalties": "{{away}} Penalties",
+			"away_regular_time": "{{away}} Regular Time",
+			"home_overtime": "{{home}} Overtime",
+			"home_penalties": "{{home}} Penalties",
+			"home_regular_time": "{{home}} Regular Time"
+		}
+	},
+	"specials.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"specials.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"squash.correct_score": {
+		"Name": "Correct score",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"squash.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"squash.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"squash.point_handicap": {
+		"Name": "Point handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"squash.total_points": {
+		"Name": "Total points",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"squash.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"starcraft.correct_score_in_maps": {
+		"Name": "Correct score (in maps)",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"starcraft.map_handicap": {
+		"Name": "Map handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"starcraft.map_winner": {
+		"Name": "Map {{map}} - winner",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"starcraft.map_winner_v2": {
+		"Name": "Map {{map}} - winner",
+		"Variables": [
+			"map"
+		],
+		"Split": "period=default\u0026period=map{{map}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"starcraft.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"starcraft.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"starcraft.total_maps": {
+		"Name": "Total maps",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"starcraft.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"street_fighter_v.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"street_fighter_v.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"sumo.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"sumo.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"sumo.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"swimming.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"swimming.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"table_tennis.correct_score": {
+		"Name": "Correct score",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"table_tennis.game_point_handicap.v2": {
+		"Name": "Game {{game}} - point handicap",
+		"Variables": [
+			"handicap",
+			"game"
+		],
+		"Split": "period=default\u0026period=game{{game}}",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"table_tennis.game_total_points.v2": {
+		"Name": "Game {{game}} - total points",
+		"Variables": [
+			"total",
+			"game"
+		],
+		"Split": "period=default\u0026period=game{{game}}",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"table_tennis.game_winner.v2": {
+		"Name": "Game {{game}} - winner",
+		"Variables": [
+			"game"
+		],
+		"Split": "period=default\u0026period=game{{game}}",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"table_tennis.handicap": {
+		"Name": "Point handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"table_tennis.handicap.v2": {
+		"Name": "Point handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default\u0026period=game1\u0026period=game2\u0026period=game3\u0026period=game4\u0026period=game5",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"table_tennis.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"table_tennis.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"table_tennis.totals": {
+		"Name": "Total points",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"table_tennis.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"tennis.any_set_to_nil": {
+		"Name": "Any set to nil",
+		"Variables": [],
+		"Split": "period=default\u0026period=wo\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"tennis.correct_score": {
+		"Name": "Correct score",
+		"Variables": [],
+		"Split": "period=default\u0026period=wo",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"tennis.exact_points": {
+		"Name": "Exact Number of Points in Game {{game}} of Set {{set}}",
+		"Variables": [
+			"set",
+			"game",
+			"point"
+		],
+		"Split": "set={{set}}\u0026game={{game}}\u0026period=wo",
+		"Outcomes": {
+			"dynamic.point": "{{point}}"
+		}
+	},
+	"tennis.exact_sets": {
+		"Name": "Exact sets",
+		"Variables": [],
+		"Split": "period=default\u0026period=wo",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"tennis.freetext": {
+		"Name": "{{market_name}}",
+		"Variables": [
+			"market_name"
+		],
+		"Split": "market_name={{market_name}}",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"tennis.game_handicap": {
+		"Name": "Game Handicap (Super Tie Break counts as 1 game)",
+		"Primary": true,
+		"Description": "Predict the result after the handicap spread has been applied to the games the players have won. All bets will STAND if there is a Super Tie Break, with the Super Tie Break counting as 1 game.",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default\u0026period=wo\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"tennis.game_handicap_in_set": {
+		"Name": "Set {{set}} - game handicap",
+		"Variables": [
+			"set",
+			"handicap"
+		],
+		"Split": "period=set{{set}}\u0026period=wo",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"tennis.game_handicap_void_supertiebreak": {
+		"Name": "Game Handicap (VOID if 3rd Set Super Tie Break)",
+		"Primary": true,
+		"Description": "Predict the result after the handicap spread has been applied to the games the players have won. Void if 3rd set Super Tie Break. A third set 10-point regular Tie Break in majors is not a Super Tie Break.",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default\u0026period=wo\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"tennis.outright": {
+		"Name": "{{market_name}}",
+		"Variables": [
+			"market_name"
+		],
+		"Split": "market_name={{market_name}}",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"tennis.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"tennis.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"tennis.point_in_game_and_set": {
+		"Name": "Set {{set}} game {{game}} - point {{point}} winner",
+		"Variables": [
+			"set",
+			"game",
+			"point"
+		],
+		"Split": "period=set{{set}}\u0026game={{game}}\u0026point={{point}}\u0026period=wo",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"tennis.race_to_games_in_set": {
+		"Name": "Set {{set}} - race to game {{game}}",
+		"Variables": [
+			"set",
+			"game"
+		],
+		"Split": "period=set{{set}}\u0026game={{game}}\u0026period=wo",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"tennis.race_to_points_in_set_and_game": {
+		"Name": "Set {{set}} game {{game}} - race to {{point}} points",
+		"Variables": [
+			"set",
+			"game",
+			"point"
+		],
+		"Split": "period=set{{set}}\u0026game={{game}}\u0026point={{point}}\u0026period=wo",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"tennis.set_correct_score": {
+		"Name": "Set {{set}} - correct score",
+		"Variables": [
+			"set"
+		],
+		"Split": "period=set{{set}}\u0026period=wo",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"tennis.set_game_correct_score": {
+		"Name": "Set {{set}} Game {{game}} - correct score",
+		"Variables": [
+			"set",
+			"game"
+		],
+		"Split": "period=set{{set}}\u0026period=game{{game}}\u0026period=wo",
+		"Outcomes": {
+			"away_to_0": "{{away}} to 0",
+			"away_to_15": "{{away}} to 15",
+			"away_to_30": "{{away}} to 30",
+			"away_to_40": "{{away}} to 40",
+			"home_to_0": "{{home}} to 0",
+			"home_to_15": "{{home}} to 15",
+			"home_to_30": "{{home}} to 30",
+			"home_to_40": "{{home}} to 40"
+		}
+	},
+	"tennis.set_game_to_deuce": {
+		"Name": "Set {{set}} Game {{game}} - to deuce",
+		"Description": "Will the stated game be played 'to deuce'? i.e. a score of 40-40 anytime",
+		"Variables": [
+			"set",
+			"game"
+		],
+		"Split": "period=set{{set}}\u0026period=game{{game}}\u0026period=wo",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"tennis.set_handicap": {
+		"Name": "Set Handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default\u0026period=wo",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"tennis.set_tiebreak_total_points": {
+		"Name": "Set {{set}} tiebreak - total points",
+		"Variables": [
+			"total",
+			"set"
+		],
+		"Split": "period=set{{set}}\u0026period=wo",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"tennis.team_to_win_a_set": {
+		"Name": "{{team}} to win a set",
+		"Description": "Will the named player win at least one set?",
+		"Variables": [
+			"team"
+		],
+		"Split": "period=default\u0026period=wo\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5\u0026team={{team}}",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"tennis.total_games": {
+		"Name": "Total Games (Super Tie Break counts as 1 game) ",
+		"Primary": true,
+		"Description": "Total number of games won by both players combined e.g. 6-2, 3-6, 7-6 = 30 (16+14). All bets will STAND if there is a Super Tie Break, with the Super Tie Break counting as 1 game.",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default\u0026period=wo\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"tennis.total_games_in_set": {
+		"Name": "Total games in set {{set}}",
+		"Variables": [
+			"set",
+			"total"
+		],
+		"Split": "period=set{{set}}\u0026period=wo",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"tennis.total_games_void_supertiebreak": {
+		"Name": "Total Games (VOID if 3rd Set Super Tie Break)",
+		"Primary": true,
+		"Description": "Total number of games won by both players combined e.g. 6-2, 3-6, 7-6 = 30 (16+14). Void if 3rd set Super Tie Break. A third set 10-point regular Tie Break in majors is not a Super Tie Break.",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default\u0026period=wo\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"tennis.total_sets": {
+		"Name": "Total sets",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default\u0026period=wo",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"tennis.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default\u0026period=wo\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"tennis.winner_and_total": {
+		"Name": "Winner \u0026 total",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default\u0026period=wo\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"away_and_over": "{{away}} \u0026 over {{total}}",
+			"away_and_under": "{{away}} \u0026 under {{total}}",
+			"home_and_over": "{{home}} \u0026 over {{total}}",
+			"home_and_under": "{{home}} \u0026 under {{total}}"
+		}
+	},
+	"tennis.winner_in_game_and_set": {
+		"Name": "Winner in set {{set}} game {{game}}",
+		"Variables": [
+			"set",
+			"game"
+		],
+		"Split": "period=set{{set}}\u0026game={{game}}\u0026period=wo",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"tennis.winner_of_set": {
+		"Name": "Winner of set {{set}}",
+		"Variables": [
+			"set"
+		],
+		"Split": "period=set{{set}}\u0026period=wo",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"tennis.with_tiebreak": {
+		"Name": "Will there be a tiebreak",
+		"Variables": [],
+		"Split": "period=default\u0026period=wo",
+		"Outcomes": {
+			"no": "No",
+			"yes": "Yes"
+		}
+	},
+	"volleyball.correct_score": {
+		"Name": "Correct score",
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"dynamic.score": "{{score}}"
+		}
+	},
+	"volleyball.handicap": {
+		"Name": "Point handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"volleyball.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"volleyball.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"volleyball.set_handicap": {
+		"Name": "Set handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"volleyball.total_sets": {
+		"Name": "Total sets",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"volleyball.totals": {
+		"Name": "Total points",
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default\u0026period=set1\u0026period=set2\u0026period=set3\u0026period=set4\u0026period=set5",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"volleyball.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"waterpolo.handicap": {
+		"Name": "Handicap",
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"waterpolo.match_odds": {
+		"Name": "Match Odds",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=ft",
+		"Outcomes": {
+			"away": "{{away}}",
+			"draw": "Draw",
+			"home": "{{home}}"
+		}
+	},
+	"waterpolo.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"waterpolo.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"waterpolo.totals": {
+		"Name": "Total",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=ft",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"wild_rift.handicap": {
+		"Name": "Handicap",
+		"Primary": true,
+		"Variables": [
+			"handicap"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}} {{-handicap}}",
+			"home": "{{home}} {{handicap}}"
+		}
+	},
+	"wild_rift.total": {
+		"Name": "Total",
+		"Primary": true,
+		"Variables": [
+			"total"
+		],
+		"Split": "period=default",
+		"Outcomes": {
+			"over": "Over {{total}}",
+			"under": "Under {{total}}"
+		}
+	},
+	"wild_rift.winner": {
+		"Name": "Winner",
+		"Primary": true,
+		"Variables": [],
+		"Split": "period=default",
+		"Outcomes": {
+			"away": "{{away}}",
+			"home": "{{home}}"
+		}
+	},
+	"winter_sports.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"winter_sports.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	},
+	"world_lottery.outright.v2": {
+		"Name": "{{name}}",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic.outcome": "{{outcome}}"
+		}
+	},
+	"world_lottery.outright.v3": {
+		"Name": "",
+		"Variables": [],
+		"Split": "default",
+		"Outcomes": {
+			"dynamic": ""
+		}
+	}
+}

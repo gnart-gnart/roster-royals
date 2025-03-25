@@ -52,56 +52,17 @@ class GroupInvite(models.Model):
     ], default='pending')
 
     class Meta:
-        unique_together = ('group', 'to_user') 
+        unique_together = ('group', 'to_user')
 
-class GroupBet(models.Model):
-    """A bet available in a betting group that members can place wagers on"""
-    group = models.ForeignKey(BettingGroup, on_delete=models.CASCADE, related_name='bets')
-    event_key = models.CharField(max_length=100)
-    market_key = models.CharField(max_length=100)
-    
-    # Store event details for display purposes
+class GroupEvent(models.Model):
+    """Model for a betting event posted to a group."""
+    group = models.ForeignKey(BettingGroup, on_delete=models.CASCADE, related_name='group_events')
+    event_key = models.CharField(max_length=255)
+    event_id = models.IntegerField(null=True, blank=True)  # New field to store the Cloudbet event ID
     event_name = models.CharField(max_length=255)
-    market_name = models.CharField(max_length=255)
-    
-    # Metadata
+    sport = models.CharField(max_length=100)
+    market_data = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    active = models.BooleanField(default=True)
-    
-    # Additional event info
-    start_time = models.DateTimeField()
-    sport = models.CharField(max_length=50)
-    
-    def __str__(self):
-        return f"{self.event_name} - {self.market_name}"
 
-class BetOutcome(models.Model):
-    """An outcome option for a particular group bet"""
-    group_bet = models.ForeignKey(GroupBet, on_delete=models.CASCADE, related_name='outcomes')
-    outcome_key = models.CharField(max_length=100)
-    outcome_name = models.CharField(max_length=255)
-    odds = models.FloatField()
-    
     def __str__(self):
-        return f"{self.outcome_name} ({self.odds})"
-
-class MemberBet(models.Model):
-    """A bet placed by a group member on a specific outcome"""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bets')
-    outcome = models.ForeignKey(BetOutcome, on_delete=models.CASCADE, related_name='member_bets')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    placed_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=[
-        ('pending', 'Pending'),
-        ('won', 'Won'),
-        ('lost', 'Lost'),
-        ('cancelled', 'Cancelled')
-    ], default='pending')
-    
-    @property
-    def potential_winnings(self):
-        return self.amount * self.outcome.odds
-    
-    def __str__(self):
-        return f"{self.user.username} bet {self.amount} on {self.outcome.outcome_name}"
+        return f'{self.event_name} ({self.sport}) in group {self.group.name}' 

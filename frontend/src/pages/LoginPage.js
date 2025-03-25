@@ -6,10 +6,17 @@ import {
   Container,
   TextField,
   Alert,
+  Grid,
+  InputAdornment,
+  IconButton,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { login, register } from '../services/auth';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -21,7 +28,7 @@ function LoginPage() {
     email: '',
     password: '',
   });
-
+  const [showPassword, setShowPassword] = useState(false);
 
   // Get the API base URL from the environment variables
   const API_URL = process.env.REACT_APP_API_URL;
@@ -115,103 +122,296 @@ function LoginPage() {
     }
   };
 
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
-    <Container component="main" maxWidth="xs">
-      <Box sx={{ marginTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Typography
-          component="h1"
-          variant="h1"
-          sx={{
-            color: '#60a5fa',
-            fontWeight: '700',
-            marginBottom: 6,
-            textAlign: 'center',
-            fontSize: { xs: '3.5rem', sm: '4.5rem' },
-            textShadow: '0 2px 10px rgba(96, 165, 250, 0.3)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1,
-          }}
-        >
-          Roster Royals
-        </Typography>
-        
-        {error && <Alert severity="error" sx={{ mt: 2, width: '100%' }}>{error}</Alert>}
-        
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            label="Username"
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-          />
+    <Grid container sx={{ minHeight: '100vh', bgcolor: '#080a10' }}>
+      {/* Left side - Login Form */}
+      <Grid item xs={12} md={6} sx={{ p: 4, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <Box sx={{ maxWidth: 400, mx: 'auto', width: '100%' }}>
+          <Typography variant="h5" sx={{ mb: 4, fontWeight: 'bold', color: '#f8fafc' }}>
+            Sign in
+          </Typography>
           
-          {(!isLogin || googleEmail) && (
+          {error && <Alert severity="error" sx={{ mb: 2, width: '100%' }}>{error}</Alert>}
+          
+          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
             <TextField
               margin="normal"
               required
               fullWidth
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              disabled={!!googleEmail}
-              InputProps={{
-                sx: { backgroundColor: googleEmail ? 'rgba(0, 0, 0, 0.1)' : 'inherit' }
+              placeholder="Username"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              variant="outlined"
+              sx={{
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: 'rgba(15, 23, 42, 0.8)',
+                  borderRadius: '8px',
+                  '& fieldset': {
+                    borderColor: 'rgba(96, 165, 250, 0.2)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(96, 165, 250, 0.5)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#8b5cf6',
+                    borderWidth: '2px',
+                  },
+                }
               }}
             />
-          )}
-          
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            label="Password"
-            type="password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-          />
-          
-          {isLogin && !googleEmail && (
-            <Box sx={{ mt: 2, width: '100%' }}>
-              <GoogleOAuthProvider clientId="1065387003454-mrilapnplql4coaj3ebvv4jcut0a1rr3.apps.googleusercontent.com">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => setError('Google login failed')}
-                  theme="filled_black"
-                  size="large"
-                  width="100%"
-                  text="Sign in with Google"
-                />
-              </GoogleOAuthProvider>
-            </Box>
-          )}
-          
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-          >
-            {isLogin ? 'Sign In' : 'Register'}
-          </Button>
-          
-          {!googleEmail && (
-            <Button
+            
+            {(!isLogin || googleEmail) && (
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                placeholder="Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                disabled={!!googleEmail}
+                variant="outlined"
+                sx={{
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: googleEmail ? 'rgba(0, 0, 0, 0.1)' : 'rgba(15, 23, 42, 0.8)',
+                    borderRadius: '8px',
+                    '& fieldset': {
+                      borderColor: 'rgba(96, 165, 250, 0.2)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(96, 165, 250, 0.5)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#8b5cf6',
+                      borderWidth: '2px',
+                    },
+                  }
+                }}
+              />
+            )}
+            
+            <TextField
+              margin="normal"
+              required
               fullWidth
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setFormData({ username: '', email: '', password: '' });
+              placeholder="Password"
+              type={showPassword ? "text" : "password"}
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleTogglePasswordVisibility}
+                      edge="end"
+                      sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                    >
+                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
               }}
-              sx={{ textAlign: 'center' }}
+              variant="outlined"
+              sx={{
+                mb: 1,
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: 'rgba(15, 23, 42, 0.8)',
+                  borderRadius: '8px',
+                  '& fieldset': {
+                    borderColor: 'rgba(96, 165, 250, 0.2)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(96, 165, 250, 0.5)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#8b5cf6',
+                    borderWidth: '2px',
+                  },
+                }
+              }}
+            />
+            
+            {isLogin && (
+              <Typography 
+                variant="body2" 
+                sx={{ textAlign: 'right', mb: 2, color: '#10b981', cursor: 'pointer' }}
+              >
+                Forgot password?
+              </Typography>
+            )}
+            
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ 
+                mt: 1, 
+                mb: 3, 
+                py: 1.5,
+                backgroundColor: '#8b5cf6',
+                borderRadius: '8px',
+                '&:hover': {
+                  backgroundColor: '#7c3aed',
+                }
+              }}
             >
-              {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+              {isLogin ? 'Sign in' : 'Register'}
             </Button>
-          )}
+            
+            <Box sx={{ textAlign: 'center', position: 'relative', mb: 3 }}>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  position: 'relative', 
+                  bgcolor: '#080a10', 
+                  px: 2, 
+                  zIndex: 1,
+                  color: 'rgba(255, 255, 255, 0.5)'
+                }}
+              >
+                OR
+              </Typography>
+              <Box 
+                sx={{ 
+                  position: 'absolute', 
+                  top: '50%', 
+                  left: 0, 
+                  right: 0, 
+                  height: '1px', 
+                  bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  zIndex: 0
+                }} 
+              />
+            </Box>
+            
+            {isLogin && !googleEmail && (
+              <Box sx={{ mb: 2 }}>
+                <GoogleOAuthProvider clientId="1065387003454-mrilapnplql4coaj3ebvv4jcut0a1rr3.apps.googleusercontent.com">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => setError('Google login failed')}
+                    theme="filled_black"
+                    size="large"
+                    width="100%"
+                    text="Sign in with Google"
+                  />
+                </GoogleOAuthProvider>
+              </Box>
+            )}
+            
+            {!googleEmail && (
+              <Button
+                fullWidth
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setFormData({ username: '', email: '', password: '' });
+                }}
+                sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+              >
+                {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+              </Button>
+            )}
+          </Box>
         </Box>
-      </Box>
-    </Container>
+      </Grid>
+      
+      {/* Right side - Promotional Content */}
+      <Grid 
+        item 
+        md={6} 
+        sx={{ 
+          display: { xs: 'none', md: 'flex' }, 
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#080a10',
+          p: 6,
+          position: 'relative'
+        }}
+      >
+        <Box sx={{ maxWidth: 500, textAlign: 'center' }}>
+          <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 2, color: '#f8fafc' }}>
+            BEAT THE ODDS
+          </Typography>
+          <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 4, color: '#10b981' }}>
+            WIN TOGETHER
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 6, color: 'rgba(255, 255, 255, 0.7)' }}>
+            Join friends in private leagues and prove your sports knowledge
+          </Typography>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
+            <Box 
+              component="div" 
+              sx={{ 
+                width: 60, 
+                height: 60, 
+                borderRadius: '50%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                border: '2px solid #10b981',
+                color: '#10b981',
+                fontSize: '24px'
+              }}
+            >
+              ★
+            </Box>
+            <Box 
+              component="div" 
+              sx={{ 
+                width: 60, 
+                height: 60, 
+                borderRadius: '50%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                border: '2px solid #8b5cf6',
+                color: '#8b5cf6',
+                fontSize: '24px'
+              }}
+            >
+              🏆
+            </Box>
+            <Box 
+              component="div" 
+              sx={{ 
+                width: 60, 
+                height: 60, 
+                borderRadius: '50%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                border: '2px solid #60a5fa',
+                color: '#60a5fa',
+                fontSize: '24px'
+              }}
+            >
+              $
+            </Box>
+          </Box>
+          
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              display: 'block', 
+              mt: 6, 
+              fontStyle: 'italic',
+              color: 'rgba(255, 255, 255, 0.5)'
+            }}
+          >
+            "The ultimate platform for competing with friends on sports predictions"
+          </Typography>
+        </Box>
+      </Grid>
+    </Grid>
   );
 }
 
