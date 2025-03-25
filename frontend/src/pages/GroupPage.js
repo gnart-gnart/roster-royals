@@ -62,8 +62,8 @@ import {
   handleFriendRequest, 
   handleGroupInvite, 
   markNotificationsRead,
-  placeBet 
-  getGroupBets,
+  placeBet, 
+  getGroupEvents,
   addBet,
   deleteBet,
 } from '../services/api';
@@ -151,17 +151,27 @@ function GroupPage() {
 
   const loadGroupBets = async () => {
     try {
-      // For now, we'll just use the regular getGroup call which might include bets
-      // In a real implementation, you might want a dedicated API endpoint for this
-      const groupData = await getGroup(id);
-      if (groupData.bets) {
-        setBets(groupData.bets);
+      // Get events from the dedicated endpoint
+      const eventsData = await getGroupEvents(id);
+      if (eventsData && Array.isArray(eventsData)) {
+        setBets(eventsData.map(event => ({
+          id: event.id,
+          event_key: event.event_key,
+          event_name: event.event_name,
+          sport: event.sport,
+          marketKey: event.market_data?.marketKey,
+          outcomeKey: event.market_data?.outcomeKey,
+          odds: event.market_data?.odds,
+          amount: event.market_data?.amount,
+          status: 'ACTIVE',
+          created_at: event.created_at
+        })));
       } else {
-        // If the API doesn't return bets, we'll keep an empty array
         setBets([]);
       }
     } catch (err) {
       console.error('Failed to load group bets:', err);
+      setBets([]);
     }
   };
 

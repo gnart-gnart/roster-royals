@@ -38,19 +38,19 @@ function PlaceBetPage() {
   useEffect(() => {
     const fetchEventDetails = async () => {
       try {
-        // This is a simplified approach - in a real implementation, 
-        // you would have an endpoint to get a specific event by key
         setFetchingEvent(true);
         
-        // For now, this remains as a placeholder
-        // In a real implementation, you would call an API like:
-        // const event = await getEventDetails(eventKey);
+        // For now, set placeholder event details since competition key format may not be compatible
+        // with the API's expectations
+        console.log(`EventKey format: ${eventKey}`);
         
-        // Instead we'll simulate finding the event in a collection
+        // Set default event details without making API call that's likely to fail
         setEventDetails({
           key: eventKey,
-          name: "Sample Event", // This would come from the API
-          sport: "Basketball", // This would come from the API
+          name: eventKey.includes('-v-') 
+            ? eventKey.replace('-v-', ' vs. ').replace(/c\d+-/g, '').split('/').pop()
+            : "Event " + eventKey,
+          sport: "Baseball", // Default since we're in baseball section
           markets: {
             "moneyline": {
               name: "Moneyline",
@@ -64,10 +64,25 @@ function PlaceBetPage() {
           outcomes: ["home", "away", "draw"]
         });
         
-        // Set default odds based on event
+        // Set default odds
         setOdds('2.5');
+        
       } catch (err) {
         console.error('Failed to fetch event details:', err);
+        // Set default placeholder data
+        setEventDetails({
+          key: eventKey,
+          name: "Event Details Not Available",
+          sport: "Unknown",
+          markets: {
+            "moneyline": {
+              name: "Moneyline",
+              odds: 2.5
+            }
+          },
+          outcomes: ["home", "away", "draw"]
+        });
+        setOdds('2.5');
       } finally {
         setFetchingEvent(false);
       }
@@ -88,7 +103,9 @@ function PlaceBetPage() {
         marketKey: marketKey,
         outcomeKey: outcomeKey,
         amount: parseFloat(amount),
-        odds: parseFloat(odds)
+        odds: parseFloat(odds),
+        eventName: eventDetails?.name || "Unknown Event",
+        sport: eventDetails?.sport || "Unknown Sport"
       };
       const result = await placeBet(betData);
       setSuccessMsg('Bet added to group successfully! Bet ID: ' + result.betId);

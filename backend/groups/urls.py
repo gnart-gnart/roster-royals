@@ -17,4 +17,5 @@ urlpatterns = [
     path('groups/bets/<str:sport>/', views.get_available_bets, name='get_sport_bets'),
     path('groups/bets/test/', views.test_bets_endpoint, name='test_bets'),
     path('groups/bets/', views.get_available_bets, name='get_available_bets'),
+    path('groups/<int:group_id>/events/', views.get_group_events, name='get-group-events'),
 ] 

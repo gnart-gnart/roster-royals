@@ -2,7 +2,7 @@ from rest_framework import status, generics
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .models import BettingGroup, User, GroupInvite, Bet, UserBet
+from .models import BettingGroup, User, GroupInvite, Bet, UserBet, GroupEvent
 from users.models import Notification  # Import from users app instead
 from .serializers import BettingGroupSerializer, GroupEventSerializer
 from .cloudbet import CloudbetClient
@@ -293,43 +293,70 @@ def get_competition_events(request, competition_key):
 @permission_classes([IsAuthenticated])
 def post_group_event(request):
     """API endpoint to post a betting event to a group."""
-    group_id = request.data.get('groupId')
-    event_key = request.data.get('event_key')
-    event_name = request.data.get('event_name')
-    sport = request.data.get('sport')
-    market_data = request.data.get('market_data', None)
-    event_id = request.data.get('event_id', None)  # New field
-
-    # Check required fields
-    if not all([group_id, event_key, event_name, sport]):
-        return Response({'error': 'Missing required fields: groupId, event_key, event_name, and sport are required.'}, status=400)
-
     try:
-        group = BettingGroup.objects.get(id=group_id)
-    except BettingGroup.DoesNotExist:
-        return Response({'error': 'Group not found.'}, status=404)
-
-    # Only allow group president to post events
-    if request.user != group.president:
-        return Response({'error': 'Only the group president can post events.'}, status=403)
-
-    # Build data for serializer, include event_id if provided
-    data = {
-        'group': group.id,
-        'event_key': event_key,
-        'event_id': event_id,
-        'event_name': event_name,
-        'sport': sport,
-        'market_data': market_data
-    }
-
-    serializer = GroupEventSerializer(data=data)
-    if serializer.is_valid():
+        # Get data from request
+        group_id = request.data.get('group_id')
+        event_key = request.data.get('event_key')
+        event_name = request.data.get('event_name')
+        sport = request.data.get('sport')
+        market_data = request.data.get('market_data')
+        
+        # Validate required fields
+        if not all([group_id, event_key, event_name, sport]):
+            return Response({'error': 'Missing required fields'}, status=400)
+        
+        # Get the group
         try:
-            serializer.save()
-            return Response(serializer.data, status=201)
-        except Exception as e:
-            logger.error("Exception during saving GroupEvent: %s", str(e), exc_info=True)
-            return Response({'error': 'Failed to save GroupEvent.', 'details': str(e)}, status=500)
-    else:
-        return Response(serializer.errors, status=400)
+            group = BettingGroup.objects.get(id=group_id)
+        except BettingGroup.DoesNotExist:
+            return Response({'error': 'Group not found'}, status=404)
+            
+        # Check if user is a member of the group or is president
+        if not (request.user in group.members.all() or request.user == group.president):
+            return Response({'error': 'You are not authorized to post events to this group'}, status=403)
+            
+        # Create the group event
+        group_event = GroupEvent.objects.create(
+            group=group,
+            event_key=event_key,
+            event_name=event_name,
+            sport=sport,
+            market_data=market_data
+        )
+        
+        # Serialize and return the created event
+        serializer = GroupEventSerializer(group_event)
+        return Response({
+            'message': 'Event successfully posted to group',
+            'betId': group_event.id,
+            'event': serializer.data
+        }, status=201)
+        
+    except Exception as e:
+        logger.error(f"Error posting group event: {str(e)}", exc_info=True)
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_group_events(request, group_id):
+    """Get all betting events for a specific group."""
+    try:
+        # Ensure the group exists
+        group = BettingGroup.objects.get(id=group_id)
+        
+        # Ensure user is a member of the group
+        if request.user not in group.members.all():
+            return Response({'error': 'You are not a member of this group'}, status=403)
+            
+        # Get all events for this group
+        events = GroupEvent.objects.filter(group=group).order_by('-created_at')
+        
+        # Serialize and return the events
+        serializer = GroupEventSerializer(events, many=True)
+        return Response(serializer.data)
+        
+    except BettingGroup.DoesNotExist:
+        return Response({'error': 'Group not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error fetching group events: {str(e)}", exc_info=True)
+        return Response({'error': str(e)}, status=500)
