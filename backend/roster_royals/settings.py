@@ -129,9 +129,9 @@ AUTH_USER_MODEL = 'users.User'
 # Disable default group model
 # DJANGO_AUTH_NO_GROUP = True
 
-# Cloudbet API settings
-CLOUDBET_API_KEY = os.environ.get('CLOUDBET_API_KEY')
-CLOUDBET_API_BASE_URL = 'https://sports-api.cloudbet.com/pub/v2/'  # Include complete path
+# Odds API settings
+ODDS_API_KEY = os.environ.get('ODDS_API_KEY')
+ODDS_API_BASE_URL = 'https://api.the-odds-api.com'  # Base URL for the Odds API
 
 # Add to your existing settings
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_OAUTH2_CLIENT_ID')

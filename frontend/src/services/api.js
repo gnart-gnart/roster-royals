@@ -27,15 +27,15 @@ const handleResponse = async (response) => {
   return response.json();
 };
 
-export const createGroup = async (groupData) => {
-  const response = await fetch(`${API_URL}/groups/create/`, {
+export const createLeague = async (leagueData) => {
+  const response = await fetch(`${API_URL}/leagues/create/`, {
     method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify(groupData),
+    body: JSON.stringify(leagueData),
   });
 
   if (!response.ok) {
-    throw new Error('Failed to create group');
+    throw new Error('Failed to create league');
   }
 
   return response.json();
@@ -88,13 +88,13 @@ export const getFriends = async () => {
   return handleResponse(response);
 };
 
-export const getGroups = async () => {
-  const response = await fetch(`${API_URL}/groups/`, {
+export const getLeagues = async () => {
+  const response = await fetch(`${API_URL}/leagues/`, {
     headers: getHeaders(),
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch groups');
+    throw new Error('Failed to fetch leagues');
   }
 
   return response.json();
@@ -150,9 +150,9 @@ export const removeFriend = async (friendId) => {
   return response.json();
 };
 
-export const inviteToGroup = async (groupId, userId) => {
-  console.log(`Sending invite for group ${groupId} to user ${userId}`);
-  const response = await fetch(`${API_URL}/groups/${groupId}/invite/${userId}/`, {
+export const inviteToLeague = async (leagueId, userId) => {
+  console.log(`Sending invite for league ${leagueId} to user ${userId}`);
+  const response = await fetch(`${API_URL}/leagues/${leagueId}/invite/${userId}/`, {
     method: 'POST',
     headers: getHeaders(),
   });
@@ -167,8 +167,8 @@ export const inviteToGroup = async (groupId, userId) => {
   return data;
 };
 
-export const handleGroupInvite = async (inviteId, action) => {
-  const response = await fetch(`${API_URL}/group-invites/${inviteId}/handle/`, {
+export const handleLeagueInvite = async (inviteId, action) => {
+  const response = await fetch(`${API_URL}/league-invites/${inviteId}/handle/`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({ action }),
@@ -181,20 +181,27 @@ export const handleGroupInvite = async (inviteId, action) => {
   return response.json();
 };
 
-export const getGroup = async (groupId) => {
+export const getLeague = async (leagueId) => {
   try {
-    const response = await fetch(`${API_URL}/groups/${groupId}/`, {
+    const response = await fetch(`${API_URL}/leagues/${leagueId}/`, {
       headers: getHeaders(),
     });
     return response.json();
   } catch (error) {
-    console.error('Error fetching group:', error);
+    console.error('Error fetching league:', error);
     throw error;
   }
 };
 
+export const browseMarket = async () => {
+  const response = await fetch(`${API_URL}/market/browse/`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
 export const getAvailableSports = async () => {
-  const response = await fetch(`${API_URL}/groups/bets/`, {
+  const response = await fetch(`${API_URL}/leagues/bets/`, {
     headers: getHeaders(),
   });
   return handleResponse(response);
@@ -203,21 +210,26 @@ export const getAvailableSports = async () => {
 export const getAvailableSportEvents = async (sport) => {
   // If sport parameter is provided, fetch data for that sport using the new endpoint
   const endpoint = sport ? 
-    `${API_URL}/groups/bets/${sport}/` : 
-    `${API_URL}/groups/bets/`;
+    `${API_URL}/leagues/bets/${sport}/` : 
+    `${API_URL}/leagues/bets/`;
   
   const response = await fetch(endpoint, {
     headers: getHeaders(),
   });
   
-  const data = await handleResponse(response);
-  
-  // Previously filtered events, now removed because data contains sport info with categories.
-  return data;
+  return handleResponse(response);
 };
 
 export const getCompetitionEvents = async (competitionKey) => {
-  const endpoint = `${API_URL}/groups/bets/competition/${competitionKey}/`;
+  const endpoint = `${API_URL}/leagues/bets/competition/${competitionKey}/`;
+  const response = await fetch(endpoint, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
+export const getEventDetails = async (eventId) => {
+  const endpoint = `${API_URL}/leagues/bets/events/${eventId}/`;
   const response = await fetch(endpoint, {
     headers: getHeaders(),
   });
@@ -225,7 +237,7 @@ export const getCompetitionEvents = async (competitionKey) => {
 };
 
 /**
- * Place a bet in a group
+ * Place a bet in a league
  * @param {Object} betData - The bet data
  * @returns {Promise<Object>} - A promise that resolves to the created bet
  */
@@ -234,11 +246,11 @@ export const placeBet = async (betData) => {
     console.log(`Placing bet with data:`, betData);
 
     // Use getHeaders to stay consistent with other API calls
-    const response = await fetch(`${API_URL}/groups/bets/post_group_event/`, {
+    const response = await fetch(`${API_URL}/leagues/bets/post_league_event/`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
-        group_id: betData.groupId,
+        league_id: betData.leagueId,
         event_key: betData.eventKey,
         event_name: betData.eventName,
         sport: betData.sport,
@@ -248,13 +260,9 @@ export const placeBet = async (betData) => {
           odds: betData.odds,
           amount: betData.amount
         }
-      })
+      }),
     });
 
-    // Debug log the response
-    console.log(`API Response status:`, response.status);
-    
-    // Use the common handler to process errors
     return handleResponse(response);
   } catch (error) {
     console.error('Error placing bet:', error);
@@ -262,24 +270,10 @@ export const placeBet = async (betData) => {
   }
 };
 
-/**
- * Fetch all betting events for a specific group
- * @param {number} groupId - The ID of the group to fetch events for
- * @returns {Promise<Array>} - A promise that resolves to an array of group events
- */
-export const getGroupEvents = async (groupId) => {
-  try {
-    console.log(`Fetching events for group ${groupId}`);
-    const response = await fetch(`${API_URL}/groups/${groupId}/events/`, {
-      method: 'GET',
-      headers: getHeaders()
-    });
-    
-    console.log(`Group events response status:`, response.status);
-    return handleResponse(response);
-  } catch (error) {
-    console.error('Error fetching group events:', error);
-    throw error;
-  }
+export const getLeagueEvents = async (leagueId) => {
+  const response = await fetch(`${API_URL}/leagues/${leagueId}/events/`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
 };
 

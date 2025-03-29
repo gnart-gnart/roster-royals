@@ -46,7 +46,7 @@ class Notification(models.Model):
     notification_type = models.CharField(max_length=50, choices=[
         ('friend_request', 'Friend Request'),
         ('friend_accepted', 'Friend Request Accepted'),
-        ('group_invite', 'Group Invitation'),
+        ('league_invite', 'League Invitation'),
         ('info', 'Information'),
     ])
     created_at = models.DateTimeField(auto_now_add=True)
@@ -60,5 +60,5 @@ class Notification(models.Model):
     def save(self, *args, **kwargs):
         # Automatically set requires_action based on notification type
         if not self.id:  # Only on creation
-            self.requires_action = self.notification_type in ['friend_request', 'group_invite']
+            self.requires_action = self.notification_type in ['friend_request', 'league_invite']
         super().save(*args, **kwargs) 

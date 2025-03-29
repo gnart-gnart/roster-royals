@@ -1,9 +1,9 @@
 from django.contrib import admin
-from .models import BettingGroup, Bet, UserBet, GroupInvite
+from .models import League, Bet, UserBet, LeagueInvite, LeagueEvent
 
-class BettingGroupAdmin(admin.ModelAdmin):
-    list_display = ('name', 'sports', 'president', 'created_at')
-    search_fields = ('name', 'president__username')
+class LeagueAdmin(admin.ModelAdmin):
+    list_display = ('name', 'sports', 'captain', 'created_at')
+    search_fields = ('name', 'captain__username')
     filter_horizontal = ('members',)
 
 class BetAdmin(admin.ModelAdmin):
@@ -16,7 +16,13 @@ class UserBetAdmin(admin.ModelAdmin):
     list_filter = ('choice',)
     search_fields = ('user__username',)
 
-admin.site.register(BettingGroup, BettingGroupAdmin)
+class LeagueEventAdmin(admin.ModelAdmin):
+    list_display = ('event_name', 'sport', 'league', 'created_at')
+    search_fields = ('event_name', 'league__name')
+    list_filter = ('sport',)
+
+admin.site.register(League, LeagueAdmin)
 admin.site.register(Bet, BetAdmin)
 admin.site.register(UserBet, UserBetAdmin)
-admin.site.register(GroupInvite) 
+admin.site.register(LeagueInvite)
+admin.site.register(LeagueEvent, LeagueEventAdmin) 
