@@ -8,6 +8,7 @@ from .serializers import LeagueSerializer, LeagueEventSerializer
 from .odds import OddsApiClient
 import datetime
 import logging
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -370,6 +371,10 @@ def browse_market(request):
     """
     try:
         client = OddsApiClient()
+        # Log API key for debugging (mask most of it for security)
+        masked_key = client.api_key[:4] + '...' + client.api_key[-4:] if len(client.api_key) > 8 else '***'
+        logger.debug(f"Using Odds API key: {masked_key}")
+        
         sports_data = client.get_sports()
         
         logger.debug(f"Retrieved sports data: {sports_data}")
@@ -378,7 +383,12 @@ def browse_market(request):
             'message': 'Sports data retrieved successfully',
             'data': sports_data
         })
-        
+    except requests.exceptions.HTTPError as http_err:
+        error_msg = f"HTTP error occurred: {http_err}"
+        if hasattr(http_err.response, 'status_code') and http_err.response.status_code == 422:
+            error_msg = f"API key validation error (422): {http_err.response.text if hasattr(http_err.response, 'text') else str(http_err)}"
+        logger.error(error_msg)
+        return Response({'error': error_msg}, status=500)    
     except Exception as e:
         logger.error(f"Error in browse_market: {str(e)}", exc_info=True)
         return Response({'error': str(e)}, status=500)

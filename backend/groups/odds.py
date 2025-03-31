@@ -39,29 +39,41 @@ class OddsApiClient:
         url = f'{self.base_url}/v4/sports'
         params = {
             'api_key': self.api_key,
-            'all': all_sports
+            'all': str(all_sports).lower()  # Convert bool to string 'true' or 'false'
         }
         
-        logger.debug(f"Fetching sports from Odds API: {url}")
+        logger.debug(f"Fetching sports from Odds API: {url} with params: {params}")
         
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        
-        sports_data = response.json()
-        
-        # Group sports by their group attribute
-        grouped_sports = {}
-        for sport in sports_data:
-            if sport['active']:  # Only include active sports
-                group = sport['group']
-                if group not in grouped_sports:
-                    grouped_sports[group] = []
-                grouped_sports[group].append(sport)
-        
-        return {
-            'grouped_sports': grouped_sports,
-            'sports': sports_data
-        }
+        try:
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            
+            sports_data = response.json()
+            
+            # Group sports by their group attribute
+            grouped_sports = {}
+            for sport in sports_data:
+                if sport['active']:  # Only include active sports
+                    group = sport['group']
+                    if group not in grouped_sports:
+                        grouped_sports[group] = []
+                    grouped_sports[group].append(sport)
+            
+            logger.debug(f"Successfully fetched {len(sports_data)} sports, grouped into {len(grouped_sports)} categories")
+            
+            return {
+                'grouped_sports': grouped_sports,
+                'sports': sports_data
+            }
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error when fetching sports: {e}, Response: {e.response.text if hasattr(e.response, 'text') else 'No response text'}")
+            raise
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request error when fetching sports: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error when fetching sports: {e}")
+            raise
 
     def get_sport_events(self, sport_key):
         """
@@ -84,27 +96,39 @@ class OddsApiClient:
         
         logger.debug(f"Fetching events for sport {sport_key} from Odds API: {url}")
         
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        
-        events_data = response.json()
-        
-        # Format events data with necessary information
-        formatted_events = []
-        for event in events_data:
-            formatted_event = {
-                'id': event['id'],
-                'sport_key': event['sport_key'],
-                'sport_title': sport_key,  # We might want to fetch this separately
-                'commence_time': event['commence_time'],
-                'home_team': event['home_team'],
-                'away_team': event['away_team'],
-                'event_name': f"{event['away_team']} @ {event['home_team']}",
-                'bookmakers': event['bookmakers']
-            }
-            formatted_events.append(formatted_event)
-        
-        return formatted_events
+        try:
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            
+            events_data = response.json()
+            
+            # Format events data with necessary information
+            formatted_events = []
+            for event in events_data:
+                formatted_event = {
+                    'id': event['id'],
+                    'sport_key': event['sport_key'],
+                    'sport_title': sport_key,  # We might want to fetch this separately
+                    'commence_time': event['commence_time'],
+                    'home_team': event['home_team'],
+                    'away_team': event['away_team'],
+                    'event_name': f"{event['away_team']} @ {event['home_team']}",
+                    'bookmakers': event['bookmakers']
+                }
+                formatted_events.append(formatted_event)
+            
+            logger.debug(f"Successfully fetched {len(formatted_events)} events for sport {sport_key}")
+            
+            return formatted_events
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error when fetching events for sport {sport_key}: {e}, Response: {e.response.text if hasattr(e.response, 'text') else 'No response text'}")
+            raise
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request error when fetching events for sport {sport_key}: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error when fetching events for sport {sport_key}: {e}")
+            raise
 
     def get_event_odds(self, event_id):
         """
@@ -137,23 +161,35 @@ class OddsApiClient:
         
         logger.debug(f"Searching for event {event_id} across all sports from Odds API")
         
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        
-        events_data = response.json()
-        event_detail = None
-        
-        # Find the specific event
-        for event in events_data:
-            if event['id'] == event_id:
-                event_detail = event
-                break
-        
-        if not event_detail:
-            logger.error(f"Event with ID {event_id} not found")
-            raise ValueError(f"Event with ID {event_id} not found")
-        
-        return event_detail
+        try:
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            
+            events_data = response.json()
+            event_detail = None
+            
+            # Find the specific event
+            for event in events_data:
+                if event['id'] == event_id:
+                    event_detail = event
+                    break
+            
+            if not event_detail:
+                logger.error(f"Event with ID {event_id} not found")
+                raise ValueError(f"Event with ID {event_id} not found")
+            
+            logger.debug(f"Successfully found event {event_id}")
+            
+            return event_detail
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error when fetching event {event_id}: {e}, Response: {e.response.text if hasattr(e.response, 'text') else 'No response text'}")
+            raise
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request error when fetching event {event_id}: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error when fetching event {event_id}: {e}")
+            raise
 
     def format_event_for_display(self, event):
         """
