@@ -28,7 +28,7 @@ const handleResponse = async (response) => {
 };
 
 export const createLeague = async (leagueData) => {
-  const response = await fetch(`${API_URL}/leagues/create/`, {
+  const response = await fetch(`${API_URL}/api/leagues/create/`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(leagueData),
@@ -42,7 +42,7 @@ export const createLeague = async (leagueData) => {
 };
 
 export const sendFriendRequest = async (userId) => {
-  const response = await fetch(`${API_URL}/friend-request/send/${userId}/`, {
+  const response = await fetch(`${API_URL}/api/friend-request/send/${userId}/`, {
     method: 'POST',
     headers: getHeaders(),
   });
@@ -56,7 +56,7 @@ export const sendFriendRequest = async (userId) => {
 };
 
 export const getFriendRequests = async () => {
-  const response = await fetch(`${API_URL}/friend-requests/`, {
+  const response = await fetch(`${API_URL}/api/friend-requests/`, {
     headers: getHeaders(),
   });
 
@@ -68,7 +68,7 @@ export const getFriendRequests = async () => {
 };
 
 export const handleFriendRequest = async (requestId, action) => {
-  const response = await fetch(`${API_URL}/friend-request/${requestId}/handle/`, {
+  const response = await fetch(`${API_URL}/api/friend-request/${requestId}/handle/`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({ action }),
@@ -82,14 +82,14 @@ export const handleFriendRequest = async (requestId, action) => {
 };
 
 export const getFriends = async () => {
-  const response = await fetch(`${API_URL}/friends/`, {
+  const response = await fetch(`${API_URL}/api/friends/`, {
     headers: getHeaders(),
   });
   return handleResponse(response);
 };
 
 export const getLeagues = async () => {
-  const response = await fetch(`${API_URL}/leagues/`, {
+  const response = await fetch(`${API_URL}/api/leagues/`, {
     headers: getHeaders(),
   });
 
@@ -101,7 +101,7 @@ export const getLeagues = async () => {
 };
 
 export const searchUsers = async (query) => {
-  const response = await fetch(`${API_URL}/users/search/?q=${encodeURIComponent(query)}`, {
+  const response = await fetch(`${API_URL}/api/users/search/?q=${encodeURIComponent(query)}`, {
     headers: getHeaders(),
   });
 
@@ -113,7 +113,7 @@ export const searchUsers = async (query) => {
 };
 
 export const getNotifications = async () => {
-  const response = await fetch(`${API_URL}/notifications/`, {
+  const response = await fetch(`${API_URL}/api/notifications/`, {
     headers: getHeaders(),
   });
 
@@ -125,7 +125,7 @@ export const getNotifications = async () => {
 };
 
 export const markNotificationsRead = async () => {
-  const response = await fetch(`${API_URL}/notifications/mark-read/`, {
+  const response = await fetch(`${API_URL}/api/notifications/mark-read/`, {
     method: 'POST',
     headers: getHeaders(),
   });
@@ -138,7 +138,7 @@ export const markNotificationsRead = async () => {
 };
 
 export const removeFriend = async (friendId) => {
-  const response = await fetch(`${API_URL}/friends/remove/${friendId}/`, {
+  const response = await fetch(`${API_URL}/api/friends/remove/${friendId}/`, {
     method: 'POST',
     headers: getHeaders(),
   });
@@ -152,7 +152,7 @@ export const removeFriend = async (friendId) => {
 
 export const inviteToLeague = async (leagueId, userId) => {
   console.log(`Sending invite for league ${leagueId} to user ${userId}`);
-  const response = await fetch(`${API_URL}/leagues/${leagueId}/invite/${userId}/`, {
+  const response = await fetch(`${API_URL}/api/leagues/${leagueId}/invite/${userId}/`, {
     method: 'POST',
     headers: getHeaders(),
   });
@@ -168,7 +168,7 @@ export const inviteToLeague = async (leagueId, userId) => {
 };
 
 export const handleLeagueInvite = async (inviteId, action) => {
-  const response = await fetch(`${API_URL}/league-invites/${inviteId}/handle/`, {
+  const response = await fetch(`${API_URL}/api/league-invites/${inviteId}/handle/`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({ action }),
@@ -183,7 +183,7 @@ export const handleLeagueInvite = async (inviteId, action) => {
 
 export const getLeague = async (leagueId) => {
   try {
-    const response = await fetch(`${API_URL}/leagues/${leagueId}/`, {
+    const response = await fetch(`${API_URL}/api/leagues/${leagueId}/`, {
       headers: getHeaders(),
     });
     return response.json();
@@ -194,14 +194,14 @@ export const getLeague = async (leagueId) => {
 };
 
 export const browseMarket = async () => {
-  const response = await fetch(`${API_URL}/market/browse/`, {
+  const response = await fetch(`${API_URL}/api/market/browse/`, {
     headers: getHeaders(),
   });
   return handleResponse(response);
 };
 
 export const getAvailableSports = async () => {
-  const response = await fetch(`${API_URL}/leagues/bets/`, {
+  const response = await fetch(`${API_URL}/api/leagues/bets/`, {
     headers: getHeaders(),
   });
   return handleResponse(response);
@@ -210,8 +210,8 @@ export const getAvailableSports = async () => {
 export const getAvailableSportEvents = async (sport) => {
   // If sport parameter is provided, fetch data for that sport using the new endpoint
   const endpoint = sport ? 
-    `${API_URL}/leagues/bets/${sport}/` : 
-    `${API_URL}/leagues/bets/`;
+    `${API_URL}/api/leagues/bets/${sport}/` : 
+    `${API_URL}/api/leagues/bets/`;
   
   const response = await fetch(endpoint, {
     headers: getHeaders(),
@@ -221,7 +221,7 @@ export const getAvailableSportEvents = async (sport) => {
 };
 
 export const getCompetitionEvents = async (competitionKey) => {
-  const endpoint = `${API_URL}/leagues/bets/competition/${competitionKey}/`;
+  const endpoint = `${API_URL}/api/leagues/bets/competition/${competitionKey}/`;
   const response = await fetch(endpoint, {
     headers: getHeaders(),
   });
@@ -229,7 +229,7 @@ export const getCompetitionEvents = async (competitionKey) => {
 };
 
 export const getEventDetails = async (eventId) => {
-  const endpoint = `${API_URL}/leagues/bets/events/${eventId}/`;
+  const endpoint = `${API_URL}/api/leagues/bets/events/${eventId}/`;
   const response = await fetch(endpoint, {
     headers: getHeaders(),
   });
@@ -246,7 +246,7 @@ export const placeBet = async (betData) => {
     console.log(`Placing bet with data:`, betData);
 
     // Use getHeaders to stay consistent with other API calls
-    const response = await fetch(`${API_URL}/leagues/bets/post_league_event/`, {
+    const response = await fetch(`${API_URL}/api/leagues/bets/post_league_event/`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -271,7 +271,7 @@ export const placeBet = async (betData) => {
 };
 
 export const getLeagueEvents = async (leagueId) => {
-  const response = await fetch(`${API_URL}/leagues/${leagueId}/events/`, {
+  const response = await fetch(`${API_URL}/api/leagues/${leagueId}/events/`, {
     headers: getHeaders(),
   });
   return handleResponse(response);

@@ -39,41 +39,20 @@ function LoginPage({ initRegister = false }) {
     
     try {
       if (isLogin) {
-        // Regular login logic
-        const response = await fetch(`${API_URL}/login/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ username: formData.username, password: formData.password }),
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          console.log('Token saved:', data.token);
+        // Use auth service login
+        try {
+          await login(formData.username, formData.password);
           navigate('/home');
-        } else {
-          setError(data.error || 'Login failed');
+        } catch (error) {
+          setError('Login failed: ' + error.message);
         }
       } else {
-        // Registration logic
-        const response = await fetch(`${API_URL}/register/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
+        // Use auth service register
+        try {
+          await register(formData.username, formData.email, formData.password);
           navigate('/home');
-        } else {
-          setError(data.error || 'Registration failed');
+        } catch (error) {
+          setError('Registration failed: ' + error.message);
         }
       }
     } catch (err) {
@@ -85,7 +64,7 @@ function LoginPage({ initRegister = false }) {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       console.log('Sending Google token to backend...');
-      const response = await fetch(`${API_URL}/google-auth/`, {
+      const response = await fetch(`${API_URL}/api/google-auth/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

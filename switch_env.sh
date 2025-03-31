@@ -62,7 +62,7 @@ if [ "$ENV" == "production" ]; then
 
     # Set REACT_APP_API_URL to production value
     if grep -q "^REACT_APP_API_URL=" .env; then
-        sed -i.bak "s|^REACT_APP_API_URL=.*|REACT_APP_API_URL=$PROD_URL/api|" .env
+        sed -i.bak "s|^REACT_APP_API_URL=.*|REACT_APP_API_URL=$PROD_URL|" .env
     fi
 
     # Define the production volumes setting
@@ -99,7 +99,7 @@ else
 
     # Set REACT_APP_API_URL to development value
     if grep -q "^REACT_APP_API_URL=" .env; then
-        sed -i.bak "s|^REACT_APP_API_URL=.*|REACT_APP_API_URL=$DEV_URL/api|" .env
+        sed -i.bak "s|^REACT_APP_API_URL=.*|REACT_APP_API_URL=$DEV_URL|" .env
     fi
 
     # For development, remove ENVIRONMENT_VOLUMES if it exists

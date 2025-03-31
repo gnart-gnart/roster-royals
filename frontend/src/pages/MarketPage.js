@@ -4,7 +4,7 @@ import {
   Container, Typography, Grid, Card, CardContent, Box, Button,
   CircularProgress, Divider, List, ListItem, ListItemText,
   Accordion, AccordionSummary, AccordionDetails, Chip,
-  Paper, Table, TableHead, TableRow, TableCell, TableBody
+  Paper, Table, TableHead, TableRow, TableCell, TableBody, TableContainer
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
