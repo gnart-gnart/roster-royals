@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -18,9 +18,9 @@ import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-function LoginPage() {
+function LoginPage({ initRegister = false }) {
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(!initRegister);
   const [error, setError] = useState('');
   const [googleEmail, setGoogleEmail] = useState(null);
   const [formData, setFormData] = useState({

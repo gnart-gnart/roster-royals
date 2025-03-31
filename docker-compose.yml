@@ -35,9 +35,13 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       ENVIRONMENT: ${ENVIRONMENT}
       DEBUG: ${DEBUG}
-      ENVIRONMENT_URL: ${ENVIRONMENT_URL_${ENVIRONMENT}}
-      ENVIRONMENT_HOST: ${ENVIRONMENT_HOST_${ENVIRONMENT}}
-      ENVIRONMENT_DEBUG: ${ENVIRONMENT_DEBUG_${ENVIRONMENT}}
+      REACT_APP_API_URL: ${REACT_APP_API_URL}
+      DEV_URL: ${DEV_URL}
+      PROD_URL: ${PROD_URL}
+      DEV_HOST: ${DEV_HOST}
+      PROD_HOST: ${PROD_HOST}
+      DEV_DEBUG: ${DEV_DEBUG}
+      PROD_DEBUG: ${PROD_DEBUG}
     volumes:
       - ./backend:/app
     ports:
@@ -62,9 +66,12 @@ services:
       NODE_ENV: ${NODE_ENV}
       REACT_APP_API_URL: ${REACT_APP_API_URL}
       ENVIRONMENT: ${ENVIRONMENT}
-      ENVIRONMENT_URL: ${ENVIRONMENT_URL_${ENVIRONMENT}}
-      ENVIRONMENT_HOST: ${ENVIRONMENT_HOST_${ENVIRONMENT}}
-      ENVIRONMENT_DEBUG: ${ENVIRONMENT_DEBUG_${ENVIRONMENT}}
+      DEV_URL: ${DEV_URL}
+      PROD_URL: ${PROD_URL}
+      DEV_HOST: ${DEV_HOST}
+      PROD_HOST: ${PROD_HOST}
+      DEV_DEBUG: ${DEV_DEBUG}
+      PROD_DEBUG: ${PROD_DEBUG}
     env_file:
       - .env
     volumes:
@@ -91,12 +98,14 @@ services:
       - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template
       - ./nginx/production.conf.template:/etc/nginx/production.conf.template
       - ./nginx/development.conf.template:/etc/nginx/development.conf.template
-    command: sh -c "envsubst < /etc/nginx/$$ENVIRONMENT.conf.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
+    command: >
+      /bin/sh -c "envsubst '$$SERVER_IP' < /etc/nginx/${ENVIRONMENT}.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
     environment:
       - ENVIRONMENT=${ENVIRONMENT}
       - REACT_APP_API_URL=${REACT_APP_API_URL}
       - SERVER_IP=${SERVER_IP}
-      - ENVIRONMENT_HOST=${ENVIRONMENT_HOST_${ENVIRONMENT}}
+      - DEV_HOST=${DEV_HOST}
+      - PROD_HOST=${PROD_HOST}
     depends_on:
       - react-app
       - django-web

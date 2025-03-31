@@ -6,17 +6,13 @@ import HomePage from './pages/HomePage';
 import LeaguePage from './pages/LeaguePage';
 import CreateLeaguePage from './pages/CreateLeaguePage';
 import ProfilePage from './pages/ProfilePage';
-import RegistrationPage from './pages/RegistrationPage';
 import AddFriendPage from './pages/AddFriendPage';
 import MarketPage from './pages/MarketPage';
 import PlaceBetPage from './pages/PlaceBetPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import CreateGroupPage from './pages/CreateGroupPage';
-import GroupPage from './pages/GroupPage';
 import SportEventsPage from './pages/SportEventsPage';
 import SettingsPage from './pages/SettingsPage';
 import AddBetPage from './pages/AddBetPage';
-import PlaceUserBetPage from './pages/PlaceUserBetPage';
 
 const theme = createTheme({
   palette: {
@@ -109,7 +105,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<LoginPage />} />
-          <Route path="/register" element={<RegistrationPage />} />
+          <Route path="/register" element={<LoginPage initRegister={true} />} />
           <Route
             path="/home"
             element={
