@@ -1,7 +1,7 @@
 const API_URL = process.env.REACT_APP_API_URL;
 
 export const login = async (username, password) => {
-  const response = await fetch(`${API_URL}/login/`, {
+  const response = await fetch(`${API_URL}/api/login/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -20,7 +20,7 @@ export const login = async (username, password) => {
 };
 
 export const register = async (username, email, password) => {
-  const response = await fetch(`${API_URL}/register/`, {
+  const response = await fetch(`${API_URL}/api/register/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

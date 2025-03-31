@@ -14,12 +14,12 @@ import {
   OutlinedInput,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { createGroup } from '../services/api';
+import { createLeague } from '../services/api';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const SPORTS_LIST = ['NFL', 'NBA', 'MLB', 'Soccer', 'NHL', 'UFC'];
 
-function CreateGroupPage() {
+function CreateLeaguePage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -31,16 +31,16 @@ function CreateGroupPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      setError('Group name is required');
+      setError('League name is required');
       return;
     }
 
     try {
-      const response = await createGroup(formData);
-      // Navigate to the new group's page
-      navigate(`/group/${response.id}`);
+      const response = await createLeague(formData);
+      // Navigate to the new league's page
+      navigate(`/league/${response.id}`);
     } catch (err) {
-      setError(err.message || 'Failed to create group');
+      setError(err.message || 'Failed to create league');
     }
   };
 
@@ -71,13 +71,13 @@ function CreateGroupPage() {
           border: '1px solid rgba(96, 165, 250, 0.2)',
         }}>
           <Typography variant="h5" gutterBottom>
-            Create New Group
+            Create New League
           </Typography>
 
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="Group Name"
+              label="League Name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
@@ -125,7 +125,7 @@ function CreateGroupPage() {
               fullWidth
               sx={{ mt: 3 }}
             >
-              Create Group
+              Create League
             </Button>
           </form>
         </Card>
@@ -134,4 +134,4 @@ function CreateGroupPage() {
   );
 }
 
-export default CreateGroupPage;
+export default CreateLeaguePage; 

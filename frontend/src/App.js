@@ -1,18 +1,18 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
-import GroupPage from './pages/GroupPage';
-import ProtectedRoute from './components/ProtectedRoute';
-import CreateGroupPage from './pages/CreateGroupPage';
-import AddFriendPage from './pages/AddFriendPage';
-import ChooseBetsPage from './pages/ChooseBetsPage';
-import SportEventsPage from './pages/SportEventsPage';
+import LeaguePage from './pages/LeaguePage';
+import CreateLeaguePage from './pages/CreateLeaguePage';
 import ProfilePage from './pages/ProfilePage';
+import AddFriendPage from './pages/AddFriendPage';
+import MarketPage from './pages/MarketPage';
+import PlaceBetPage from './pages/PlaceBetPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import SportEventsPage from './pages/SportEventsPage';
 import SettingsPage from './pages/SettingsPage';
 import AddBetPage from './pages/AddBetPage';
-import PlaceUserBetPage from './pages/PlaceUserBetPage';
 
 const theme = createTheme({
   palette: {
@@ -105,64 +105,64 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<LoginPage />} />
-          <Route path="/home" element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          } />
-          <Route path="/group/:id" element={<GroupPage />} />
-          <Route path="/create-group" element={
-            <ProtectedRoute>
-              <CreateGroupPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/add-friend" element={
-            <ProtectedRoute>
-              <AddFriendPage />
-            </ProtectedRoute>
-          } />
-          <Route 
-            path="/group/:groupId/choose-bets" 
+          <Route path="/register" element={<LoginPage initRegister={true} />} />
+          <Route
+            path="/home"
             element={
               <ProtectedRoute>
-                <ChooseBetsPage />
+                <HomePage />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/group/:groupId/choose-bets/:sportKey" 
+          <Route
+            path="/league/:id"
             element={
               <ProtectedRoute>
-                <SportEventsPage />
+                <LeaguePage />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/group/:groupId/event/:eventKey/add-bet" 
+          <Route
+            path="/create-league"
             element={
               <ProtectedRoute>
-                <AddBetPage />
+                <CreateLeaguePage />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/group/:groupId/event/:eventKey/place-user-bet" 
+          <Route
+            path="/profile"
             element={
               <ProtectedRoute>
-                <PlaceUserBetPage />
+                <ProfilePage />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          } />
-          <Route path="/settings" element={
-            <ProtectedRoute>
-              <SettingsPage />
-            </ProtectedRoute>
-          } />
+          <Route
+            path="/add-friend"
+            element={
+              <ProtectedRoute>
+                <AddFriendPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/league/:leagueId/market"
+            element={
+              <ProtectedRoute>
+                <MarketPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/league/:leagueId/event/:eventId/place-user-bet"
+            element={
+              <ProtectedRoute>
+                <PlaceBetPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
     </ThemeProvider>

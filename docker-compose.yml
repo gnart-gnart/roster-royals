@@ -21,6 +21,8 @@ services:
     build: 
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        - ENVIRONMENT=${ENVIRONMENT}
     restart: always
     depends_on:
       - pgdb
@@ -31,6 +33,15 @@ services:
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_DB: ${POSTGRES_DB}
+      ENVIRONMENT: ${ENVIRONMENT}
+      DEBUG: ${DEBUG}
+      REACT_APP_API_URL: ${REACT_APP_API_URL}
+      DEV_URL: ${DEV_URL}
+      PROD_URL: ${PROD_URL}
+      DEV_HOST: ${DEV_HOST}
+      PROD_HOST: ${PROD_HOST}
+      DEV_DEBUG: ${DEV_DEBUG}
+      PROD_DEBUG: ${PROD_DEBUG}
     volumes:
       - ./backend:/app
     ports:
@@ -45,18 +56,27 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        REACT_APP_API_URL: ${REACT_APP_API_URL}
+        - REACT_APP_API_URL=${REACT_APP_API_URL}
+        - ENVIRONMENT=${ENVIRONMENT}
+        - NODE_ENV=${NODE_ENV}
     restart: always
     depends_on:
       - django-web
     environment:
       NODE_ENV: ${NODE_ENV}
-      REACT_APP_API_URL: http://localhost/api # FIXME: remove this
+      REACT_APP_API_URL: ${REACT_APP_API_URL}
+      ENVIRONMENT: ${ENVIRONMENT}
+      DEV_URL: ${DEV_URL}
+      PROD_URL: ${PROD_URL}
+      DEV_HOST: ${DEV_HOST}
+      PROD_HOST: ${PROD_HOST}
+      DEV_DEBUG: ${DEV_DEBUG}
+      PROD_DEBUG: ${PROD_DEBUG}
     env_file:
       - .env
-    # volumes:
-      # - ./frontend:/app
-      # - /app/node_modules
+    volumes:
+      - node_modules:/app/node_modules
+      - ${ENVIRONMENT_VOLUMES:-./frontend:/app}
     ports:
       - "${REACT_PORT}:${REACT_CONTAINER_PORT}"
     stdin_open: true
@@ -65,14 +85,27 @@ services:
       - app_network
   
   nginx:
-    image: nginx:latest
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+      args:
+        - ENVIRONMENT=${ENVIRONMENT}
     container_name: nginx_proxy
     restart: always
     ports:
       - "80:80"
     volumes:
       - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template
-    command: sh -c "cat /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
+      - ./nginx/production.conf.template:/etc/nginx/production.conf.template
+      - ./nginx/development.conf.template:/etc/nginx/development.conf.template
+    command: >
+      /bin/sh -c "envsubst '$$SERVER_IP' < /etc/nginx/${ENVIRONMENT}.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT}
+      - REACT_APP_API_URL=${REACT_APP_API_URL}
+      - SERVER_IP=${SERVER_IP}
+      - DEV_HOST=${DEV_HOST}
+      - PROD_HOST=${PROD_HOST}
     depends_on:
       - react-app
       - django-web
@@ -81,6 +114,7 @@ services:
 
 volumes:
   postgres_data:
+  node_modules:
 
 networks:
   app_network:

@@ -1,18 +1,18 @@
 from django.db import models
 from users.models import User
 
-class BettingGroup(models.Model):
-    """Model for betting groups"""
+class League(models.Model):
+    """Model for betting leagues"""
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)  # Optional description
     sports = models.JSONField(default=list, blank=True)  # Store multiple sports as JSON array
-    president = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='owned_betting_groups')
-    members = models.ManyToManyField('users.User', related_name='betting_groups')
+    captain = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='owned_leagues')
+    members = models.ManyToManyField('users.User', related_name='leagues')
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Bet(models.Model):
-    """Model for bets within a group"""
-    group = models.ForeignKey(BettingGroup, related_name='bets', on_delete=models.CASCADE)
+    """Model for bets within a league"""
+    league = models.ForeignKey(League, related_name='bets', on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     type = models.CharField(max_length=50)  # spread, moneyline, over/under
     points = models.IntegerField()
@@ -40,9 +40,9 @@ class UserBet(models.Model):
     class Meta:
         unique_together = ('user', 'bet')
 
-class GroupInvite(models.Model):
-    group = models.ForeignKey(BettingGroup, on_delete=models.CASCADE, related_name='invites')
-    to_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_invites')
+class LeagueInvite(models.Model):
+    league = models.ForeignKey(League, on_delete=models.CASCADE, related_name='invites')
+    to_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='league_invites')
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=[
         ('pending', 'Pending'),
@@ -51,17 +51,17 @@ class GroupInvite(models.Model):
     ], default='pending')
 
     class Meta:
-        unique_together = ('group', 'to_user')
+        unique_together = ('league', 'to_user')
 
-class GroupEvent(models.Model):
-    """Model for a betting event posted to a group."""
-    group = models.ForeignKey(BettingGroup, on_delete=models.CASCADE, related_name='group_events')
+class LeagueEvent(models.Model):
+    """Model for a betting event posted to a league."""
+    league = models.ForeignKey(League, on_delete=models.CASCADE, related_name='league_events')
     event_key = models.CharField(max_length=255)
-    event_id = models.IntegerField(null=True, blank=True)  # New field to store the Cloudbet event ID
+    event_id = models.IntegerField(null=True, blank=True)  # New field to store the Odds API event ID
     event_name = models.CharField(max_length=255)
     sport = models.CharField(max_length=100)
     market_data = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.event_name} ({self.sport}) in group {self.group.name}' 
+        return f'{self.event_name} ({self.sport}) in league {self.league.name}' 

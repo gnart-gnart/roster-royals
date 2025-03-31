@@ -25,8 +25,8 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
-import { getGroups, getFriends, removeFriend, getFriendRequests, getNotifications, handleFriendRequest, handleGroupInvite, markNotificationsRead } from '../services/api';
-import GroupCard from '../components/GroupCard';
+import { getLeagues, getFriends, removeFriend, getFriendRequests, getNotifications, handleFriendRequest, handleLeagueInvite, markNotificationsRead } from '../services/api';
+import LeagueCard from '../components/LeagueCard';
 import NavBar from '../components/NavBar';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
@@ -37,7 +37,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
 
 function HomePage() {
-  const [groups, setGroups] = useState([]);
+  const [leagues, setLeagues] = useState([]);
   const [friends, setFriends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -50,12 +50,12 @@ function HomePage() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user')) || { username: '' };
 
-  const loadGroups = async () => {
+  const loadLeagues = async () => {
     try {
-      const data = await getGroups();
-      setGroups(data);
+      const data = await getLeagues();
+      setLeagues(data);
     } catch (err) {
-      console.error('Failed to load groups:', err);
+      console.error('Failed to load leagues:', err);
     }
   };
 
@@ -80,11 +80,11 @@ function HomePage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [groupsData, friendsData] = await Promise.all([
-          getGroups(),
+        const [leaguesData, friendsData] = await Promise.all([
+          getLeagues(),
           getFriends()
         ]);
-        setGroups(groupsData);
+        setLeagues(leaguesData);
         setFriends(friendsData);
         
         // Also load notifications and friend requests
@@ -106,13 +106,13 @@ function HomePage() {
 
     window.addEventListener('friendsUpdated', handleFriendsUpdate);
 
-    // Listen for group updates
-    window.addEventListener('groupsUpdated', loadGroups);
+    // Listen for league updates
+    window.addEventListener('leaguesUpdated', loadLeagues);
 
     // Cleanup
     return () => {
       window.removeEventListener('friendsUpdated', handleFriendsUpdate);
-      window.removeEventListener('groupsUpdated', loadGroups);
+      window.removeEventListener('leaguesUpdated', loadLeagues);
     };
   }, []);
 
@@ -158,15 +158,15 @@ function HomePage() {
     }
   };
 
-  const handleGroupInviteAction = async (inviteId, action) => {
+  const handleLeagueInviteAction = async (inviteId, action) => {
     try {
-      await handleGroupInvite(inviteId, action);
+      await handleLeagueInvite(inviteId, action);
       loadNotifications();
       if (action === 'accept') {
-        window.dispatchEvent(new Event('groupsUpdated'));
+        window.dispatchEvent(new Event('leaguesUpdated'));
       }
     } catch (err) {
-      console.error(`Failed to ${action} group invite:`, err);
+      console.error(`Failed to ${action} league invite:`, err);
     }
   };
 
@@ -284,7 +284,7 @@ function HomePage() {
           </Box>
           <Button 
             variant="contained" 
-            onClick={() => navigate('/create-group')}
+            onClick={() => navigate('/create-league')}
             sx={{ 
               bgcolor: '#8B5CF6', 
               borderRadius: '8px',
@@ -297,7 +297,7 @@ function HomePage() {
               }
             }}
           >
-            Create Group
+            Create League
           </Button>
         </Box>
         
@@ -306,16 +306,16 @@ function HomePage() {
         
         {/* Main Content */}
         <Grid container spacing={3}>
-          {/* Groups Section */}
+          {/* Leagues Section */}
           <Grid item xs={12} md={8}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
               <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
-                Your Groups
+                Your Leagues
               </Typography>
               <Button
                 startIcon={<AddIcon />}
                 size="small"
-                onClick={() => navigate('/create-group')}
+                onClick={() => navigate('/create-league')}
                 sx={{
                   backgroundColor: 'rgba(22, 28, 36, 0.7)',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -328,185 +328,28 @@ function HomePage() {
                   },
                 }}
               >
-                Create Group
+                Create League
               </Button>
             </Box>
             
             {loading ? (
-              <Box sx={{ textAlign: 'center', mt: 4, color: '#CBD5E1' }}>Loading groups...</Box>
+              <Box sx={{ textAlign: 'center', mt: 4, color: '#CBD5E1' }}>Loading leagues...</Box>
             ) : error ? (
               <Box sx={{ color: 'error.main', mt: 4 }}>{error}</Box>
-            ) : groups.length === 0 ? (
+            ) : leagues.length === 0 ? (
               <Card sx={{
                 backgroundColor: 'rgba(22, 28, 36, 0.6)',
                 borderRadius: '12px',
                 border: '1px solid rgba(255, 255, 255, 0.05)',
                 boxShadow: 'none',
               }}>
-                <Box sx={{ p: 2, textAlign: 'center', color: '#CBD5E1' }}>No groups yet. Create one!</Box>
+                <Box sx={{ p: 2, textAlign: 'center', color: '#CBD5E1' }}>No leagues yet. Create one!</Box>
               </Card>
             ) : (
               <Grid container spacing={2}>
-                {groups.map((group) => (
-                  <Grid item xs={12} key={group.id}>
-                    <Card 
-                      onClick={() => navigate(`/group/${group.id}`)}
-                      sx={{
-                        cursor: 'pointer',
-                        backgroundColor: 'rgba(22, 28, 36, 0.6)',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
-                        boxShadow: 'none',
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          backgroundColor: 'rgba(22, 28, 36, 0.8)',
-                          transform: 'translateY(-2px)',
-                        },
-                      }}
-                    >
-                      <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                            <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold', mb: 1 }}>
-                              {group.name}
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                              {group.sports && group.sports.length > 0 ? (
-                                group.sports.map(sport => (
-                                  <Chip
-                                    key={sport}
-                                    label={sport.toUpperCase()}
-                                    size="small"
-                                    sx={{
-                                      backgroundColor: 'rgba(251, 191, 36, 0.1)',
-                                      border: '1px solid rgba(251, 191, 36, 0.2)',
-                                      color: '#FBBF24',
-                                      fontSize: '12px',
-                                      height: '24px',
-                                      fontWeight: 'medium',
-                                    }}
-                                  />
-                                ))
-                              ) : (
-                                <>
-                                  <Chip
-                                    label="NFL"
-                                    size="small"
-                                    sx={{
-                                      backgroundColor: 'rgba(251, 191, 36, 0.1)',
-                                      border: '1px solid rgba(251, 191, 36, 0.2)',
-                                      color: '#FBBF24',
-                                      fontSize: '12px',
-                                      height: '24px',
-                                      fontWeight: 'medium',
-                                    }}
-                                  />
-                                  <Chip
-                                    label="NBA"
-                                    size="small"
-                                    sx={{
-                                      backgroundColor: 'rgba(251, 191, 36, 0.1)',
-                                      border: '1px solid rgba(251, 191, 36, 0.2)',
-                                      color: '#FBBF24',
-                                      fontSize: '12px',
-                                      height: '24px',
-                                      fontWeight: 'medium',
-                                    }}
-                                  />
-                                </>
-                              )}
-                            </Box>
-                          </Box>
-                          <Chip
-                            label="No active bets"
-                            size="small"
-                            sx={{
-                              backgroundColor: 'rgba(100, 100, 100, 0.15)',
-                              color: 'rgba(255, 255, 255, 0.5)',
-                              fontSize: '12px',
-                              height: '24px',
-                            }}
-                            icon={<Box sx={{ width: 6, height: 6, bgcolor: '#777', borderRadius: '50%', ml: 1 }} />}
-                          />
-                        </Box>
-
-                        {/* Divider line */}
-                        <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.05)' }} />
-                        
-                        {/* Bottom section with members and avatar */}
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Typography variant="body2" sx={{ color: '#CBD5E1', mr: 2 }}>
-                              {group.members?.length || 1} member{(group.members?.length || 1) !== 1 ? 's' : ''}
-                            </Typography>
-                            
-                            {/* Member avatars - shown in an overlapping stack */}
-                            <Box sx={{ display: 'flex' }}>
-                              {/* First show the president avatar */}
-                              <Avatar 
-                                sx={{ 
-                                  bgcolor: '#8B5CF6', 
-                                  width: 28, 
-                                  height: 28, 
-                                  fontSize: '14px',
-                                  border: '2px solid #161E2E',
-                                }}
-                              >
-                                {/* Use first letter of president's username if available */}
-                                {group.president?.username?.[0]?.toUpperCase() || 'G'}
-                              </Avatar>
-                              
-                              {/* Add additional avatars if there are more members */}
-                              {group.members && group.members.length > 1 && (
-                                <Avatar 
-                                  sx={{ 
-                                    bgcolor: '#60A5FA', 
-                                    width: 28, 
-                                    height: 28, 
-                                    fontSize: '14px',
-                                    border: '2px solid #161E2E',
-                                    ml: -1,
-                                  }}
-                                >
-                                  {/* Just use a generic letter for other members */}
-                                  B
-                                </Avatar>
-                              )}
-                              
-                              {/* Show a count avatar if there are more than 2 members */}
-                              {group.members && group.members.length > 2 && (
-                                <Avatar 
-                                  sx={{ 
-                                    bgcolor: 'rgba(255, 255, 255, 0.1)', 
-                                    color: '#CBD5E1',
-                                    width: 28, 
-                                    height: 28, 
-                                    fontSize: '12px',
-                                    ml: -1,
-                                    border: '2px solid #161E2E',
-                                  }}
-                                >
-                                  +{group.members.length - 2}
-                                </Avatar>
-                              )}
-                            </Box>
-                          </Box>
-                          
-                          {/* Add a circular icon for the user's avatar like in your mockup - changed to yellow/gold */}
-                          <Avatar 
-                            sx={{ 
-                              bgcolor: '#8B5CF6', 
-                              width: 32, 
-                              height: 32, 
-                              fontSize: '16px', 
-                              fontWeight: 'bold',
-                            }}
-                          >
-                            G
-                          </Avatar>
-                        </Box>
-                      </CardContent>
-                    </Card>
+                {leagues.map((league) => (
+                  <Grid item xs={12} key={league.id}>
+                    <LeagueCard league={league} />
                   </Grid>
                 ))}
               </Grid>

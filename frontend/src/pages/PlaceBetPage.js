@@ -18,10 +18,10 @@ import {
   Divider
 } from '@mui/material';
 import NavBar from '../components/NavBar';
-import { getGroup, getGroupEvents } from '../services/api';
+import { getLeague, getLeagueEvents, placeBet } from '../services/api';
 
-function PlaceUserBetPage() {
-  const { groupId, eventKey } = useParams();
+function PlaceBetPage() {
+  const { leagueId, eventId } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || {});
 
@@ -33,23 +33,23 @@ function PlaceUserBetPage() {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [eventDetails, setEventDetails] = useState(null);
-  const [group, setGroup] = useState(null);
+  const [league, setLeague] = useState(null);
 
-  // Fetch event details from the group events
+  // Fetch event details from the league events
   useEffect(() => {
     const fetchData = async () => {
       try {
         setFetchingEvent(true);
         
-        // Get group details
-        const groupData = await getGroup(groupId);
-        setGroup(groupData);
+        // Get league details
+        const leagueData = await getLeague(leagueId);
+        setLeague(leagueData);
 
-        // Get events from the group
-        const eventsData = await getGroupEvents(groupId);
+        // Get events from the league
+        const eventsData = await getLeagueEvents(leagueId);
         if (eventsData && Array.isArray(eventsData)) {
           // Find the matching event
-          const event = eventsData.find(e => e.event_key === eventKey);
+          const event = eventsData.find(e => e.event_key === eventId);
           if (event) {
             setEventDetails({
               id: event.id,
@@ -64,7 +64,7 @@ function PlaceUserBetPage() {
               created_at: event.created_at
             });
           } else {
-            setErrorMsg('Event not found in this group');
+            setErrorMsg('Event not found in this league');
           }
         }
       } catch (err) {
@@ -76,7 +76,7 @@ function PlaceUserBetPage() {
     };
 
     fetchData();
-  }, [groupId, eventKey]);
+  }, [leagueId, eventId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,10 +94,17 @@ function PlaceUserBetPage() {
         throw new Error('Insufficient funds to place this bet');
       }
 
-      // Mock API call for now - we'll implement the actual API later
-      // In a real implementation, you would call an API to place the user's bet
-      // For now, we'll simulate success
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // Call the API to place the bet
+      await placeBet({
+        leagueId: leagueId,
+        eventKey: eventId,
+        eventName: eventDetails.name,
+        sport: eventDetails.sport,
+        marketKey: eventDetails.marketKey,
+        outcomeKey: selectedOutcome,
+        odds: eventDetails.odds,
+        amount: betAmount
+      });
       
       // Update user's money in localStorage (temporary - will be replaced with proper API)
       const updatedMoney = currentMoney - betAmount;
@@ -113,9 +120,9 @@ function PlaceUserBetPage() {
       // After successful bet placement, clear form
       setAmount('');
       
-      // Navigate to group page after short delay
+      // Navigate to league page after short delay
       setTimeout(() => {
-        navigate(`/group/${groupId}`);
+        navigate(`/league/${leagueId}`);
       }, 2000);
     } catch (err) {
       setErrorMsg(err.message || 'Failed to place bet.');
@@ -252,7 +259,7 @@ function PlaceUserBetPage() {
                 </Typography>
                 <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
                 <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
-                  Group: {group?.name || groupId}
+                  League: {league?.name || leagueId}
                 </Typography>
               </>
             )}
@@ -357,4 +364,4 @@ function PlaceUserBetPage() {
   );
 }
 
-export default PlaceUserBetPage; 
+export default PlaceBetPage; 

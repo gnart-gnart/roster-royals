@@ -10,16 +10,16 @@ import {
   Button,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { inviteToGroup, removeFriend } from '../services/api';
+import { inviteToLeague, removeFriend } from '../services/api';
 
-function FriendsList({ friends, groups, onFriendRemoved }) {
+function FriendsList({ friends, leagues, onFriendRemoved }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [inviteMenuAnchor, setInviteMenuAnchor] = useState(null);
 
-  // Only show groups where user is president
-  const ownedGroups = groups.filter(group => 
-    group.president.id === JSON.parse(localStorage.getItem('user')).id
+  // Only show leagues where user is captain
+  const ownedLeagues = leagues.filter(league => 
+    league.captain.id === JSON.parse(localStorage.getItem('user')).id
   );
 
   const handleMenuOpen = (event, friend) => {
@@ -41,9 +41,9 @@ function FriendsList({ friends, groups, onFriendRemoved }) {
     handleMenuClose();
   };
 
-  const handleInviteToGroup = async (groupId) => {
+  const handleInviteToLeague = async (leagueId) => {
     try {
-      await inviteToGroup(groupId, selectedFriend.id);
+      await inviteToLeague(leagueId, selectedFriend.id);
       handleInviteMenuClose();
     } catch (err) {
       console.error('Failed to invite friend:', err);
@@ -81,9 +81,9 @@ function FriendsList({ friends, groups, onFriendRemoved }) {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        {ownedGroups.length > 0 && (
+        {ownedLeagues.length > 0 && (
           <MenuItem onClick={handleInviteClick}>
-            Invite to Group
+            Invite to League
           </MenuItem>
         )}
         <MenuItem onClick={handleRemoveFriend} sx={{ color: 'error.main' }}>
@@ -96,12 +96,12 @@ function FriendsList({ friends, groups, onFriendRemoved }) {
         open={Boolean(inviteMenuAnchor)}
         onClose={handleInviteMenuClose}
       >
-        {ownedGroups.map(group => (
+        {ownedLeagues.map(league => (
           <MenuItem 
-            key={group.id}
-            onClick={() => handleInviteToGroup(group.id)}
+            key={league.id}
+            onClick={() => handleInviteToLeague(league.id)}
           >
-            {group.name}
+            {league.name}
           </MenuItem>
         ))}
       </Menu>

@@ -16,12 +16,12 @@ This directory contains the Django backend for the Roster Royals application. It
   - **`serializers.py`**: Serializers for user data.
   - **`urls.py`**: URL routing for user-related endpoints.
 
-- **`groups/`**: Manages betting groups, bets, and related features.
-  - **`models.py`**: Models for groups and bets.
-  - **`views.py`**: API views for group-related operations.
-  - **`serializers.py`**: Serializers for group data.
-  - **`urls.py`**: URL routing for group-related endpoints.
-  - **`cloudbet.py`**: Integration with Cloudbet API for sports data.
+- **`groups/`**: Manages betting leagues, bets, and related features.
+  - **`models.py`**: Models for leagues and bets.
+  - **`views.py`**: API views for league-related operations.
+  - **`serializers.py`**: Serializers for league data.
+  - **`urls.py`**: URL routing for league-related endpoints.
+  - **`odds.py`**: Integration with the Odds API for sports data.
 
 - **`db_init.sh`**: Script for initializing the database with test data.
 
@@ -83,7 +83,7 @@ The application uses environment variables defined in a `.env` file. Ensure the 
 - **`POSTGRES_DB`**: Name of the PostgreSQL database.
 - **`POSTGRES_USER`**: PostgreSQL username.
 - **`POSTGRES_PASSWORD`**: PostgreSQL password.
-- **`CLOUDBET_API_KEY`**: API key for Cloudbet integration.
+- **`ODDS_API_KEY`**: API key for the Odds API integration.
 
 ## Testing
 

@@ -4,12 +4,15 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Get environment setting
+ENVIRONMENT = os.environ.get('ENVIRONMENT', 'development')
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY') # Development only
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = ['*']
 #ALLOWED_HOSTS = ['165.22.187.23', 'rosterroyals.com']
 
@@ -80,7 +83,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'corsheaders',
     'users.apps.UsersConfig',
     'groups.apps.GroupsConfig',
     'django_extensions',
@@ -88,7 +90,6 @@ INSTALLED_APPS = [
 
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Must come before other middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -100,21 +101,35 @@ MIDDLEWARE = [
 ]
 
 
-# During development only
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
+# Comment out all CORS-related settings
+# Enhanced CORS settings
+# CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_CREDENTIALS = True
+# CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+# CORS_ALLOW_HEADERS = [
+#     'accept',
+#     'accept-encoding',
+#     'authorization',
+#     'content-type',
+#     'dnt',
+#     'origin',
+#     'user-agent',
+#     'x-csrftoken',
+#     'x-requested-with',
+#     'access-control-allow-origin',
+#     'access-control-allow-methods',
+#     'access-control-allow-headers',
+# ]
+
+# Specific allowed origins for when CORS_ALLOW_ALL_ORIGINS is set to False
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "http://localhost",
+#     "http://127.0.0.1:3000",
+#     "http://127.0.0.1",
+# ]
+
+# CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
 
 # REST Framework settings
 REST_FRAMEWORK = {
@@ -129,9 +144,9 @@ AUTH_USER_MODEL = 'users.User'
 # Disable default group model
 # DJANGO_AUTH_NO_GROUP = True
 
-# Cloudbet API settings
-CLOUDBET_API_KEY = os.environ.get('CLOUDBET_API_KEY')
-CLOUDBET_API_BASE_URL = 'https://sports-api.cloudbet.com/pub/v2/'  # Include complete path
+# Odds API settings
+ODDS_API_KEY = os.environ.get('ODDS_API_KEY')
+ODDS_API_BASE_URL = 'https://api.the-odds-api.com'  # Base URL for the Odds API
 
 # Add to your existing settings
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_OAUTH2_CLIENT_ID')
@@ -148,7 +163,7 @@ LOGGING = {
     'loggers': {
         '': {
             'handlers': ['console'],
-            'level': 'DEBUG', # or ERROR for production
+            'level': 'DEBUG' if DEBUG else 'INFO',
         },
     },
 }

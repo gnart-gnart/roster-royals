@@ -32,8 +32,8 @@ import {
   handleFriendRequest, 
   getNotifications,
   markNotificationsRead,
-  handleGroupInvite as handleGroupInviteAPI,
-  getGroups,
+  handleLeagueInvite,
+  getLeagues,
 } from '../services/api';
 
 function NavBar() {
@@ -50,7 +50,7 @@ function NavBar() {
 
   const loadGroups = async () => {
     try {
-      const data = await getGroups();
+      const data = await getLeagues();
       setGroups(data);
     } catch (err) {
       console.error('Failed to load groups:', err);
@@ -136,7 +136,7 @@ function NavBar() {
 
   const handleGroupInvite = async (notificationId, inviteId, action) => {
     try {
-      await handleGroupInviteAPI(inviteId, action);
+      await handleLeagueInvite(inviteId, action);
       
       // Remove the notification from the list
       setNotifications(prev => 

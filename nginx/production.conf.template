@@ -1,15 +1,23 @@
-worker_processes 1;
+worker_processes auto;
 
 events {
     worker_connections 1024;
 }
 
 http {
-    include /etc/nginx/mime.types;
-    default_type application/octet-stream;
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
 
+    sendfile        on;
+    keepalive_timeout  65;
+    gzip  on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    
+    # Remove global CORS settings as they cause duplicate headers
+    
     server {
         listen 80;
+        # Use direct SERVER_IP variable
         server_name ${SERVER_IP};
 
         # Frontend
@@ -26,12 +34,22 @@ http {
             # WebSocket support
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
+            proxy_cache_bypass $http_upgrade;
+            proxy_redirect off;
+            proxy_buffering off;
             
             # CORS headers
             add_header 'Access-Control-Allow-Origin' '*' always;
             add_header 'Access-Control-Allow-Credentials' 'true' always;
             add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
             add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
+            
+            # Browser caching for static assets
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|otf|eot)$ {
+                expires 30d;
+                add_header Cache-Control "public, no-transform";
+                add_header 'Access-Control-Allow-Origin' '*' always;
+            }
         }
 
         # Backend API
@@ -44,19 +62,23 @@ http {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             
-            # CORS headers for all responses 
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
-            add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
-
             # Handle preflight OPTIONS requests specially
             if ($request_method = 'OPTIONS') {
+                add_header 'Access-Control-Allow-Origin' '*';
+                add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE';
+                add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
+                add_header 'Access-Control-Allow-Credentials' 'true';
                 add_header 'Access-Control-Max-Age' '1728000';
                 add_header 'Content-Type' 'text/plain charset=UTF-8';
                 add_header 'Content-Length' '0';
                 return 204;
             }
+            
+            # CORS headers for normal responses - only applied to non-OPTIONS requests
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
+            add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
         }
         
         # Serve static files
@@ -72,4 +94,4 @@ http {
             add_header 'Access-Control-Allow-Credentials' 'true' always;
         }
     }
-}
+} 

@@ -53,33 +53,33 @@ import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import { 
-  inviteToGroup, 
+  inviteToLeague, 
   getFriends, 
-  getGroups, 
-  getGroup, 
+  getLeagues, 
+  getLeague, 
   getFriendRequests, 
   getNotifications, 
   handleFriendRequest, 
-  handleGroupInvite, 
+  handleLeagueInvite, 
   markNotificationsRead,
   placeBet, 
-  getGroupEvents,
+  getLeagueEvents,
   addBet,
   deleteBet,
 } from '../services/api';
 import NavBar from '../components/NavBar';
 
-function GroupPage() {
+function LeaguePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [friends, setFriends] = useState([]);
-  const [group, setGroup] = useState(null);
+  const [league, setLeague] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bets, setBets] = useState([]);
   const user = JSON.parse(localStorage.getItem('user')) || { username: '' };
-  const isPresident = group?.president?.id === user?.id;
+  const isCaptain = league?.captain?.id === user?.id;
   const [members, setMembers] = useState([]);
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -105,10 +105,10 @@ function GroupPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load group data
-        const groupData = await getGroup(id);
-        setGroup(groupData);
-        setMembers(groupData.members || []);
+        // Load league data
+        const leagueData = await getLeague(id);
+        setLeague(leagueData);
+        setMembers(leagueData.members || []);
         
         // Load friends for invite functionality
         const friendsData = await getFriends();
@@ -118,10 +118,10 @@ function GroupPage() {
         loadFriendRequests();
         loadNotifications();
 
-        // Load group bets (these would be the bets added to the group)
-        loadGroupBets();
+        // Load league bets (these would be the bets added to the league)
+        loadLeagueBets();
       } catch (err) {
-        setError('Failed to load group data');
+        setError('Failed to load league data');
         console.error(err);
       } finally {
         setLoading(false);
@@ -149,10 +149,10 @@ function GroupPage() {
     }
   };
 
-  const loadGroupBets = async () => {
+  const loadLeagueBets = async () => {
     try {
       // Get events from the dedicated endpoint
-      const eventsData = await getGroupEvents(id);
+      const eventsData = await getLeagueEvents(id);
       if (eventsData && Array.isArray(eventsData)) {
         setBets(eventsData.map(event => ({
           id: event.id,
@@ -170,7 +170,7 @@ function GroupPage() {
         setBets([]);
       }
     } catch (err) {
-      console.error('Failed to load group bets:', err);
+      console.error('Failed to load league bets:', err);
       setBets([]);
     }
   };
@@ -213,23 +213,23 @@ function GroupPage() {
     }
   };
 
-  const handleGroupInviteAction = async (notificationId, inviteId, action) => {
+  const handleLeagueInviteAction = async (notificationId, inviteId, action) => {
     try {
-      await handleGroupInvite(inviteId, action);
+      await handleLeagueInvite(inviteId, action);
       
       // Remove the notification from the list
       setNotifications(prev => 
         prev.filter(n => n.id !== notificationId)
       );
       
-      // Refresh groups list if accepted
+      // Refresh leagues list if accepted
       if (action === 'accept') {
-        // Dispatch event before loading groups to ensure all listeners are notified
-        window.dispatchEvent(new Event('groupsUpdated'));
+        // Dispatch event before loading leagues to ensure all listeners are notified
+        window.dispatchEvent(new Event('leaguesUpdated'));
         navigate('/home');
       }
     } catch (err) {
-      console.error('Failed to handle group invite:', err);
+      console.error('Failed to handle league invite:', err);
     }
   };
 
@@ -238,7 +238,7 @@ function GroupPage() {
     
     try {
       const invitePromises = selectedFriends.map(friendId => 
-        inviteToGroup(id, friendId)
+        inviteToLeague(id, friendId)
       );
       
       await Promise.all(invitePromises);
@@ -289,11 +289,11 @@ function GroupPage() {
     setProfileAnchorEl(null);
   };
 
-  const handlePromoteToCoPresident = (memberId) => {
+  const handlePromoteToCoCaptain = (memberId) => {
     setConfirmDialog({
       open: true,
-      title: 'Promote to Co-President',
-      message: 'Are you sure you want to promote this member to co-president?',
+      title: 'Promote to Co-Captain',
+      message: 'Are you sure you want to promote this member to co-captain?',
       action: 'promote',
       memberId,
     });
@@ -303,7 +303,7 @@ function GroupPage() {
     setConfirmDialog({
       open: true,
       title: 'Remove Member',
-      message: 'Are you sure you want to remove this member from the group?',
+      message: 'Are you sure you want to remove this member from the league?',
       action: 'remove',
       memberId,
     });
@@ -337,11 +337,11 @@ function GroupPage() {
           </Button>
           
           <Typography variant="h4" sx={{ ml: 1, color: '#f8fafc', fontWeight: 'bold', flexGrow: 1 }}>
-            {loading ? 'Loading...' : group?.name}
+            {loading ? 'Loading...' : league?.name}
           </Typography>
         </Box>
 
-        {!loading && group && (
+        {!loading && league && (
           <Box 
             sx={{ 
               px: 2, 
@@ -353,7 +353,7 @@ function GroupPage() {
             }}
           >
             <Typography variant="body1" sx={{ color: '#CBD5E1' }}>
-              {group.description || 'A group for testing various sports betting'}
+              {league.description || 'A league for testing various sports betting'}
           </Typography>
           </Box>
         )}
@@ -364,11 +364,11 @@ function GroupPage() {
               <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
                 Active Bets
               </Typography>
-        {isPresident && (
+        {isCaptain && (
             <Button
               variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => navigate(`/group/${id}/choose-bets`)}
+                  onClick={() => navigate(`/league/${id}/market`)}
                   sx={{
                     bgcolor: '#8B5CF6',
                     color: 'white',
@@ -427,7 +427,7 @@ function GroupPage() {
                           <Button
                             variant="outlined"
                             size="small"
-                            onClick={() => navigate(`/group/${id}/event/${bet.event_key}/place-user-bet`)}
+                            onClick={() => navigate(`/league/${id}/event/${bet.event_key}/place-user-bet`)}
                             sx={{
                               borderColor: '#8B5CF6',
                               color: '#8B5CF6',
@@ -462,7 +462,7 @@ function GroupPage() {
               <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
                 Leaderboard
               </Typography>
-              {isPresident && (
+              {isCaptain && (
             <Button
                   variant="outlined"
                   size="small"
@@ -539,7 +539,7 @@ function GroupPage() {
                               <Typography sx={{ color: '#f8fafc', fontWeight: 'medium' }}>
                                 {member.username}
                               </Typography>
-                              {group?.president?.id === member.id && (
+                              {league?.captain?.id === member.id && (
                                 <Typography 
                                   variant="caption" 
                                   sx={{ 
@@ -551,10 +551,10 @@ function GroupPage() {
                                     borderRadius: '4px',
                                   }}
                                 >
-                                  President
+                                  Captain
                                 </Typography>
                               )}
-                              {member.is_co_president && (
+                              {member.is_co_captain && (
                                 <Typography 
                                   variant="caption" 
                                   sx={{ 
@@ -566,7 +566,7 @@ function GroupPage() {
                                     borderRadius: '4px',
                                   }}
                                 >
-                                  Co-President
+                                  Co-Captain
                                 </Typography>
                               )}
                             </Box>
@@ -579,18 +579,18 @@ function GroupPage() {
                             {member.points || (2500 - index * 150)}
                           </Typography>
                           
-                          {isPresident && member.id !== group.president.id && (
+                          {isCaptain && member.id !== league.captain.id && (
                             <Box sx={{ display: 'flex', ml: 2 }}>
-                              <Tooltip title={member.is_co_president ? "Remove Co-President" : "Promote to Co-President"}>
+                              <Tooltip title={member.is_co_captain ? "Remove Co-Captain" : "Promote to Co-Captain"}>
                                 <IconButton
                                   size="small"
-                                  onClick={() => handlePromoteToCoPresident(member.id)}
+                                  onClick={() => handlePromoteToCoCaptain(member.id)}
                                   sx={{ 
-                                    color: member.is_co_president ? '#8B5CF6' : '#CBD5E1',
+                                    color: member.is_co_captain ? '#8B5CF6' : '#CBD5E1',
                                     '&:hover': { bgcolor: 'rgba(139, 92, 246, 0.1)' }
                                   }}
                                 >
-                                  {member.is_co_president ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
+                                  {member.is_co_captain ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
                                 </IconButton>
                               </Tooltip>
                               
@@ -787,4 +787,4 @@ function GroupPage() {
   );
 }
 
-export default GroupPage; 
+export default LeaguePage; 
