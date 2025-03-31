@@ -8,16 +8,23 @@ http {
     server {
         listen 80;
 
-        server_name ${ENVIRONMENT_HOST};  # Updated to use ENVIRONMENT_HOST
-
+        # Frontend
         location / {
-            proxy_pass http://react-app:3000;  # Use container name instead of IP
+            proxy_pass http://react-app:3000;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            
+            # For development hot-reloading
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
         }
 
+        # Backend
         location /api/ {
-            proxy_pass http://django-web:8000;  # Use container name instead of IP
+            proxy_pass http://django-web:8000;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
 
@@ -34,4 +41,4 @@ http {
             }
         }
     }
-}
+} 

@@ -1,6 +1,6 @@
 # Roster Royals
 
-Roster Royals is a web application that allows users to create and manage betting groups. This README provides instructions for setting up the development environment and running the application locally.
+Roster Royals is a web application that allows users to create and manage betting leagues. This README provides instructions for setting up the development environment and running the application locally.
 
 ## Prerequisites
 
@@ -24,14 +24,24 @@ Before you begin, ensure you have the following installed on your machine:
 
    You will need a `.env` file with the necessary environment variables. This file is not included in the repository for security reasons. Please contact the project maintainer to obtain it.
 
-   **Note**: In the `.env` file, there are a couple of places to change URLs depending on whether you are testing locally or on the DigitalOcean droplet. For most people, testing locally will be the default, so you don't need to worry about this unless deploying to production.
+   The project now uses a simple environment switching mechanism:
+   
+   ```bash
+   # For local development (default)
+   ./switch_env.sh development
+   
+   # For production deployment
+   ./switch_env.sh production
+   ```
+   
+   This script automatically updates the `.env` file with the appropriate settings for each environment without requiring manual IP address changes.
 
 3. **Build and Run the Application**
 
    Use Docker Compose to build and run the application:
 
    ```bash
-   docker compose up --build
+   docker compose up --build -d
    ```
 
    This command will build the Docker images and start the containers for the backend (Django), frontend (React), and Nginx proxy.
@@ -40,14 +50,52 @@ Before you begin, ensure you have the following installed on your machine:
 
    Once the containers are running, you can access the application in your web browser at:
 
-   - Frontend: [http://localhost:3000](http://localhost:3000)
-   - Backend API: [http://localhost:8000/api](http://localhost:8000/api)
+   - Frontend: [http://localhost](http://localhost)
+   - Backend API: [http://localhost/api](http://localhost/api)
 
 ## Development Workflow
 
 - **Frontend (React)**: The React application is located in the `frontend` directory. You can add new components, pages, and services here. The application will automatically reload when you make changes.
 
 - **Backend (Django)**: The Django application is located in the `backend` directory. You can add new models, views, and serializers here. Use Django's management commands to apply migrations and manage the database.
+
+## Development vs. Production
+
+The application now uses a single environment variable (`ENVIRONMENT`) in the `.env` file to control all aspects of the environment setup:
+
+- **Development Mode** 
+  - Uses live-reloading for React
+  - Mounts your local `frontend` directory to enable hot code reloading
+  - Uses Django's development server
+  - Optimized for developer experience
+
+- **Production Mode**
+  - Creates optimized builds of React
+  - Serves static files efficiently
+  - Uses Gunicorn for Django
+  - Optimized for performance
+
+## Switching Environments
+
+To switch between development and production environments:
+
+1. Run the switching script:
+   ```bash
+   ./switch_env.sh development   # For local development
+   # OR
+   ./switch_env.sh production    # For production deployment
+   ```
+
+2. Restart your containers:
+   ```bash
+   docker compose down && docker compose up --build -d
+   ```
+
+This eliminates the need to manually change any IP addresses or configuration settings in your `.env` file.
+
+## API Integration
+
+Roster Royals uses the Odds API for sports data, odds, and event information. An API key for this service is required and should be set in the `.env` file as `ODDS_API_KEY`.
 
 ## Testing
 

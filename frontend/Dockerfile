@@ -7,28 +7,36 @@ WORKDIR /app
 # Copy package.json and package-lock.json first
 COPY package.json package-lock.json ./
 
-# Add this line to receive the build argument
+# Add build arguments
 ARG REACT_APP_API_URL
+ARG ENVIRONMENT=development
+ARG NODE_ENV=production
 ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+ENV ENVIRONMENT=${ENVIRONMENT}
+ENV NODE_ENV=${NODE_ENV}
 
-# Install only production dependencies
-RUN npm install --only=production --legacy-peer-deps --prefer-offline --no-audit
-
-# Remove any existing build directory if present (to ensure a clean build)
-RUN rm -rf build
+# Install dependencies with cache optimization
+RUN npm ci --only=production --legacy-peer-deps --prefer-offline --no-audit
 
 # Copy the rest of the application
 COPY . .
 
-# Force a clean build with the new environment variable
-RUN rm -rf build
-RUN npm run build
+# If in production mode, build the static files
+RUN if [ "$ENVIRONMENT" = "production" ]; then \
+        npm run build; \
+    fi
 
-# Install `serve` to serve the static files
-RUN npm install -g serve
+# Install serve for production or use development server
+RUN if [ "$ENVIRONMENT" = "production" ]; then \
+        npm install -g serve; \
+    fi
 
 # Expose the app port
 EXPOSE 3000
 
-# Start the production server
-CMD ["serve", "-s", "build", "-l", "3000", "--single", "-n"]
+# Start the appropriate server based on environment
+CMD if [ "$ENVIRONMENT" = "production" ]; then \
+        serve -s build -l 3000 --single -n; \
+    else \
+        npm start; \
+    fi
