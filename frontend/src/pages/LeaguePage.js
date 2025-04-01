@@ -52,6 +52,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { 
   inviteToLeague, 
   getFriends, 
@@ -66,6 +69,7 @@ import {
   getLeagueEvents,
   addBet,
   deleteBet,
+  updateLeague,
 } from '../services/api';
 import NavBar from '../components/NavBar';
 
@@ -84,6 +88,18 @@ function LeaguePage() {
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectAll, setSelectAll] = useState(false);
+  
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    description: ''
+  });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   // Navbar state
   const [notifAnchorEl, setNotifAnchorEl] = useState(null);
@@ -130,6 +146,15 @@ function LeaguePage() {
 
     loadData();
   }, [id]);
+
+  useEffect(() => {
+    if (league) {
+      setEditFormData({
+        name: league.name || '',
+        description: league.description || ''
+      });
+    }
+  }, [league]);
 
   const loadFriendRequests = async () => {
     try {
@@ -314,6 +339,66 @@ function LeaguePage() {
     setConfirmDialog({ ...confirmDialog, open: false });
   };
 
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditFormData({
+      name: league.name || '',
+      description: league.description || ''
+    });
+    setIsEditing(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editFormData.name.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'League name cannot be empty',
+        severity: 'error'
+      });
+      return;
+    }
+
+    try {
+      const updatedLeague = await updateLeague(id, {
+        name: editFormData.name,
+        description: editFormData.description
+      });
+      
+      setLeague(updatedLeague);
+      setIsEditing(false);
+      setSnackbar({
+        open: true,
+        message: 'League details updated successfully',
+        severity: 'success'
+      });
+    } catch (err) {
+      console.error('Failed to update league:', err);
+      setSnackbar({
+        open: true,
+        message: 'Failed to update league details',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData({
+      ...editFormData,
+      [name]: value
+    });
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar({
+      ...snackbar,
+      open: false
+    });
+  };
+
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh' }}>
       <NavBar />
@@ -336,9 +421,46 @@ function LeaguePage() {
             Back
           </Button>
           
-          <Typography variant="h4" sx={{ ml: 1, color: '#f8fafc', fontWeight: 'bold', flexGrow: 1 }}>
-            {loading ? 'Loading...' : league?.name}
-          </Typography>
+          {isEditing ? (
+            <Box sx={{ flexGrow: 1, ml: 1, display: 'flex', alignItems: 'center' }}>
+              <TextField
+                name="name"
+                value={editFormData.name}
+                onChange={handleInputChange}
+                variant="outlined"
+                size="small"
+                sx={{ flexGrow: 1, input: { color: '#f8fafc' } }}
+              />
+              <IconButton 
+                onClick={handleSaveEdit}
+                sx={{ color: '#10B981', ml: 1 }}
+              >
+                <SaveIcon />
+              </IconButton>
+              <IconButton 
+                onClick={handleCancelEdit}
+                sx={{ color: '#EF4444', ml: 1 }}
+              >
+                <CancelIcon />
+              </IconButton>
+            </Box>
+          ) : (
+            <>
+              <Typography variant="h4" sx={{ ml: 1, color: '#f8fafc', fontWeight: 'bold', flexGrow: 1 }}>
+                {loading ? 'Loading...' : league?.name}
+              </Typography>
+              {isCaptain && (
+                <Tooltip title="Edit league details">
+                  <IconButton 
+                    onClick={handleEditClick}
+                    sx={{ color: '#60A5FA' }}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </>
+          )}
         </Box>
 
         {!loading && league && (
@@ -352,9 +474,23 @@ function LeaguePage() {
               border: '1px solid rgba(30, 41, 59, 0.8)',
             }}
           >
-            <Typography variant="body1" sx={{ color: '#CBD5E1' }}>
-              {league.description || 'A league for testing various sports betting'}
-          </Typography>
+            {isEditing ? (
+              <TextField
+                name="description"
+                value={editFormData.description}
+                onChange={handleInputChange}
+                variant="outlined"
+                fullWidth
+                multiline
+                rows={3}
+                placeholder="Add a description for your league"
+                sx={{ input: { color: '#CBD5E1' } }}
+              />
+            ) : (
+              <Typography variant="body1" sx={{ color: '#CBD5E1' }}>
+                {league.description || 'A league for sports betting'}
+              </Typography>
+            )}
           </Box>
         )}
 
@@ -783,6 +919,17 @@ function LeaguePage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        <Snackbar 
+          open={snackbar.open} 
+          autoHideDuration={6000} 
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={handleSnackbarClose} severity={snackbar.severity}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
   );
 }

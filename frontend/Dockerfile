@@ -21,6 +21,9 @@ RUN npm ci --only=production --legacy-peer-deps --prefer-offline --no-audit
 # Copy the rest of the application
 COPY . .
 
+# Create .cache directory with proper permissions
+RUN mkdir -p /app/node_modules/.cache && chmod -R 777 /app/node_modules/.cache
+
 # If in production mode, build the static files
 RUN if [ "$ENVIRONMENT" = "production" ]; then \
         npm run build; \

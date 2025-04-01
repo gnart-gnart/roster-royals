@@ -193,6 +193,16 @@ export const getLeague = async (leagueId) => {
   }
 };
 
+export const updateLeague = async (leagueId, updateData) => {
+  const response = await fetch(`${API_URL}/api/leagues/${leagueId}/update/`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(updateData),
+  });
+  
+  return handleResponse(response);
+};
+
 export const browseMarket = async () => {
   const response = await fetch(`${API_URL}/api/market/browse/`, {
     headers: getHeaders(),

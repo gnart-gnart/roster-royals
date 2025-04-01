@@ -392,3 +392,33 @@ def browse_market(request):
     except Exception as e:
         logger.error(f"Error in browse_market: {str(e)}", exc_info=True)
         return Response({'error': str(e)}, status=500)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_league(request, league_id):
+    """
+    Update league details like name and description.
+    Only the league captain can make these changes.
+    """
+    try:
+        league = League.objects.get(id=league_id)
+        
+        # Check if user is the captain
+        if request.user != league.captain:
+            return Response({'error': 'Only the league captain can update league details'}, status=403)
+        
+        data = request.data
+        
+        # Update name and description if provided
+        if 'name' in data:
+            league.name = data['name']
+        if 'description' in data:
+            league.description = data['description']
+        
+        league.save()
+        
+        return Response(LeagueSerializer(league).data)
+    except League.DoesNotExist:
+        return Response({'error': 'League not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

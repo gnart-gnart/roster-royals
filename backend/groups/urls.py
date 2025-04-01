@@ -5,6 +5,7 @@ urlpatterns = [
     path('leagues/', views.get_leagues),
     path('leagues/create/', views.CreateLeagueView.as_view()),
     path('leagues/<int:league_id>/', views.get_league),
+    path('leagues/<int:league_id>/update/', views.update_league, name='update_league'),
     path('leagues/<int:league_id>/add-member/<int:user_id>/', views.add_league_member, name='add_league_member'),
     path('leagues/<int:league_id>/invite/<int:user_id>/', views.invite_to_league),
     path('league-invites/<int:invite_id>/handle/', views.handle_league_invite),
