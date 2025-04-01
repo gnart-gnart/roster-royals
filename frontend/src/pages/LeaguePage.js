@@ -52,6 +52,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { 
   inviteToLeague, 
   getFriends, 
@@ -321,30 +322,50 @@ function LeaguePage() {
   };
 
   return (
-    <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh' }}>
+    <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh', pb: 4 }}>
       <NavBar />
-      
-      <Container maxWidth="lg" sx={{ mt: 3, mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <Button
-            variant="text"
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/home')}
-            sx={{
-              color: '#f8fafc',
-              textTransform: 'none',
-              fontWeight: 'medium',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              },
+      <Container maxWidth="lg" sx={{ pt: 4 }}>
+        {/* Header with back button and league name */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton 
+              onClick={() => navigate('/home')} 
+              sx={{ 
+                color: '#f8fafc',
+                mr: 1,
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.1)'
+                }
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="h4" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+              {loading ? 'Loading...' : league?.name}
+            </Typography>
+          </Box>
+          
+          {/* User Money Display */}
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              bgcolor: 'rgba(255, 215, 0, 0.15)', 
+              p: '8px 16px', 
+              borderRadius: 2,
+              border: '1px solid rgba(255, 215, 0, 0.3)'
             }}
           >
-            Back
-          </Button>
-          
-          <Typography variant="h4" sx={{ ml: 1, color: '#f8fafc', fontWeight: 'bold', flexGrow: 1 }}>
-            {loading ? 'Loading...' : league?.name}
-          </Typography>
+            <Typography sx={{ color: '#FFD700', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+              <Box component="span" sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
+                <AttachMoneyIcon fontSize="small" />
+              </Box>
+              {typeof user.money === 'number' 
+                ? user.money.toFixed(2) 
+                : parseFloat(user.money || 0).toFixed(2)
+              }
+            </Typography>
+          </Box>
         </Box>
 
         {!loading && league && (
@@ -573,7 +594,7 @@ function LeaguePage() {
               ) : (
                 <List disablePadding>
                   {members
-                    .sort((a, b) => (b.points || 1500) - (a.points || 1500))
+                    .sort((a, b) => (b.points || 0) - (a.points || 0))
                     .map((member, index) => (
                       <ListItem 
                         key={member.id}
@@ -649,7 +670,7 @@ function LeaguePage() {
                           </Box>
                           
                           <Typography sx={{ color: '#10B981', fontWeight: 'bold' }}>
-                            {member.points || (2500 - index * 150)}
+                            {member.points || 0}
                           </Typography>
                           
                           {isCaptain && member.id !== league.captain.id && (

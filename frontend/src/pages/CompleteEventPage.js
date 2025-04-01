@@ -54,7 +54,12 @@ function CompleteEventPage() {
         
         // Fetch event details
         const eventData = await getEventDetails(eventId);
+        console.log('Event details received:', eventData);
+        console.log('Market data structure:', eventData.market_data);
         setEvent(eventData);
+        
+        // Initialize a default selection
+        // We'll handle setting winningOutcome after event is set, in a separate useEffect
         
         setLoading(false);
       } catch (err) {
@@ -66,7 +71,24 @@ function CompleteEventPage() {
     fetchData();
   }, [leagueId, eventId, currentUser.id]);
 
+  // Separate useEffect to set winningOutcome after event is available
+  useEffect(() => {
+    if (event && event.market_data) {
+      // For custom events with marketKey/outcomeKey structure
+      if (event.market_data.outcomeKey) {
+        console.log('Setting outcome from market_data.outcomeKey:', event.market_data.outcomeKey);
+        setWinningOutcome(event.market_data.outcomeKey);
+      } 
+      // For other structures, default to "home"
+      else {
+        console.log('Setting default outcome to: "home"');
+        setWinningOutcome("home");
+      }
+    }
+  }, [event]);
+
   const handleOutcomeChange = (e) => {
+    console.log('Selected outcome:', e.target.value);
     setWinningOutcome(e.target.value);
   };
 
@@ -74,6 +96,8 @@ function CompleteEventPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    
+    console.log('Form submitted with outcome:', winningOutcome);
 
     // Validate selection
     if (!winningOutcome) {
@@ -82,7 +106,9 @@ function CompleteEventPage() {
     }
 
     try {
-      await completeLeagueEvent(eventId, winningOutcome);
+      console.log('Sending API request to complete event with outcome:', winningOutcome);
+      const response = await completeLeagueEvent(eventId, winningOutcome);
+      console.log('API response:', response);
       setSuccess('Event completed successfully! Payouts have been processed.');
       
       // Redirect to league page after a short delay
@@ -90,6 +116,7 @@ function CompleteEventPage() {
         navigate(`/league/${leagueId}`);
       }, 2000);
     } catch (err) {
+      console.error('Error completing event:', err);
       setError(err.message || 'Failed to complete the event');
     }
   };
@@ -231,21 +258,34 @@ function CompleteEventPage() {
                     <InputLabel id="outcome-select-label">Winning Outcome</InputLabel>
                     <Select
                       labelId="outcome-select-label"
-                      value={winningOutcome}
+                      value={winningOutcome || ''}
                       onChange={handleOutcomeChange}
                       label="Winning Outcome"
                       required
                     >
-                      {event.markets && event.markets.length > 0 && event.markets[0].outcomes.map((outcome) => (
-                        <MenuItem key={outcome.name} value={outcome.name}>
-                          {outcome.name === 'home' 
-                            ? `Home Team (${event.home_team || 'Home'}) - Odds: ${outcome.price}`
-                            : outcome.name === 'away'
-                            ? `Away Team (${event.away_team || 'Away'}) - Odds: ${outcome.price}`
-                            : `${outcome.name.charAt(0).toUpperCase() + outcome.name.slice(1)} - Odds: ${outcome.price}`
-                          }
-                        </MenuItem>
-                      ))}
+                      {console.log('Current winningOutcome:', winningOutcome)}
+                      
+                      {/* Always provide these two basic options for any event */}
+                      <MenuItem value="home">
+                        Home Team ({event.home_team || 'Home'})
+                        {event.market_data && event.market_data.odds && ` - Odds: ${event.market_data.odds}`}
+                      </MenuItem>
+                      <MenuItem value="away">
+                        Away Team ({event.away_team || 'Away'})
+                        {event.market_data && event.market_data.odds && ` - Odds: ${event.market_data.odds}`}
+                      </MenuItem>
+                      
+                      {/* Add any additional outcome options for external API events */}
+                      {(event.markets && event.markets.length > 0 && event.markets[0].outcomes) ?
+                        event.markets[0].outcomes
+                          .filter(outcome => outcome.name !== 'home' && outcome.name !== 'away')
+                          .map(outcome => (
+                            <MenuItem key={outcome.name} value={outcome.name}>
+                              {outcome.name.charAt(0).toUpperCase() + outcome.name.slice(1)} - Odds: {outcome.price}
+                            </MenuItem>
+                          ))
+                        : null
+                      }
                     </Select>
                   </FormControl>
                   

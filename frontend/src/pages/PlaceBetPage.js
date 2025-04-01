@@ -48,10 +48,24 @@ function PlaceBetPage() {
 
         // Get events from the league
         const eventsData = await getLeagueEvents(leagueId);
+        console.log("League events:", eventsData); // Debug log
+        console.log("Current event ID from URL:", eventId); // Debug log
+        
         if (eventsData && Array.isArray(eventsData)) {
-          // Find the matching event
-          const event = eventsData.find(e => e.event_key === eventId);
+          // First try to find the event by id (which is what's typically in the URL)
+          // Then fall back to event_key if not found
+          const event = eventsData.find(e => String(e.id) === eventId) || 
+                         eventsData.find(e => e.event_key === eventId);
+          
           if (event) {
+            console.log("Found event:", event); // Debug log
+            
+            // Check if the event has user_bets and the current user has a bet
+            if (event.user_bets && event.user_bets.some(bet => bet.user_id === user.id)) {
+              // User already has a bet on this event
+              setErrorMsg('You have already placed a bet on this event.');
+            }
+            
             setEventDetails({
               id: event.id,
               key: event.event_key,
@@ -61,14 +75,17 @@ function PlaceBetPage() {
               commenceTime: event.commence_time,
               homeTeam: event.home_team,
               awayTeam: event.away_team,
-              marketKey: event.market_data?.marketKey || 'moneyline',
-              outcomeKey: event.market_data?.outcomeKey,
-              odds: event.market_data?.odds || 2.5,
-              amount: event.market_data?.amount,
+              marketKey: event.market_data?.key || 'h2h',
+              // Get the outcomes from market_data if available
+              outcomes: event.market_data?.outcomes || [],
+              // Set a default odds value based on market_data
+              odds: event.market_data?.odds || 2.0,
               status: event.completed ? 'COMPLETED' : 'ACTIVE',
               created_at: event.created_at
             });
           } else {
+            console.error("Event not found. eventId:", eventId);
+            console.error("Available events:", eventsData.map(e => ({ id: e.id, key: e.event_key })));
             setErrorMsg('Event not found in this league');
           }
         }
@@ -112,10 +129,21 @@ function PlaceBetPage() {
         throw new Error(`Insufficient funds. Your balance is $${currentMoney.toFixed(2)}`);
       }
 
+      // Find the selected outcome odds
+      let selectedOdds = eventDetails.odds;
+      if (eventDetails?.outcomes && eventDetails.outcomes.length > 0) {
+        const selectedOutcomeData = eventDetails.outcomes.find(
+          outcome => outcome.name === selectedOutcome
+        );
+        if (selectedOutcomeData) {
+          selectedOdds = selectedOutcomeData.price;
+        }
+      }
+
       // Call the API to place the bet
       await placeBet({
         leagueId: leagueId,
-        eventKey: eventId,
+        eventKey: eventDetails.key,
         eventId: eventDetails.eventId,
         eventName: eventDetails.name,
         sport: eventDetails.sport,
@@ -124,7 +152,7 @@ function PlaceBetPage() {
         awayTeam: eventDetails.awayTeam,
         marketKey: eventDetails.marketKey,
         outcomeKey: selectedOutcome,
-        odds: eventDetails.odds,
+        odds: selectedOdds,
         amount: betAmount
       });
       
@@ -155,40 +183,68 @@ function PlaceBetPage() {
 
   // Generate outcome options based on the market type
   const getOutcomeOptions = () => {
-    const marketKey = eventDetails?.marketKey || 'moneyline';
+    // If we have outcomes in market_data, use those
+    if (eventDetails?.outcomes && eventDetails.outcomes.length > 0) {
+      return eventDetails.outcomes.map(outcome => ({
+        value: outcome.name,
+        label: outcome.name === 'home' ? `${eventDetails.homeTeam || 'Home'} (${outcome.price})` :
+               outcome.name === 'away' ? `${eventDetails.awayTeam || 'Away'} (${outcome.price})` :
+               outcome.name === 'draw' ? `Draw (${outcome.price})` :
+               outcome.name === 'over' ? `Over ${outcome.point} (${outcome.price})` :
+               outcome.name === 'under' ? `Under ${outcome.point} (${outcome.price})` :
+               `${outcome.name} (${outcome.price})`
+      }));
+    }
+
+    // Default options based on market type
+    const marketKey = eventDetails?.marketKey || 'h2h';
     
     switch(marketKey) {
-      case 'moneyline':
+      case 'h2h':
         return [
-          { value: 'home', label: 'Home Team' },
-          { value: 'away', label: 'Away Team' },
+          { value: 'home', label: `${eventDetails?.homeTeam || 'Home Team'}` },
+          { value: 'away', label: `${eventDetails?.awayTeam || 'Away Team'}` },
           { value: 'draw', label: 'Draw' }
         ];
-      case 'spread':
+      case 'spreads':
         return [
-          { value: 'home', label: 'Home Team (with spread)' },
-          { value: 'away', label: 'Away Team (with spread)' }
+          { value: 'home', label: `${eventDetails?.homeTeam || 'Home Team'} (with spread)` },
+          { value: 'away', label: `${eventDetails?.awayTeam || 'Away Team'} (with spread)` }
         ];
-      case 'total':
+      case 'totals':
         return [
           { value: 'over', label: 'Over' },
           { value: 'under', label: 'Under' }
         ];
       default:
         return [
-          { value: 'home', label: 'Home Team' },
-          { value: 'away', label: 'Away Team' }
+          { value: 'home', label: `${eventDetails?.homeTeam || 'Home Team'}` },
+          { value: 'away', label: `${eventDetails?.awayTeam || 'Away Team'}` }
         ];
     }
   };
 
   // Calculate potential winnings
   const calculatePotentialWinnings = () => {
-    if (!amount || !eventDetails?.odds) return '0.00';
+    if (!amount || !selectedOutcome) return '0.00';
     
     try {
       const betAmount = parseFloat(amount);
-      const oddsValue = parseFloat(eventDetails.odds);
+      let oddsValue = 0;
+      
+      // Find the odds for the selected outcome
+      if (eventDetails?.outcomes && eventDetails.outcomes.length > 0) {
+        const selectedOutcomeData = eventDetails.outcomes.find(
+          outcome => outcome.name === selectedOutcome
+        );
+        if (selectedOutcomeData) {
+          oddsValue = parseFloat(selectedOutcomeData.price);
+        } else {
+          oddsValue = parseFloat(eventDetails.odds || 2.0);
+        }
+      } else {
+        oddsValue = parseFloat(eventDetails?.odds || 2.0);
+      }
       
       if (isNaN(betAmount) || isNaN(oddsValue)) return '0.00';
       

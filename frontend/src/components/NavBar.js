@@ -25,6 +25,8 @@ import {
   Logout as LogoutIcon,
   EmojiEvents as EmojiEventsOutlinedIcon,
   Person as PersonIcon,
+  CheckCircleOutline as CheckCircleOutlineIcon,
+  HighlightOff as HighlightOffIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -121,7 +123,7 @@ function NavBar() {
     if (notifications.length > 0) {
       console.log('Current notifications:');
       notifications.forEach(notif => {
-        console.log(`ID: ${notif.id}, Type: ${notif.notification_type}, Message: ${notif.message}`);
+        console.log(`ID: ${notif.id}, Type: ${notif.type}, Message: ${notif.message}`);
       });
     }
     
@@ -353,27 +355,70 @@ function NavBar() {
             </Typography>
             <Divider />
             <List>
-              {notifications.map((notification) => (
+              {notifications.map((notification) => {
+                // Debug logging for each notification
+                console.log(`Rendering notification ${notification.id}:`);
+                console.log(`- Type:`, notification.type || notification.notification_type);
+                console.log(`- Reference ID: ${notification.reference_id}`);
+                console.log(`- Full notification:`, notification);
+                
+                // Get notification type from either type or notification_type field
+                const notificationType = notification.type || notification.notification_type;
+                
+                // Check if this is a betting result notification by looking for win/loss keywords
+                const isWinNotification = notification.message && 
+                  (notification.message.toLowerCase().includes('won') || 
+                   notification.message.toLowerCase().includes('win'));
+                   
+                const isLossNotification = notification.message && 
+                  (notification.message.toLowerCase().includes('lost') || 
+                   notification.message.toLowerCase().includes('loss'));
+                
+                return (
                 <ListItem 
                   key={notification.id}
                   sx={{
                     backgroundColor: notification.is_read ? 'transparent' : 'rgba(96, 165, 250, 0.1)',
-                    borderLeft: notification.notification_type === 'league_invite' ? '4px solid #8B5CF6' : 'none',
+                    borderLeft: notificationType === 'league_invite' 
+                      ? '4px solid #8B5CF6' 
+                      : isWinNotification 
+                        ? '4px solid #10B981' // Green for wins
+                        : isLossNotification 
+                          ? '4px solid #EF4444' // Red for losses
+                          : 'none',
+                    padding: '12px 16px', // More padding for better readability
+                    marginBottom: '4px', // Add spacing between items
                   }}
                 >
                   <ListItemText 
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        {notification.notification_type === 'league_invite' && (
-                          <EmojiEventsOutlinedIcon sx={{ color: '#8B5CF6', mr: 1, fontSize: '1rem' }} />
+                        {notificationType === 'league_invite' && (
+                          <EmojiEventsOutlinedIcon sx={{ color: '#8B5CF6', mr: 1, fontSize: '1.1rem' }} />
                         )}
-                        <Typography sx={{ fontWeight: notification.notification_type === 'league_invite' ? 'bold' : 'normal' }}>
+                        {isWinNotification && (
+                          <CheckCircleOutlineIcon sx={{ color: '#10B981', mr: 1, fontSize: '1.1rem' }} />
+                        )}
+                        {isLossNotification && (
+                          <HighlightOffIcon sx={{ color: '#EF4444', mr: 1, fontSize: '1.1rem' }} />
+                        )}
+                        <Typography sx={{ 
+                          fontWeight: notificationType === 'league_invite' || isWinNotification || isLossNotification 
+                            ? 'bold' 
+                            : 'normal',
+                          color: isWinNotification 
+                            ? '#10B981' 
+                            : isLossNotification 
+                              ? '#EF4444'
+                              : 'inherit',
+                          fontSize: isWinNotification || isLossNotification ? '0.95rem' : 'inherit'
+                        }}>
                           {notification.message}
                         </Typography>
                       </Box>
                     }
                     secondary={
-                      notification.notification_type === 'league_invite' ? (
+                      (notificationType === 'league_invite' || notification.requires_action) ? (
                         <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
                           <Button
                             size="small"
@@ -409,7 +454,7 @@ function NavBar() {
                     }
                   />
                 </ListItem>
-              ))}
+              )})}
             </List>
           </>
         )}

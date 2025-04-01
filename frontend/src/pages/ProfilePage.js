@@ -156,20 +156,45 @@ function ProfilePage() {
                 Member since Oct 2023
               </Typography>
               
+              {/* Points Display */}
               <Paper 
                 sx={{ 
                   bgcolor: 'rgba(22, 28, 36, 0.7)', 
                   p: 2, 
                   width: '100%',
                   borderRadius: 2,
-                  mb: 3
+                  mb: 2
                 }}
               >
                 <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#10B981', mb: 1 }}>
-                  1500
+                  {user.points || 0}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
                   Available Points
+                </Typography>
+              </Paper>
+
+              {/* Money Display */}
+              <Paper 
+                sx={{ 
+                  bgcolor: 'rgba(22, 28, 36, 0.7)', 
+                  p: 2, 
+                  width: '100%',
+                  borderRadius: 2,
+                  mb: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center'
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <AttachMoneyIcon sx={{ color: '#FFD700', fontSize: '2rem', mr: 1 }} />
+                  <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#FFD700', mb: 1 }}>
+                    {typeof user.money === 'number' ? user.money.toFixed(2) : (user.money || '0.00')}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
+                  Betting Balance
                 </Typography>
               </Paper>
               

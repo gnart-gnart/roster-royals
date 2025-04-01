@@ -2,11 +2,19 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 const getHeaders = () => {
   const token = localStorage.getItem('token');
-  console.log('Using token:', token); // Debug log
-  return {
+  console.log('[getHeaders] Token retrieved from localStorage:', token ? `${token.substring(0, 5)}...` : 'null');
+  
+  if (!token) {
+    console.warn('[getHeaders] No token found in localStorage! This will cause authentication failures.');
+  }
+  
+  const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Token ${token}`,
+    'Authorization': token ? `Token ${token}` : '',
   };
+  
+  console.log('[getHeaders] Generated headers:', headers);
+  return headers;
 };
 
 const handleResponse = async (response) => {
@@ -113,15 +121,21 @@ export const searchUsers = async (query) => {
 };
 
 export const getNotifications = async () => {
+  console.log("Fetching notifications...");
   const response = await fetch(`${API_URL}/api/notifications/`, {
     headers: getHeaders(),
   });
 
+  console.log("Notifications response status:", response.status);
+  
   if (!response.ok) {
+    console.error("Error fetching notifications:", response.statusText);
     throw new Error('Failed to fetch notifications');
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log("Notifications data:", data);
+  return data;
 };
 
 export const markNotificationsRead = async () => {
@@ -230,22 +244,51 @@ export const getCompetitionEvents = async (competitionKey) => {
 
 export const getEventDetails = async (eventId) => {
   try {
-    const response = await fetch(`${API_URL}/api/leagues/events/${eventId}/`);
+    const headers = getHeaders();
+    console.log(`[getEventDetails] Event ID: ${eventId}, Auth headers:`, headers);
+    console.log(`[getEventDetails] Token from localStorage:`, localStorage.getItem('token'));
+    
+    // Normalize the event ID
+    const normalizedEventId = eventId.toString();
+    console.log(`[getEventDetails] Using normalized event ID: ${normalizedEventId}`);
+    
+    const url = `${API_URL}/api/leagues/events/${normalizedEventId}/`;
+    console.log(`[getEventDetails] Fetching from URL: ${url}`);
+    
+    const response = await fetch(url, {
+      headers: headers,
+    });
+    
+    console.log(`[getEventDetails] Response status:`, response.status);
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[getEventDetails] Error response: ${errorText}`);
+      
+      // If we got a 401, let's verify the token status
+      if (response.status === 401) {
+        const token = localStorage.getItem('token');
+        console.error(`[getEventDetails] Authentication failure. Token exists: ${!!token}`);
+        throw new Error(`Authentication failed. Please log in again.`);
+      }
+      
       throw new Error(`Failed to get event details: ${response.status}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log(`[getEventDetails] Success - received data:`, data);
+    return data;
   } catch (error) {
-    console.error('Error getting event details:', error);
+    console.error('[getEventDetails] Error:', error);
     throw error;
   }
 };
 
 export const getLeagueEvents = async (leagueId) => {
   try {
-    const response = await fetch(`${API_URL}/api/leagues/${leagueId}/events/`);
+    const response = await fetch(`${API_URL}/api/leagues/${leagueId}/events/`, {
+      headers: getHeaders(),
+    });
     
     if (!response.ok) {
       throw new Error(`Failed to get league events: ${response.status}`);
@@ -326,22 +369,14 @@ export const completeLeagueEvent = async (eventId, winningOutcome) => {
  */
 export const createCustomEvent = async (eventData) => {
   try {
-    const token = localStorage.getItem('token');
+    console.log("Creating custom event with data:", eventData);
     const response = await fetch(`${API_URL}/api/leagues/events/create/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Token ${token}`,
-      },
+      headers: getHeaders(),
       body: JSON.stringify(eventData),
     });
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || `Failed to create event: ${response.status}`);
-    }
-    
-    return await response.json();
+    return handleResponse(response);
   } catch (error) {
     console.error('Error creating custom event:', error);
     throw error;

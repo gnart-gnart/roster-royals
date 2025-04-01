@@ -12,9 +12,9 @@ urlpatterns = [
     
     # League events
     path('leagues/<int:league_id>/events/', views.get_league_events, name='get-league-events'),
-    path('leagues/events/<str:event_id>/', views.get_event_details, name='get-event-details'),
-    path('leagues/events/<int:event_id>/complete/', views.complete_league_event, name='complete-league-event'),
     path('leagues/events/create/', views.create_custom_event, name='create-custom-event'),
+    path('leagues/events/<int:event_id>/complete/', views.complete_league_event, name='complete-league-event'),
+    path('leagues/events/<str:event_id>/', views.get_event_details, name='get-event-details'),
     
     # Market browsing 
     path('market/browse/', views.browse_market, name='browse-market'),

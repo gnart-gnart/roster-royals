@@ -18,6 +18,7 @@ import {
   CircularProgress,
   Checkbox,
   FormControlLabel,
+  InputAdornment,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -56,8 +57,11 @@ function CreateEventPage() {
     awayTeam: 'Team B',
     commenceTime: new Date(Date.now() + 3600000), // Default to 1 hour from now
     endTime: new Date(Date.now() + 86400000), // Default to 24 hours from now
-    homeOdds: 2.0,
-    awayOdds: 2.0,
+    homeAmericanOdds: -110,
+    awayAmericanOdds: +110,
+    oddsType: 'moneyline',  // 'moneyline' or 'spread'
+    homeSpread: -3.5,
+    awaySpread: +3.5,
   });
 
   // Check if user is the league captain
@@ -88,6 +92,18 @@ function CreateEventPage() {
     fetchLeague();
   }, [leagueId, currentUser.id]);
 
+  // Convert American odds to decimal for the backend
+  const americanToDecimal = (american) => {
+    if (!american) return 2.0;
+    let decimal;
+    if (american > 0) {
+      decimal = (american / 100) + 1;
+    } else {
+      decimal = (100 / Math.abs(american)) + 1;
+    }
+    return parseFloat(decimal.toFixed(2));
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -115,25 +131,50 @@ function CreateEventPage() {
     }
 
     try {
-      // Prepare market data - simplified odds format
-      const marketData = {
-        key: 'h2h',
-        outcomes: [
-          { name: 'home', price: parseFloat(formData.homeOdds) },
-          { name: 'away', price: parseFloat(formData.awayOdds) }
-        ]
-      };
+      // Convert American odds to decimal for the backend
+      const homeDecimalOdds = americanToDecimal(parseInt(formData.homeAmericanOdds));
+      const awayDecimalOdds = americanToDecimal(parseInt(formData.awayAmericanOdds));
+      
+      // Prepare market data based on odds type
+      let marketData;
+      
+      if (formData.oddsType === 'spread') {
+        marketData = {
+          key: 'spreads',
+          outcomes: [
+            { 
+              name: 'home', 
+              price: homeDecimalOdds,
+              point: parseFloat(formData.homeSpread)
+            },
+            { 
+              name: 'away', 
+              price: awayDecimalOdds,
+              point: parseFloat(formData.awaySpread)
+            }
+          ]
+        };
+      } else {
+        // Default to moneyline (h2h)
+        marketData = {
+          key: 'h2h',
+          outcomes: [
+            { name: 'home', price: homeDecimalOdds },
+            { name: 'away', price: awayDecimalOdds }
+          ]
+        };
+      }
 
       // Create the event
       const eventData = {
-        leagueId: leagueId,
-        eventName: formData.eventName,
+        league_id: leagueId,
+        event_name: formData.eventName,
         sport: formData.sport || 'Test Event',
-        homeTeam: formData.homeTeam || 'Team A',
-        awayTeam: formData.awayTeam || 'Team B',
-        commenceTime: formData.commenceTime.toISOString(),
-        endTime: formData.endTime.toISOString(),
-        marketData: marketData
+        home_team: formData.homeTeam || 'Team A',
+        away_team: formData.awayTeam || 'Team B',
+        commence_time: formData.commenceTime.toISOString(),
+        end_time: formData.endTime.toISOString(),
+        market_data: marketData
       };
 
       const response = await createCustomEvent(eventData);
@@ -145,7 +186,7 @@ function CreateEventPage() {
       }, 2000);
       
     } catch (err) {
-      setError(err.message || 'Failed to create event');
+      setError(`Error creating custom event: ${err.message}`);
     }
   };
 
@@ -337,37 +378,92 @@ function CreateEventPage() {
               <Divider sx={{ my: 3 }} />
               
               <Typography variant="h6" gutterBottom>
-                Odds
+                Betting Odds
               </Typography>
               
               <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Odds Type</InputLabel>
+                    <Select
+                      name="oddsType"
+                      value={formData.oddsType}
+                      onChange={handleInputChange}
+                      label="Odds Type"
+                    >
+                      <MenuItem value="moneyline">Moneyline (Winner Only)</MenuItem>
+                      <MenuItem value="spread">Point Spread</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
                 <Grid item xs={12} sm={6}>
                   <TextField
-                    name="homeOdds"
+                    name="homeAmericanOdds"
                     label="Home Team Odds"
-                    value={formData.homeOdds}
+                    value={formData.homeAmericanOdds}
                     onChange={handleInputChange}
                     fullWidth
                     type="number"
-                    inputProps={{ min: 1, step: 0.01 }}
                     required
-                    helperText="Multiplier for winnings (e.g., 2.0 = double)"
+                    helperText="Negative value for favorites (e.g., -110)"
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">{formData.homeAmericanOdds < 0 ? "-" : "+"}</InputAdornment>,
+                    }}
                   />
                 </Grid>
                 
                 <Grid item xs={12} sm={6}>
                   <TextField
-                    name="awayOdds"
+                    name="awayAmericanOdds"
                     label="Away Team Odds"
-                    value={formData.awayOdds}
+                    value={formData.awayAmericanOdds}
                     onChange={handleInputChange}
                     fullWidth
                     type="number"
-                    inputProps={{ min: 1, step: 0.01 }}
                     required
-                    helperText="Multiplier for winnings (e.g., 2.0 = double)"
+                    helperText="Positive value for underdogs (e.g., +110)"
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">{formData.awayAmericanOdds < 0 ? "-" : "+"}</InputAdornment>,
+                    }}
                   />
                 </Grid>
+                
+                {formData.oddsType === 'spread' && (
+                  <>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        name="homeSpread"
+                        label="Home Team Spread"
+                        value={formData.homeSpread}
+                        onChange={handleInputChange}
+                        fullWidth
+                        type="number"
+                        required
+                        helperText="Use negative for favorites (e.g., -3.5)"
+                        InputProps={{
+                          startAdornment: <InputAdornment position="start">{formData.homeSpread < 0 ? "-" : "+"}</InputAdornment>,
+                        }}
+                      />
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        name="awaySpread"
+                        label="Away Team Spread"
+                        value={formData.awaySpread}
+                        onChange={handleInputChange}
+                        fullWidth
+                        type="number"
+                        required
+                        helperText="Use positive for underdogs (e.g., +3.5)"
+                        InputProps={{
+                          startAdornment: <InputAdornment position="start">{formData.awaySpread < 0 ? "-" : "+"}</InputAdornment>,
+                        }}
+                      />
+                    </Grid>
+                  </>
+                )}
               </Grid>
 
               <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
