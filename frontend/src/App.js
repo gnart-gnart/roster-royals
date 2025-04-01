@@ -9,10 +9,12 @@ import ProfilePage from './pages/ProfilePage';
 import AddFriendPage from './pages/AddFriendPage';
 import MarketPage from './pages/MarketPage';
 import PlaceBetPage from './pages/PlaceBetPage';
+import CreateEventPage from './pages/CreateEventPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import SportEventsPage from './pages/SportEventsPage';
 import SettingsPage from './pages/SettingsPage';
 import AddBetPage from './pages/AddBetPage';
+import CompleteEventPage from './pages/CompleteEventPage';
 
 const theme = createTheme({
   palette: {
@@ -159,6 +161,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <PlaceBetPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/league/:leagueId/create-event"
+            element={
+              <ProtectedRoute>
+                <CreateEventPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/league/:leagueId/event/:eventId/complete"
+            element={
+              <ProtectedRoute>
+                <CompleteEventPage />
               </ProtectedRoute>
             }
           />

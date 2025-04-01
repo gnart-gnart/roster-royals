@@ -55,6 +55,7 @@ import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { 
   inviteToLeague, 
   getFriends, 
@@ -70,6 +71,7 @@ import {
   addBet,
   deleteBet,
   updateLeague,
+  getLeagueBets,
 } from '../services/api';
 import NavBar from '../components/NavBar';
 
@@ -88,6 +90,7 @@ function LeaguePage() {
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectAll, setSelectAll] = useState(false);
+  const [leagueEvents, setLeagueEvents] = useState([]);
   
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -136,6 +139,10 @@ function LeaguePage() {
 
         // Load league bets (these would be the bets added to the league)
         loadLeagueBets();
+
+        // Get league events
+        const eventsData = await getLeagueEvents(id);
+        setLeagueEvents(eventsData);
       } catch (err) {
         setError('Failed to load league data');
         console.error(err);
@@ -400,67 +407,88 @@ function LeaguePage() {
   };
 
   return (
-    <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh' }}>
+    <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh', pb: 4 }}>
       <NavBar />
-      
-      <Container maxWidth="lg" sx={{ mt: 3, mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <Button
-            variant="text"
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/home')}
-            sx={{
-              color: '#f8fafc',
-              textTransform: 'none',
-              fontWeight: 'medium',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              },
+      <Container maxWidth="lg" sx={{ pt: 4 }}>
+        {/* Header with back button and league name */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton 
+              onClick={() => navigate('/home')} 
+              sx={{ 
+                color: '#f8fafc',
+                mr: 1,
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.1)'
+                }
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            
+            {isEditing ? (
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <TextField
+                  name="name"
+                  value={editFormData.name}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                  size="small"
+                  sx={{ input: { color: '#f8fafc' } }}
+                />
+                <IconButton 
+                  onClick={handleSaveEdit}
+                  sx={{ color: '#10B981', ml: 1 }}
+                >
+                  <SaveIcon />
+                </IconButton>
+                <IconButton 
+                  onClick={handleCancelEdit}
+                  sx={{ color: '#EF4444', ml: 1 }}
+                >
+                  <CancelIcon />
+                </IconButton>
+              </Box>
+            ) : (
+              <>
+                <Typography variant="h4" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                  {loading ? 'Loading...' : league?.name}
+                </Typography>
+                {isCaptain && (
+                  <Tooltip title="Edit league details">
+                    <IconButton 
+                      onClick={handleEditClick}
+                      sx={{ color: '#60A5FA', ml: 1 }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </>
+            )}
+          </Box>
+          
+          {/* User Money Display */}
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              bgcolor: 'rgba(255, 215, 0, 0.15)', 
+              p: '8px 16px', 
+              borderRadius: 2,
+              border: '1px solid rgba(255, 215, 0, 0.3)'
             }}
           >
-            Back
-          </Button>
-          
-          {isEditing ? (
-            <Box sx={{ flexGrow: 1, ml: 1, display: 'flex', alignItems: 'center' }}>
-              <TextField
-                name="name"
-                value={editFormData.name}
-                onChange={handleInputChange}
-                variant="outlined"
-                size="small"
-                sx={{ flexGrow: 1, input: { color: '#f8fafc' } }}
-              />
-              <IconButton 
-                onClick={handleSaveEdit}
-                sx={{ color: '#10B981', ml: 1 }}
-              >
-                <SaveIcon />
-              </IconButton>
-              <IconButton 
-                onClick={handleCancelEdit}
-                sx={{ color: '#EF4444', ml: 1 }}
-              >
-                <CancelIcon />
-              </IconButton>
-            </Box>
-          ) : (
-            <>
-              <Typography variant="h4" sx={{ ml: 1, color: '#f8fafc', fontWeight: 'bold', flexGrow: 1 }}>
-                {loading ? 'Loading...' : league?.name}
-              </Typography>
-              {isCaptain && (
-                <Tooltip title="Edit league details">
-                  <IconButton 
-                    onClick={handleEditClick}
-                    sx={{ color: '#60A5FA' }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </>
-          )}
+            <Typography sx={{ color: '#FFD700', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+              <Box component="span" sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
+                <AttachMoneyIcon fontSize="small" />
+              </Box>
+              {typeof user.money === 'number' 
+                ? user.money.toFixed(2) 
+                : parseFloat(user.money || 0).toFixed(2)
+              }
+            </Typography>
+          </Box>
         </Box>
 
         {!loading && league && (
@@ -498,35 +526,57 @@ function LeaguePage() {
           <Grid item xs={12} md={8}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
-                Active Bets
+                League Events
               </Typography>
         {isCaptain && (
-            <Button
-              variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => navigate(`/league/${id}/market`)}
-                  sx={{
-                    bgcolor: '#8B5CF6',
-                    color: 'white',
-                    borderRadius: '20px',
-                    textTransform: 'none',
-                    fontWeight: 'medium',
-                    px: 2,
-                    '&:hover': {
-                      backgroundColor: '#7C3AED',
-                    },
-                  }}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => navigate(`/league/${id}/create-event`)}
+                    sx={{
+                        bgcolor: '#8B5CF6',
+                        color: 'white',
+                        borderRadius: '20px',
+                        textTransform: 'none',
+                        fontWeight: 'medium',
+                        px: 2,
+                        '&:hover': {
+                            backgroundColor: '#7C3AED',
+                        },
+                    }}
                 >
-                  Choose Bet
-            </Button>
+                    Create Event
+                </Button>
+                
+                <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={() => navigate(`/league/${id}/market`)}
+                    sx={{
+                        borderColor: '#8B5CF6',
+                        color: '#8B5CF6',
+                        borderRadius: '20px',
+                        textTransform: 'none',
+                        fontWeight: 'medium',
+                        px: 2,
+                        '&:hover': {
+                            borderColor: '#7C3AED',
+                            backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                        },
+                    }}
+                >
+                    Browse Market
+                </Button>
+            </Box>
               )}
             </Box>
             
-            {/* Replace the empty state with a dynamic list of bets */}
-            {bets && bets.length > 0 ? (
+            {/* Display league events */}
+            {leagueEvents && leagueEvents.length > 0 ? (
               <Grid container spacing={2}>
-                {bets.map((bet) => (
-                  <Grid item xs={12} key={bet.id}>
+                {leagueEvents.map((event) => (
+                  <Grid item xs={12} key={event.id}>
                     <Card sx={{ 
                       bgcolor: 'rgba(22, 28, 36, 0.4)', 
                       borderRadius: '8px', 
@@ -537,44 +587,89 @@ function LeaguePage() {
                       <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                           <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
-                            {bet.event_name || 'Betting Event'}
+                            {event.event_name || 'Event'}
                           </Typography>
                           <Chip 
-                            label={bet.status || 'Active'} 
-                            color={bet.status === 'CLOSED' ? 'error' : 'success'}
+                            label={event.completed ? 'Completed' : 'Active'} 
+                            color={event.completed ? 'error' : 'success'}
                             size="small"
                           />
                         </Box>
                         
-                        <Typography variant="body2" sx={{ color: '#CBD5E1', mb: 2 }}>
-                          Sport: {bet.sport || 'Not specified'}
-                        </Typography>
-                        
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Box>
-                            <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
-                              Market: {bet.marketKey || 'Moneyline'}
+                        <Grid container spacing={2} sx={{ mb: 2 }}>
+                          <Grid item xs={6} sm={3}>
+                            <Typography variant="body2" sx={{ color: '#94A3B8' }}>
+                              Sport:
                             </Typography>
                             <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
-                              Odds: {bet.odds || '-'}
+                              {event.sport || 'Not specified'}
                             </Typography>
-                          </Box>
+                          </Grid>
                           
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => navigate(`/league/${id}/event/${bet.event_key}/place-user-bet`)}
-                            sx={{
-                              borderColor: '#8B5CF6',
-                              color: '#8B5CF6',
-                              '&:hover': {
-                                borderColor: '#7C3AED',
-                                backgroundColor: 'rgba(139, 92, 246, 0.08)',
-                              },
-                            }}
-                          >
-                            Place Your Bet
-                          </Button>
+                          <Grid item xs={6} sm={3}>
+                            <Typography variant="body2" sx={{ color: '#94A3B8' }}>
+                              Market:
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
+                              {event.markets?.[0]?.key || 'Moneyline'}
+                            </Typography>
+                          </Grid>
+                          
+                          <Grid item xs={6} sm={3}>
+                            <Typography variant="body2" sx={{ color: '#94A3B8' }}>
+                              Home Team:
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
+                              {event.home_team || 'Home'}
+                            </Typography>
+                          </Grid>
+                          
+                          <Grid item xs={6} sm={3}>
+                            <Typography variant="body2" sx={{ color: '#94A3B8' }}>
+                              Away Team:
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
+                              {event.away_team || 'Away'}
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                        
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                          {!event.completed && (
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={() => navigate(`/league/${id}/event/${event.id}/place-user-bet`)}
+                              sx={{
+                                borderColor: '#10B981',
+                                color: '#10B981',
+                                '&:hover': {
+                                  borderColor: '#059669',
+                                  backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                                },
+                              }}
+                            >
+                              Place Bet
+                            </Button>
+                          )}
+                          
+                          {isCaptain && !event.completed && (
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={() => navigate(`/league/${id}/event/${event.id}/complete`)}
+                              sx={{
+                                borderColor: '#F59E0B',
+                                color: '#F59E0B',
+                                '&:hover': {
+                                  borderColor: '#D97706',
+                                  backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                                },
+                              }}
+                            >
+                              Complete Event
+                            </Button>
+                          )}
                         </Box>
                       </CardContent>
                     </Card>
@@ -583,7 +678,7 @@ function LeaguePage() {
               </Grid>
             ) : (
               <Box sx={{ p: 3, textAlign: 'center', color: '#6B7280', bgcolor: 'rgba(22, 28, 36, 0.4)', borderRadius: '8px', border: '1px solid rgba(30, 41, 59, 0.8)' }}>
-                No bets available yet.
+                No events available yet.
               </Box>
             )}
           </Grid>
@@ -636,7 +731,7 @@ function LeaguePage() {
               ) : (
                 <List disablePadding>
                   {members
-                    .sort((a, b) => (b.points || 1500) - (a.points || 1500))
+                    .sort((a, b) => (b.points || 0) - (a.points || 0))
                     .map((member, index) => (
                       <ListItem 
                         key={member.id}
@@ -712,7 +807,7 @@ function LeaguePage() {
                           </Box>
                           
                           <Typography sx={{ color: '#10B981', fontWeight: 'bold' }}>
-                            {member.points || (2500 - index * 150)}
+                            {member.points || 0}
                           </Typography>
                           
                           {isCaptain && member.id !== league.captain.id && (

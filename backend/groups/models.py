@@ -57,11 +57,15 @@ class LeagueEvent(models.Model):
     """Model for a betting event posted to a league."""
     league = models.ForeignKey(League, on_delete=models.CASCADE, related_name='league_events')
     event_key = models.CharField(max_length=255)
-    event_id = models.IntegerField(null=True, blank=True)  # New field to store the Odds API event ID
+    event_id = models.CharField(max_length=255, null=True, blank=True)  # Field for Odds API event ID (changed to handle string IDs)
     event_name = models.CharField(max_length=255)
     sport = models.CharField(max_length=100)
+    commence_time = models.DateTimeField(null=True, blank=True)  # When the event starts
+    home_team = models.CharField(max_length=255, null=True, blank=True)
+    away_team = models.CharField(max_length=255, null=True, blank=True)
     market_data = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    completed = models.BooleanField(default=False)  # Added to track if the event is completed
 
     def __str__(self):
         return f'{self.event_name} ({self.sport}) in league {self.league.name}' 

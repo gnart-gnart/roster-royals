@@ -2,11 +2,19 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 const getHeaders = () => {
   const token = localStorage.getItem('token');
-  console.log('Using token:', token); // Debug log
-  return {
+  console.log('[getHeaders] Token retrieved from localStorage:', token ? `${token.substring(0, 5)}...` : 'null');
+  
+  if (!token) {
+    console.warn('[getHeaders] No token found in localStorage! This will cause authentication failures.');
+  }
+  
+  const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Token ${token}`,
+    'Authorization': token ? `Token ${token}` : '',
   };
+  
+  console.log('[getHeaders] Generated headers:', headers);
+  return headers;
 };
 
 const handleResponse = async (response) => {
@@ -113,15 +121,21 @@ export const searchUsers = async (query) => {
 };
 
 export const getNotifications = async () => {
+  console.log("Fetching notifications...");
   const response = await fetch(`${API_URL}/api/notifications/`, {
     headers: getHeaders(),
   });
 
+  console.log("Notifications response status:", response.status);
+  
   if (!response.ok) {
+    console.error("Error fetching notifications:", response.statusText);
     throw new Error('Failed to fetch notifications');
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log("Notifications data:", data);
+  return data;
 };
 
 export const markNotificationsRead = async () => {
@@ -239,11 +253,62 @@ export const getCompetitionEvents = async (competitionKey) => {
 };
 
 export const getEventDetails = async (eventId) => {
-  const endpoint = `${API_URL}/api/leagues/bets/events/${eventId}/`;
-  const response = await fetch(endpoint, {
-    headers: getHeaders(),
-  });
-  return handleResponse(response);
+  try {
+    const headers = getHeaders();
+    console.log(`[getEventDetails] Event ID: ${eventId}, Auth headers:`, headers);
+    console.log(`[getEventDetails] Token from localStorage:`, localStorage.getItem('token'));
+    
+    // Normalize the event ID
+    const normalizedEventId = eventId.toString();
+    console.log(`[getEventDetails] Using normalized event ID: ${normalizedEventId}`);
+    
+    const url = `${API_URL}/api/leagues/events/${normalizedEventId}/`;
+    console.log(`[getEventDetails] Fetching from URL: ${url}`);
+    
+    const response = await fetch(url, {
+      headers: headers,
+    });
+    
+    console.log(`[getEventDetails] Response status:`, response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[getEventDetails] Error response: ${errorText}`);
+      
+      // If we got a 401, let's verify the token status
+      if (response.status === 401) {
+        const token = localStorage.getItem('token');
+        console.error(`[getEventDetails] Authentication failure. Token exists: ${!!token}`);
+        throw new Error(`Authentication failed. Please log in again.`);
+      }
+      
+      throw new Error(`Failed to get event details: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`[getEventDetails] Success - received data:`, data);
+    return data;
+  } catch (error) {
+    console.error('[getEventDetails] Error:', error);
+    throw error;
+  }
+};
+
+export const getLeagueEvents = async (leagueId) => {
+  try {
+    const response = await fetch(`${API_URL}/api/leagues/${leagueId}/events/`, {
+      headers: getHeaders(),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to get league events: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting league events:', error);
+    throw error;
+  }
 };
 
 /**
@@ -262,8 +327,12 @@ export const placeBet = async (betData) => {
       body: JSON.stringify({
         league_id: betData.leagueId,
         event_key: betData.eventKey,
+        event_id: betData.eventId,
         event_name: betData.eventName,
         sport: betData.sport,
+        commence_time: betData.commenceTime,
+        home_team: betData.homeTeam,
+        away_team: betData.awayTeam,
         market_data: {
           marketKey: betData.marketKey,
           outcomeKey: betData.outcomeKey,
@@ -280,10 +349,47 @@ export const placeBet = async (betData) => {
   }
 };
 
-export const getLeagueEvents = async (leagueId) => {
-  const response = await fetch(`${API_URL}/api/leagues/${leagueId}/events/`, {
-    headers: getHeaders(),
-  });
-  return handleResponse(response);
+/**
+ * Complete a league event and determine winners/losers
+ * @param {number} eventId - The ID of the event to complete
+ * @param {string} winningOutcome - The outcome that won (e.g., "home", "away", "draw")
+ * @returns {Promise<Object>} - A promise that resolves to the API response
+ */
+export const completeLeagueEvent = async (eventId, winningOutcome) => {
+  try {
+    const response = await fetch(`${API_URL}/api/leagues/events/${eventId}/complete/`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        winning_outcome: winningOutcome
+      }),
+    });
+    
+    return handleResponse(response);
+  } catch (error) {
+    console.error('Error completing league event:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create a custom betting event with manual details
+ * @param {Object} eventData - The event data containing details for the custom event
+ * @returns {Promise<Object>} - A promise that resolves to the created event
+ */
+export const createCustomEvent = async (eventData) => {
+  try {
+    console.log("Creating custom event with data:", eventData);
+    const response = await fetch(`${API_URL}/api/leagues/events/create/`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(eventData),
+    });
+    
+    return handleResponse(response);
+  } catch (error) {
+    console.error('Error creating custom event:', error);
+    throw error;
+  }
 };
 

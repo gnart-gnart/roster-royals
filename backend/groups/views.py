@@ -1,14 +1,19 @@
-from rest_framework import status, generics
+from django.shortcuts import render
+from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .models import League, User, LeagueInvite, Bet, UserBet, LeagueEvent
-from users.models import Notification  # Import from users app instead
-from .serializers import LeagueSerializer, LeagueEventSerializer
-from .odds import OddsApiClient
-import datetime
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import generics, status
+from .models import League, Bet, UserBet, LeagueInvite, LeagueEvent
+from users.models import User, Notification, FriendRequest
+from .serializers import LeagueSerializer, BetSerializer, LeagueEventSerializer
 import logging
+import json
 import requests
+import uuid
+from decimal import Decimal
+from django.utils import timezone
+from .odds import OddsApiClient
 
 logger = logging.getLogger(__name__)
 
@@ -205,6 +210,19 @@ def test_bets_endpoint(request):
 def get_event_details(request, event_id):
     try:
         print(f"\nFetching event details for event ID: {event_id}")
+        
+        # First, try to find the event in our local database
+        try:
+            # Check if event_id is an integer (for local events)
+            if event_id.isdigit():
+                event = LeagueEvent.objects.get(id=int(event_id))
+                print(f"Found local event: {event.event_name}")
+                serializer = LeagueEventSerializer(event)
+                return Response(serializer.data)
+        except (ValueError, LeagueEvent.DoesNotExist):
+            print(f"Event {event_id} not found in local DB, trying external API")
+        
+        # If not found locally or not an integer ID, try the external API
         client = OddsApiClient()
         event_details = client.get_event_odds(event_id)
         return Response(event_details)
@@ -298,9 +316,18 @@ def post_league_event(request):
         # Get data from request
         league_id = request.data.get('league_id')
         event_key = request.data.get('event_key')
+        event_id = request.data.get('event_id')  # ID from Odds API
         event_name = request.data.get('event_name')
         sport = request.data.get('sport')
-        market_data = request.data.get('market_data')
+        commence_time = request.data.get('commence_time')
+        home_team = request.data.get('home_team')
+        away_team = request.data.get('away_team')
+        market_data = request.data.get('market_data', {})
+        
+        # Log for debugging
+        logger.info(f"Posting league event: {event_name}")
+        logger.info(f"User: {request.user.username} (ID: {request.user.id})")
+        logger.info(f"Market data: {market_data}")
         
         # Validate required fields
         if not all([league_id, event_key, event_name, sport]):
@@ -315,15 +342,102 @@ def post_league_event(request):
         # Check if user is a member of the league or is captain
         if not (request.user in league.members.all() or request.user == league.captain):
             return Response({'error': 'You are not authorized to post events to this league'}, status=403)
+        
+        # Check if this event already exists in this league
+        existing_event = LeagueEvent.objects.filter(league=league, event_key=event_key).first()
+        if existing_event:
+            logger.info(f"Event {event_key} already exists in league {league_id}")
+            
+            # Check if the user has already bet on this event
+            if existing_event.market_data and 'user_bets' in existing_event.market_data:
+                user_bets = existing_event.market_data['user_bets']
+                if any(bet.get('user_id') == request.user.id for bet in user_bets):
+                    return Response({'error': 'You have already placed a bet on this event'}, status=400)
+            
+            # If we're here, the event exists but the user hasn't bet on it yet
+            # We'll add the user's bet to the existing event
+            wager_amount = 0
+            if market_data and 'amount' in market_data:
+                wager_amount = float(market_data['amount'])
+                if request.user.money < wager_amount:
+                    return Response({'error': 'Insufficient funds to place this bet'}, status=400)
+            
+            # Add user bet to existing event
+            if wager_amount > 0:
+                # Deduct money from user
+                request.user.money -= Decimal(str(wager_amount))
+                request.user.save()
+                
+                # Prepare user bet data
+                user_bet = {
+                    'user_id': request.user.id,
+                    'username': request.user.username,
+                    'amount': wager_amount,
+                    'odds': market_data.get('odds', 2.0),
+                    'outcomeKey': market_data.get('outcomeKey', 'home'),
+                    'bet_time': timezone.now().isoformat()
+                }
+                
+                # Update the event's market_data
+                if 'user_bets' not in existing_event.market_data:
+                    existing_event.market_data['user_bets'] = []
+                
+                existing_event.market_data['user_bets'].append(user_bet)
+                existing_event.save()
+                
+                logger.info(f"Added user bet to existing event: {user_bet}")
+                
+                return Response({
+                    'message': 'Bet placed on existing event',
+                    'betId': existing_event.id,
+                    'event': LeagueEventSerializer(existing_event).data
+                }, status=200)
+        
+        # Check if the user has sufficient funds if market_data includes a wager amount
+        wager_amount = 0
+        if market_data and 'amount' in market_data:
+            wager_amount = float(market_data['amount'])
+            if request.user.money < wager_amount:
+                return Response({'error': 'Insufficient funds to place this bet'}, status=400)
+        
+        # Prepare market data with user bet information
+        enhanced_market_data = market_data.copy() if market_data else {}
+        
+        # Add user_bets array if it doesn't exist
+        if 'user_bets' not in enhanced_market_data:
+            enhanced_market_data['user_bets'] = []
+        
+        # Add this user's bet if they're placing one
+        if wager_amount > 0:
+            user_bet = {
+                'user_id': request.user.id,
+                'username': request.user.username,
+                'amount': wager_amount,
+                'odds': market_data.get('odds', 2.0),
+                'outcomeKey': market_data.get('outcomeKey', 'home'),
+                'bet_time': timezone.now().isoformat()
+            }
+            enhanced_market_data['user_bets'].append(user_bet)
+            
+            logger.info(f"Created user bet data: {user_bet}")
             
         # Create the league event
         league_event = LeagueEvent.objects.create(
             league=league,
             event_key=event_key,
+            event_id=event_id,
             event_name=event_name,
             sport=sport,
-            market_data=market_data
+            commence_time=commence_time,
+            home_team=home_team,
+            away_team=away_team,
+            market_data=enhanced_market_data
         )
+        
+        # If there's a wager, deduct money from the user
+        if wager_amount > 0:
+            request.user.money -= Decimal(str(wager_amount))
+            request.user.save()
         
         # Serialize and return the created event
         serializer = LeagueEventSerializer(league_event)
@@ -391,6 +505,215 @@ def browse_market(request):
         return Response({'error': error_msg}, status=500)    
     except Exception as e:
         logger.error(f"Error in browse_market: {str(e)}", exc_info=True)
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def complete_league_event(request, event_id):
+    """Mark a league event as completed and process bet outcomes."""
+    try:
+        # Get the event
+        event = LeagueEvent.objects.get(id=event_id)
+        
+        # Verify the user is the league captain
+        if request.user != event.league.captain:
+            return Response({'error': 'Only the league captain can complete events'}, status=403)
+        
+        # Check if event is already completed
+        if event.completed:
+            return Response({'error': 'This event is already completed'}, status=400)
+        
+        # Get request data
+        data = request.data
+        winning_outcome = data.get('winning_outcome')
+        
+        if not winning_outcome:
+            return Response({'error': 'Winning outcome is required'}, status=400)
+        
+        # Mark the event as completed
+        event.completed = True
+        event.save()
+        
+        # Log for debugging
+        logger.info(f"Completing event {event.id}: {event.event_name}")
+        logger.info(f"Winning outcome: {winning_outcome}")
+        logger.info(f"Market data: {event.market_data}")
+        
+        # Check if we have market_data with user bets
+        if event.market_data and isinstance(event.market_data, dict):
+            # Process user bets directly from market_data if available
+            user_bets = event.market_data.get('user_bets', [])
+            logger.info(f"Found {len(user_bets)} user bets in market_data")
+            
+            for user_bet in user_bets:
+                try:
+                    # Get user and bet details
+                    user_id = user_bet.get('user_id')
+                    choice = user_bet.get('outcomeKey')
+                    amount = float(user_bet.get('amount', 0))
+                    odds = float(user_bet.get('odds', 2.0))
+                    
+                    if not user_id or not choice or amount <= 0:
+                        logger.warning(f"Incomplete bet data: {user_bet}")
+                        continue
+                    
+                    # Get the user
+                    try:
+                        user = User.objects.get(id=user_id)
+                    except User.DoesNotExist:
+                        logger.warning(f"User with ID {user_id} not found")
+                        continue
+                    
+                    # Check if the user won or lost
+                    if choice == winning_outcome:
+                        # User won - calculate winnings based on odds and amount wagered
+                        winnings = amount * odds
+                        
+                        # Update user's money
+                        user.money += Decimal(str(winnings))
+                        
+                        # Award 1 point for winning
+                        user.points += 1
+                        user.save()
+                        
+                        # Create notification for the win
+                        logger.info(f"Creating win notification for user {user.username}")
+                        notification = Notification.objects.create(
+                            user=user,
+                            message=f"You won ${winnings:.2f} on {event.event_name}!",
+                            notification_type='info'
+                        )
+                        logger.info(f"Created notification ID {notification.id} for {user.username}")
+                    else:
+                        # User lost
+                        logger.info(f"Creating loss notification for user {user.username}")
+                        notification = Notification.objects.create(
+                            user=user,
+                            message=f"You lost your bet of ${amount:.2f} on {event.event_name}",
+                            notification_type='info'
+                        )
+                        logger.info(f"Created notification ID {notification.id} for {user.username}")
+                        user.save()  # Save the user to ensure any other changes are persisted
+                        
+                except Exception as bet_error:
+                    logger.error(f"Error processing bet: {str(bet_error)}", exc_info=True)
+        
+        # Traditional bet processing (keeping this as a fallback)
+        bets = Bet.objects.filter(name=event.event_key, league=event.league)
+        logger.info(f"Found {bets.count()} traditional Bet objects")
+        
+        for bet in bets:
+            # Mark bet as settled
+            bet.status = 'settled'
+            bet.save()
+            
+            # Get all user bets for this bet
+            user_bets = UserBet.objects.filter(bet=bet)
+            
+            for user_bet in user_bets:
+                # Check if the user won or lost
+                if user_bet.choice == winning_outcome:
+                    # User won - calculate winnings based on odds and amount wagered
+                    odds = float(event.market_data.get('odds', 2.0))
+                    winnings = user_bet.points_wagered * odds
+                    
+                    # Update user's result and money
+                    user_bet.result = 'won'
+                    user_bet.user.money += Decimal(str(winnings))
+                    
+                    # Award 1 point for winning
+                    user_bet.user.points += 1
+                    user_bet.user.save()
+                    
+                    # Create notification for the win
+                    notification = Notification.objects.create(
+                        user=user_bet.user,
+                        message=f"You won ${winnings:.2f} on {event.event_name}!",
+                        notification_type='info'
+                    )
+                    logger.info(f"Created traditional notification ID {notification.id} for {user_bet.user.username}")
+                else:
+                    # User lost
+                    user_bet.result = 'lost'
+                    
+                    # Create notification for the loss
+                    notification = Notification.objects.create(
+                        user=user_bet.user,
+                        message=f"You lost your bet of ${user_bet.points_wagered:.2f} on {event.event_name}",
+                        notification_type='info'
+                    )
+                    logger.info(f"Created traditional notification ID {notification.id} for {user_bet.user.username}")
+                
+                # Save the updated user bet
+                user_bet.save()
+        
+        # Log summary
+        logger.info(f"Event {event.id} completion finished successfully")
+        
+        return Response({
+            'message': 'Event marked as completed and bets settled',
+            'event_id': event.id
+        })
+    except LeagueEvent.DoesNotExist:
+        return Response({'error': 'League event not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error completing league event: {str(e)}", exc_info=True)
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_custom_event(request):
+    """Create a custom event manually by a league captain."""
+    try:
+        # Extract request data
+        league_id = request.data.get('league_id')
+        event_name = request.data.get('event_name')
+        sport = request.data.get('sport')
+        home_team = request.data.get('home_team')
+        away_team = request.data.get('away_team')
+        commence_time = request.data.get('commence_time')
+        end_time = request.data.get('end_time')
+        market_data = request.data.get('market_data', {})
+        
+        # Validate required fields
+        if not all([league_id, event_name, sport]):
+            return Response({'error': 'Missing required fields'}, status=400)
+        
+        # Get the league
+        try:
+            league = League.objects.get(id=league_id)
+        except League.DoesNotExist:
+            return Response({'error': 'League not found'}, status=404)
+            
+        # Check if user is the league captain
+        if request.user != league.captain:
+            return Response({'error': 'Only league captains can create custom events'}, status=403)
+            
+        # Generate a unique event key since this is a custom event
+        event_key = f"custom-{uuid.uuid4().hex[:8]}"
+        
+        # Create the league event
+        league_event = LeagueEvent.objects.create(
+            league=league,
+            event_key=event_key,
+            event_id=None,  # No Odds API ID for custom events
+            event_name=event_name,
+            sport=sport,
+            commence_time=commence_time,
+            home_team=home_team,
+            away_team=away_team,
+            market_data=market_data
+        )
+        
+        # Serialize and return the created event
+        serializer = LeagueEventSerializer(league_event)
+        return Response({
+            'message': 'Custom event successfully created',
+            'event': serializer.data
+        }, status=201)
+        
+    except Exception as e:
+        logger.error(f"Error creating custom event: {str(e)}", exc_info=True)
         return Response({'error': str(e)}, status=500)
 
 @api_view(['PUT'])
