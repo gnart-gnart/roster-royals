@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 
 class User(AbstractUser):
     """Extended user model"""
-    points = models.IntegerField(default=1000)  # Starting points for new users
+    points = models.IntegerField(default=0)  # Starting points for new users
     money = models.DecimalField(max_digits=10, decimal_places=2, default=1000.00)  # Money for betting ($1000 default)
     friends = models.ManyToManyField(
         'self',
