@@ -32,7 +32,7 @@ import {
   handleFriendRequest, 
   getNotifications,
   markNotificationsRead,
-  handleLeagueInvite,
+  handleLeagueInvite as processLeagueInvite,
   getLeagues,
 } from '../services/api';
 
@@ -43,30 +43,30 @@ function NavBar() {
   const [notifications, setNotifications] = useState([]);
   const user = JSON.parse(localStorage.getItem('user'));
 
-  // Add groups state and loading function
-  const [groups, setGroups] = useState([]);
+  // Add leagues state and loading function
+  const [leagues, setLeagues] = useState([]);
 
   const [profileAnchorEl, setProfileAnchorEl] = useState(null);
 
-  const loadGroups = async () => {
+  const loadLeagues = async () => {
     try {
       const data = await getLeagues();
-      setGroups(data);
+      setLeagues(data);
     } catch (err) {
-      console.error('Failed to load groups:', err);
+      console.error('Failed to load leagues:', err);
     }
   };
 
   useEffect(() => {
     loadFriendRequests();
     loadNotifications();
-    loadGroups();  // Initial load
+    loadLeagues();  // Initial load
 
-    // Listen for groups update events
-    window.addEventListener('groupsUpdated', loadGroups);
+    // Listen for leagues update events
+    window.addEventListener('leaguesUpdated', loadLeagues);
 
     return () => {
-      window.removeEventListener('groupsUpdated', loadGroups);
+      window.removeEventListener('leaguesUpdated', loadLeagues);
     };
   }, []);
 
@@ -117,6 +117,14 @@ function NavBar() {
   const handleNotificationsOpen = async (event) => {
     setNotifAnchorEl(event.currentTarget);
     
+    // Log notification types for debugging
+    if (notifications.length > 0) {
+      console.log('Current notifications:');
+      notifications.forEach(notif => {
+        console.log(`ID: ${notif.id}, Type: ${notif.notification_type}, Message: ${notif.message}`);
+      });
+    }
+    
     if (notifications.some(n => !n.is_read)) {
       try {
         await markNotificationsRead();
@@ -134,26 +142,26 @@ function NavBar() {
     loadNotifications();
   };
 
-  const handleGroupInvite = async (notificationId, inviteId, action) => {
+  const handleLeagueInvite = async (notificationId, inviteId, action) => {
     try {
-      await handleLeagueInvite(inviteId, action);
+      await processLeagueInvite(inviteId, action);
       
       // Remove the notification from the list
       setNotifications(prev => 
         prev.filter(n => n.id !== notificationId)
       );
       
-      // Refresh groups list if accepted
+      // Refresh leagues list if accepted
       if (action === 'accept') {
-        // Dispatch event before loading groups to ensure all listeners are notified
-        window.dispatchEvent(new Event('groupsUpdated'));
-        await loadGroups();
+        // Dispatch event before loading leagues to ensure all listeners are notified
+        window.dispatchEvent(new Event('leaguesUpdated'));
+        await loadLeagues();
         
-        // Navigate to home page to see updated groups
+        // Navigate to home page to see updated leagues
         navigate('/home');
       }
     } catch (err) {
-      console.error('Failed to handle group invite:', err);
+      console.error('Failed to handle league invite:', err);
     }
   };
 
@@ -350,27 +358,51 @@ function NavBar() {
                   key={notification.id}
                   sx={{
                     backgroundColor: notification.is_read ? 'transparent' : 'rgba(96, 165, 250, 0.1)',
+                    borderLeft: notification.notification_type === 'league_invite' ? '4px solid #8B5CF6' : 'none',
                   }}
                 >
                   <ListItemText 
-                    primary={notification.message}
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        {notification.notification_type === 'league_invite' && (
+                          <EmojiEventsOutlinedIcon sx={{ color: '#8B5CF6', mr: 1, fontSize: '1rem' }} />
+                        )}
+                        <Typography sx={{ fontWeight: notification.notification_type === 'league_invite' ? 'bold' : 'normal' }}>
+                          {notification.message}
+                        </Typography>
+                      </Box>
+                    }
                     secondary={
-                      notification.type === 'group_invite' ? (
-                        <Box sx={{ mt: 1 }}>
+                      notification.notification_type === 'league_invite' ? (
+                        <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
                           <Button
                             size="small"
                             variant="contained"
-                            onClick={() => handleGroupInvite(notification.id, notification.reference_id, 'accept')}
-                            sx={{ mr: 1 }}
+                            onClick={() => handleLeagueInvite(notification.id, notification.reference_id, 'accept')}
+                            sx={{ 
+                              mr: 1, 
+                              bgcolor: '#8B5CF6',
+                              '&:hover': {
+                                bgcolor: '#7C3AED'
+                              }
+                            }}
                           >
                             Accept
                           </Button>
                           <Button
                             size="small"
                             variant="outlined"
-                            onClick={() => handleGroupInvite(notification.id, notification.reference_id, 'reject')}
+                            onClick={() => handleLeagueInvite(notification.id, notification.reference_id, 'reject')}
+                            sx={{ 
+                              borderColor: '#EF4444',
+                              color: '#EF4444',
+                              '&:hover': {
+                                borderColor: '#DC2626',
+                                bgcolor: 'rgba(239, 68, 68, 0.04)'
+                              }
+                            }}
                           >
-                            Reject
+                            Decline
                           </Button>
                         </Box>
                       ) : new Date(notification.created_at).toLocaleDateString()

@@ -119,8 +119,12 @@ function MarketPage() {
       const eventData = {
         leagueId: leagueId,
         eventKey: event.id,
+        eventId: event.id, // Include the event ID from the API
         eventName: `${event.away_team} @ ${event.home_team}`,
         sport: event.sport_key,
+        commenceTime: event.commence_time,
+        homeTeam: event.home_team,
+        awayTeam: event.away_team,
         // Include basic market data if available
         marketData: event.bookmakers && event.bookmakers.length > 0 
           ? { bookmaker: event.bookmakers[0].key, markets: event.bookmakers[0].markets }

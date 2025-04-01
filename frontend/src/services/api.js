@@ -229,11 +229,33 @@ export const getCompetitionEvents = async (competitionKey) => {
 };
 
 export const getEventDetails = async (eventId) => {
-  const endpoint = `${API_URL}/api/leagues/bets/events/${eventId}/`;
-  const response = await fetch(endpoint, {
-    headers: getHeaders(),
-  });
-  return handleResponse(response);
+  try {
+    const response = await fetch(`${API_URL}/api/leagues/events/${eventId}/`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to get event details: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting event details:', error);
+    throw error;
+  }
+};
+
+export const getLeagueEvents = async (leagueId) => {
+  try {
+    const response = await fetch(`${API_URL}/api/leagues/${leagueId}/events/`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to get league events: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting league events:', error);
+    throw error;
+  }
 };
 
 /**
@@ -252,8 +274,12 @@ export const placeBet = async (betData) => {
       body: JSON.stringify({
         league_id: betData.leagueId,
         event_key: betData.eventKey,
+        event_id: betData.eventId,
         event_name: betData.eventName,
         sport: betData.sport,
+        commence_time: betData.commenceTime,
+        home_team: betData.homeTeam,
+        away_team: betData.awayTeam,
         market_data: {
           marketKey: betData.marketKey,
           outcomeKey: betData.outcomeKey,
@@ -270,10 +296,55 @@ export const placeBet = async (betData) => {
   }
 };
 
-export const getLeagueEvents = async (leagueId) => {
-  const response = await fetch(`${API_URL}/api/leagues/${leagueId}/events/`, {
-    headers: getHeaders(),
-  });
-  return handleResponse(response);
+/**
+ * Complete a league event and determine winners/losers
+ * @param {number} eventId - The ID of the event to complete
+ * @param {string} winningOutcome - The outcome that won (e.g., "home", "away", "draw")
+ * @returns {Promise<Object>} - A promise that resolves to the API response
+ */
+export const completeLeagueEvent = async (eventId, winningOutcome) => {
+  try {
+    const response = await fetch(`${API_URL}/api/leagues/events/${eventId}/complete/`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        winning_outcome: winningOutcome
+      }),
+    });
+    
+    return handleResponse(response);
+  } catch (error) {
+    console.error('Error completing league event:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create a custom betting event with manual details
+ * @param {Object} eventData - The event data containing details for the custom event
+ * @returns {Promise<Object>} - A promise that resolves to the created event
+ */
+export const createCustomEvent = async (eventData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/api/leagues/events/create/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Token ${token}`,
+      },
+      body: JSON.stringify(eventData),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `Failed to create event: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating custom event:', error);
+    throw error;
+  }
 };
 

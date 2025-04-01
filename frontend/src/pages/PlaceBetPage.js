@@ -15,7 +15,8 @@ import {
   Select,
   InputAdornment,
   CircularProgress,
-  Divider
+  Divider,
+  Chip
 } from '@mui/material';
 import NavBar from '../components/NavBar';
 import { getLeague, getLeagueEvents, placeBet } from '../services/api';
@@ -54,13 +55,17 @@ function PlaceBetPage() {
             setEventDetails({
               id: event.id,
               key: event.event_key,
+              eventId: event.event_id,
               name: event.event_name,
               sport: event.sport,
+              commenceTime: event.commence_time,
+              homeTeam: event.home_team,
+              awayTeam: event.away_team,
               marketKey: event.market_data?.marketKey || 'moneyline',
               outcomeKey: event.market_data?.outcomeKey,
               odds: event.market_data?.odds || 2.5,
               amount: event.market_data?.amount,
-              status: 'ACTIVE',
+              status: event.completed ? 'COMPLETED' : 'ACTIVE',
               created_at: event.created_at
             });
           } else {
@@ -76,6 +81,10 @@ function PlaceBetPage() {
     };
 
     fetchData();
+    
+    // Always reload the latest user data from local storage
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    setUser(userData);
   }, [leagueId, eventId]);
 
   const handleSubmit = async (e) => {
@@ -89,24 +98,37 @@ function PlaceBetPage() {
       const betAmount = parseFloat(amount);
       const currentMoney = parseFloat(user.money || 0);
       
+      if (isNaN(betAmount) || betAmount <= 0) {
+        throw new Error('Please enter a valid bet amount greater than zero');
+      }
+      
+      // Check if the event is completed
+      if (eventDetails.status === 'COMPLETED') {
+        throw new Error('This event has already completed. You cannot place a bet.');
+      }
+      
       // Check if user has enough money
       if (betAmount > currentMoney) {
-        throw new Error('Insufficient funds to place this bet');
+        throw new Error(`Insufficient funds. Your balance is $${currentMoney.toFixed(2)}`);
       }
 
       // Call the API to place the bet
       await placeBet({
         leagueId: leagueId,
         eventKey: eventId,
+        eventId: eventDetails.eventId,
         eventName: eventDetails.name,
         sport: eventDetails.sport,
+        commenceTime: eventDetails.commenceTime,
+        homeTeam: eventDetails.homeTeam,
+        awayTeam: eventDetails.awayTeam,
         marketKey: eventDetails.marketKey,
         outcomeKey: selectedOutcome,
         odds: eventDetails.odds,
         amount: betAmount
       });
       
-      // Update user's money in localStorage (temporary - will be replaced with proper API)
+      // Update user's money locally - the server will have updated the actual amount
       const updatedMoney = currentMoney - betAmount;
       const updatedUser = { 
         ...user, 
@@ -212,7 +234,7 @@ function PlaceBetPage() {
               Your Balance
             </Typography>
             <Typography variant="h4" sx={{ color: '#10B981', fontWeight: 'bold', mb: 1 }}>
-              ${typeof user.money === 'number' ? user.money.toFixed(2) : '0.00'}
+              ${parseFloat(user.money || 0).toFixed(2)}
             </Typography>
             <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
               Available for betting
@@ -242,24 +264,51 @@ function PlaceBetPage() {
               </Typography>
             ) : (
               <>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                    {eventDetails.name}
+                  </Typography>
+                  <Chip 
+                    label={eventDetails.status === 'COMPLETED' ? 'Completed' : 'Active'} 
+                    size="small"
+                    color={eventDetails.status === 'COMPLETED' ? 'error' : 'success'}
+                    sx={{ fontWeight: 'bold' }}
+                  />
+                </Box>
+                
                 <Typography variant="body1" sx={{ color: '#CBD5E1', mb: 1 }}>
-                  Event: {eventDetails.name}
+                  <strong>Sport:</strong> {eventDetails.sport}
                 </Typography>
+                
                 <Typography variant="body1" sx={{ color: '#CBD5E1', mb: 1 }}>
-                  Sport: {eventDetails.sport}
+                  <strong>Home Team:</strong> {eventDetails.homeTeam || 'Unknown'}
                 </Typography>
+                
                 <Typography variant="body1" sx={{ color: '#CBD5E1', mb: 1 }}>
-                  Market: {eventDetails.marketKey === 'moneyline' ? 'Moneyline' : 
-                           eventDetails.marketKey === 'spread' ? 'Spread' : 
-                           eventDetails.marketKey === 'total' ? 'Total Points' : 
-                           eventDetails.marketKey}
+                  <strong>Away Team:</strong> {eventDetails.awayTeam || 'Unknown'}
                 </Typography>
+                
+                {eventDetails.commenceTime && (
+                  <Typography variant="body1" sx={{ color: '#CBD5E1', mb: 1 }}>
+                    <strong>Start Time:</strong> {new Date(eventDetails.commenceTime).toLocaleString()}
+                  </Typography>
+                )}
+                
                 <Typography variant="body1" sx={{ color: '#CBD5E1', mb: 1 }}>
-                  Odds: {eventDetails.odds}
+                  <strong>Market:</strong> {eventDetails.marketKey === 'moneyline' ? 'Moneyline' : 
+                                   eventDetails.marketKey === 'spread' ? 'Spread' : 
+                                   eventDetails.marketKey === 'total' ? 'Total Points' : 
+                                   eventDetails.marketKey}
                 </Typography>
+                
+                <Typography variant="body1" sx={{ color: '#CBD5E1', mb: 1 }}>
+                  <strong>Odds:</strong> {eventDetails.odds}
+                </Typography>
+                
                 <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                
                 <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
-                  League: {league?.name || leagueId}
+                  <strong>League:</strong> {league?.name || leagueId}
                 </Typography>
               </>
             )}
