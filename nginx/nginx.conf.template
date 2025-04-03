@@ -71,5 +71,18 @@ http {
             add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
             add_header 'Access-Control-Allow-Credentials' 'true' always;
         }
+
+        # Serve media files
+        location /media/ {
+            alias /app/media/;
+            expires 30d;
+            add_header Cache-Control "public, no-transform";
+            
+            # CORS for media files
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+        }
     }
 }
