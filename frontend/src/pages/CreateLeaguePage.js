@@ -25,6 +25,7 @@ function CreateLeaguePage() {
     name: '',
     description: '',
     sports: [],
+    image: null
   });
   const [error, setError] = useState('');
 
@@ -36,11 +37,29 @@ function CreateLeaguePage() {
     }
 
     try {
-      const response = await createLeague(formData);
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('sports', JSON.stringify(formData.sports));
+      if (formData.image) {
+        formDataToSend.append('image', formData.image);
+      }
+
+      const response = await createLeague(formDataToSend);
       // Navigate to the new league's page
       navigate(`/league/${response.id}`);
     } catch (err) {
       setError(err.message || 'Failed to create league');
+    }
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setFormData({
+        ...formData,
+        image: file
+      });
     }
   };
 
@@ -95,6 +114,44 @@ function CreateLeaguePage() {
               multiline
               rows={3}
             />
+
+            <Button
+              variant="outlined"
+              component="label"
+              fullWidth
+              sx={{
+                mt: 2,
+                borderColor: '#8B5CF6',
+                color: '#8B5CF6',
+                '&:hover': {
+                  borderColor: '#7C3AED',
+                  backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                },
+              }}
+            >
+              Upload League Image (Optional)
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+            </Button>
+
+            {formData.image && (
+              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                <img
+                  src={URL.createObjectURL(formData.image)}
+                  alt="League preview"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '200px',
+                    borderRadius: '8px',
+                    objectFit: 'cover'
+                  }}
+                />
+              </Box>
+            )}
 
             <FormControl fullWidth margin="normal">
               <InputLabel>Sports (Optional)</InputLabel>

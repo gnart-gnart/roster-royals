@@ -9,6 +9,7 @@ class League(models.Model):
     captain = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='owned_leagues')
     members = models.ManyToManyField('users.User', related_name='leagues')
     created_at = models.DateTimeField(auto_now_add=True)
+    image = models.ImageField(upload_to='league_images/', default='league_images/default_league.png', blank=True)
 
 class Bet(models.Model):
     """Model for bets within a league"""

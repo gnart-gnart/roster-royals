@@ -8,7 +8,7 @@ class LeagueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = League
-        fields = ['id', 'name', 'description', 'sports', 'captain', 'members', 'created_at']
+        fields = ['id', 'name', 'description', 'sports', 'captain', 'members', 'created_at', 'image']
         read_only_fields = ['captain', 'members', 'created_at']
 
     def create(self, validated_data):

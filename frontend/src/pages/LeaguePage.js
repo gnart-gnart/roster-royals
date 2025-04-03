@@ -96,7 +96,8 @@ function LeaguePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState({
     name: '',
-    description: ''
+    description: '',
+    image: null
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -158,7 +159,8 @@ function LeaguePage() {
     if (league) {
       setEditFormData({
         name: league.name || '',
-        description: league.description || ''
+        description: league.description || '',
+        image: league.image || null
       });
     }
   }, [league]);
@@ -353,9 +355,20 @@ function LeaguePage() {
   const handleCancelEdit = () => {
     setEditFormData({
       name: league.name || '',
-      description: league.description || ''
+      description: league.description || '',
+      image: league.image || null
     });
     setIsEditing(false);
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setEditFormData({
+        ...editFormData,
+        image: file
+      });
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -369,10 +382,14 @@ function LeaguePage() {
     }
 
     try {
-      const updatedLeague = await updateLeague(id, {
-        name: editFormData.name,
-        description: editFormData.description
-      });
+      const formData = new FormData();
+      formData.append('name', editFormData.name);
+      formData.append('description', editFormData.description);
+      if (editFormData.image) {
+        formData.append('image', editFormData.image);
+      }
+
+      const updatedLeague = await updateLeague(id, formData);
       
       setLeague(updatedLeague);
       setIsEditing(false);
@@ -406,6 +423,21 @@ function LeaguePage() {
     });
   };
 
+  // Add a function to get the full image URL
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    // If the URL is already absolute (starts with http or https), return it as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    // If the URL starts with /media/, prepend the API URL
+    if (imageUrl.startsWith('/media/')) {
+      return `${process.env.REACT_APP_API_URL}${imageUrl}`;
+    }
+    // Otherwise, assume it's a relative media path and construct the full URL
+    return `${process.env.REACT_APP_API_URL}/media/${imageUrl.replace('media/', '')}`;
+  };
+
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh', pb: 4 }}>
       <NavBar />
@@ -427,7 +459,7 @@ function LeaguePage() {
             </IconButton>
             
             {isEditing ? (
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <TextField
                   name="name"
                   value={editFormData.name}
@@ -436,6 +468,26 @@ function LeaguePage() {
                   size="small"
                   sx={{ input: { color: '#f8fafc' } }}
                 />
+                <Button
+                  variant="outlined"
+                  component="label"
+                  sx={{
+                    borderColor: '#8B5CF6',
+                    color: '#8B5CF6',
+                    '&:hover': {
+                      borderColor: '#7C3AED',
+                      backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                    },
+                  }}
+                >
+                  Upload Image
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                </Button>
                 <IconButton 
                   onClick={handleSaveEdit}
                   sx={{ color: '#10B981', ml: 1 }}
@@ -502,6 +554,20 @@ function LeaguePage() {
               border: '1px solid rgba(30, 41, 59, 0.8)',
             }}
           >
+            {league.image && (
+              <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+                <img 
+                  src={getImageUrl(league.image)} 
+                  alt={league.name}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '200px',
+                    borderRadius: '8px',
+                    objectFit: 'cover'
+                  }}
+                />
+              </Box>
+            )}
             {isEditing ? (
               <TextField
                 name="description"

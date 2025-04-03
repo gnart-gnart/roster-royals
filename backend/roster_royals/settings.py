@@ -63,6 +63,9 @@ STATICFILES_DIRS = [BASE_DIR / "static"]  # Optional, used if static files exist
 STATIC_ROOT = BASE_DIR / "staticfiles"  # WhiteNoise will serve files from here
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# Media files configuration
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Other required settings
 ROOT_URLCONF = 'roster_royals.urls'

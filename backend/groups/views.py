@@ -14,6 +14,7 @@ import uuid
 from decimal import Decimal
 from django.utils import timezone
 from .odds import OddsApiClient
+from rest_framework import serializers
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +23,21 @@ class CreateLeagueView(generics.CreateAPIView):
     serializer_class = LeagueSerializer
 
     def perform_create(self, serializer):
-        # Create league with current user as captain
-        league = serializer.save(captain=self.request.user)
-        # Add captain as first member
-        league.members.add(self.request.user)
-        return league
+        try:
+            # Create league with current user as captain
+            league = serializer.save(captain=self.request.user)
+            # Add captain as first member
+            league.members.add(self.request.user)
+            return league
+        except Exception as e:
+            logger.error(f"Error creating league: {str(e)}")
+            raise serializers.ValidationError(str(e))
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -720,7 +731,7 @@ def create_custom_event(request):
 @permission_classes([IsAuthenticated])
 def update_league(request, league_id):
     """
-    Update league details like name and description.
+    Update league details like name, description, and image.
     Only the league captain can make these changes.
     """
     try:
@@ -730,18 +741,28 @@ def update_league(request, league_id):
         if request.user != league.captain:
             return Response({'error': 'Only the league captain can update league details'}, status=403)
         
-        data = request.data
+        # Handle FormData
+        if request.FILES:
+            if 'image' in request.FILES:
+                league.image = request.FILES['image']
         
-        # Update name and description if provided
-        if 'name' in data:
-            league.name = data['name']
-        if 'description' in data:
-            league.description = data['description']
+        # Handle JSON data
+        if request.data:
+            data = request.data
+            if 'name' in data:
+                league.name = data['name']
+            if 'description' in data:
+                league.description = data['description']
         
+        # Save the changes
         league.save()
         
-        return Response(LeagueSerializer(league).data)
+        # Return the updated league data
+        serializer = LeagueSerializer(league)
+        return Response(serializer.data)
+        
     except League.DoesNotExist:
         return Response({'error': 'League not found'}, status=404)
     except Exception as e:
+        logger.error(f"Error updating league: {str(e)}")
         return Response({'error': str(e)}, status=500)
