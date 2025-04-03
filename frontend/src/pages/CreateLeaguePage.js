@@ -16,6 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { createLeague } from '../services/api';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ImageCropper from '../components/ImageCropper';
 
 const SPORTS_LIST = ['NFL', 'NBA', 'MLB', 'Soccer', 'NHL', 'UFC'];
 
@@ -28,6 +29,8 @@ function CreateLeaguePage() {
     image: null
   });
   const [error, setError] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,7 +49,6 @@ function CreateLeaguePage() {
       }
 
       const response = await createLeague(formDataToSend);
-      // Navigate to the new league's page
       navigate(`/league/${response.id}`);
     } catch (err) {
       setError(err.message || 'Failed to create league');
@@ -56,11 +58,22 @@ function CreateLeaguePage() {
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setFormData({
-        ...formData,
-        image: file
-      });
+      setSelectedImage(file);
+      setShowCropper(true);
     }
+  };
+
+  const handleCropComplete = (croppedImage) => {
+    setFormData({
+      ...formData,
+      image: croppedImage
+    });
+    setShowCropper(false);
+  };
+
+  const handleCropCancel = () => {
+    setSelectedImage(null);
+    setShowCropper(false);
   };
 
   return (
@@ -187,6 +200,14 @@ function CreateLeaguePage() {
           </form>
         </Card>
       </Box>
+
+      {showCropper && selectedImage && (
+        <ImageCropper
+          image={selectedImage}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </Container>
   );
 }

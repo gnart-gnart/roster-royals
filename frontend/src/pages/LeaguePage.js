@@ -74,6 +74,7 @@ import {
   getLeagueBets,
 } from '../services/api';
 import NavBar from '../components/NavBar';
+import ImageCropper from '../components/ImageCropper';
 
 function LeaguePage() {
   const { id } = useParams();
@@ -121,6 +122,9 @@ function LeaguePage() {
     action: null,
     memberId: null,
   });
+
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -364,11 +368,22 @@ function LeaguePage() {
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setEditFormData(prev => ({
-        ...prev,
-        image: file
-      }));
+      setSelectedImage(file);
+      setShowCropper(true);
     }
+  };
+
+  const handleCropComplete = (croppedImage) => {
+    setEditFormData(prev => ({
+      ...prev,
+      image: croppedImage
+    }));
+    setShowCropper(false);
+  };
+
+  const handleCropCancel = () => {
+    setSelectedImage(null);
+    setShowCropper(false);
   };
 
   const handleSaveEdit = async () => {
@@ -1148,6 +1163,14 @@ function LeaguePage() {
             {snackbar.message}
           </Alert>
         </Snackbar>
+
+        {showCropper && selectedImage && (
+          <ImageCropper
+            image={selectedImage}
+            onCropComplete={handleCropComplete}
+            onCancel={handleCropCancel}
+          />
+        )}
       </Box>
   );
 }

@@ -4,8 +4,8 @@ FROM node:16-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json first
-COPY package.json package-lock.json ./
+# Copy package files
+COPY package*.json ./
 
 # Add build arguments
 ARG REACT_APP_API_URL
@@ -15,8 +15,9 @@ ENV REACT_APP_API_URL=${REACT_APP_API_URL}
 ENV ENVIRONMENT=${ENVIRONMENT}
 ENV NODE_ENV=${NODE_ENV}
 
-# Install dependencies with cache optimization
-RUN npm ci --only=production --legacy-peer-deps --prefer-offline --no-audit
+# Install dependencies
+RUN npm install --legacy-peer-deps && \
+    npm install react-image-crop@latest
 
 # Copy the rest of the application
 COPY . .
