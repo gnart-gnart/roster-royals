@@ -16,6 +16,10 @@ python3 manage.py makemigrations
 echo "Applying migrations..."
 python3 manage.py migrate
 
+# Create default league image
+echo "Creating default league image..."
+python3 manage.py create_default_league_image
+
 # Instead of dropping groups tables via shell (which may cause conflicts when using a fresh DB),
 # reset the groups migration state and re-run migrations for groups.
 
@@ -30,7 +34,7 @@ python3 manage.py collectstatic --noinput
 # Creating test users and relationships...
 python3 manage.py shell << 'END'
 from users.models import User, Friendship
-from groups.models import BettingGroup
+from groups.models import League
 from rest_framework.authtoken.models import Token
 
 # Delete existing tokens
@@ -79,16 +83,16 @@ Friendship.objects.create(user=buddy, friend=grant)
 Friendship.objects.create(user=grant, friend=buddy)
 print("Friendships created.")
 
-# Clear any existing betting groups and create a new one
-BettingGroup.objects.all().delete()
-test_group = BettingGroup.objects.create(
-    name="Test Betting Group",
-    description="A group for testing various sports betting",
+# Clear any existing leagues and create a new one
+League.objects.all().delete()
+test_league = League.objects.create(
+    name="Test League",
+    description="A league for testing various sports betting",
     sports=["NFL", "NBA"],
-    president=grant
+    captain=grant
 )
-test_group.members.add(grant)
-print("Test group created.")
+test_league.members.add(grant)
+print("Test league created.")
 
 print("Database setup complete!")
 END
