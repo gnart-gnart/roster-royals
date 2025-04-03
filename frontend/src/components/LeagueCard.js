@@ -9,6 +9,7 @@ import {
   Chip,
   AvatarGroup,
   Button,
+  CardMedia,
 } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -23,6 +24,21 @@ function LeagueCard({ league }) {
   // Check if the current user is the captain
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
   const isCaptain = league.captain?.id === currentUser.id;
+
+  // Function to get the proper image URL
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    // If the URL is already absolute (starts with http or https), return it as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    // If the URL starts with /media/, prepend the API URL
+    if (imageUrl.startsWith('/media/')) {
+      return `${process.env.REACT_APP_API_URL}${imageUrl}`;
+    }
+    // Otherwise, assume it's a relative media path and construct the full URL
+    return `${process.env.REACT_APP_API_URL}/media/${imageUrl.replace('media/', '')}`;
+  };
 
   return (
     <Card 
@@ -43,17 +59,35 @@ function LeagueCard({ league }) {
           backgroundColor: 'rgba(30, 41, 59, 0.7)',
         },
         position: 'relative',
-        '&::after': {
-          content: '""',
+      }}
+    >
+      {/* League Image */}
+      {league.image && (
+        <CardMedia
+          component="img"
+          height="140"
+          image={getImageUrl(league.image)}
+          alt={league.name}
+          sx={{
+            objectFit: 'cover',
+            borderBottom: '1px solid rgba(226, 232, 240, 0.1)',
+          }}
+        />
+      )}
+      
+      {/* Gradient overlay at the top */}
+      <Box
+        sx={{
           position: 'absolute',
           top: 0,
           left: 0,
           width: '100%',
           height: '5px',
           background: 'linear-gradient(90deg, #4F46E5 0%, #7C3AED 100%)',
-        }
-      }}
-    >
+          zIndex: 1,
+        }}
+      />
+
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
           <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>

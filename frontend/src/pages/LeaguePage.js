@@ -364,10 +364,10 @@ function LeaguePage() {
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setEditFormData({
-        ...editFormData,
+      setEditFormData(prev => ({
+        ...prev,
         image: file
-      });
+      }));
     }
   };
 
@@ -438,6 +438,15 @@ function LeaguePage() {
     return `${process.env.REACT_APP_API_URL}/media/${imageUrl.replace('media/', '')}`;
   };
 
+  // Add a function to get preview URL
+  const getPreviewUrl = (image) => {
+    if (!image) return null;
+    if (image instanceof File) {
+      return URL.createObjectURL(image);
+    }
+    return getImageUrl(image);
+  };
+
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh', pb: 4 }}>
       <NavBar />
@@ -468,26 +477,6 @@ function LeaguePage() {
                   size="small"
                   sx={{ input: { color: '#f8fafc' } }}
                 />
-                <Button
-                  variant="outlined"
-                  component="label"
-                  sx={{
-                    borderColor: '#8B5CF6',
-                    color: '#8B5CF6',
-                    '&:hover': {
-                      borderColor: '#7C3AED',
-                      backgroundColor: 'rgba(139, 92, 246, 0.08)',
-                    },
-                  }}
-                >
-                  Upload Image
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                </Button>
                 <IconButton 
                   onClick={handleSaveEdit}
                   sx={{ color: '#10B981', ml: 1 }}
@@ -546,45 +535,113 @@ function LeaguePage() {
         {!loading && league && (
           <Box 
             sx={{ 
-              px: 2, 
-              py: 3, 
-              mb: 3,
+              px: 4, 
+              py: 4, 
+              mb: 4,
               backgroundColor: 'rgba(22, 28, 36, 0.4)', 
-              borderRadius: '8px',
+              borderRadius: '12px',
               border: '1px solid rgba(30, 41, 59, 0.8)',
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              gap: 4,
+              alignItems: 'flex-start'
             }}
           >
-            {league.image && (
-              <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
-                <img 
-                  src={getImageUrl(league.image)} 
-                  alt={league.name}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '200px',
-                    borderRadius: '8px',
-                    objectFit: 'cover'
+            {/* Image Section */}
+            <Box 
+              sx={{ 
+                width: { xs: '100%', md: '300px' },
+                flexShrink: 0
+              }}
+            >
+              <img 
+                src={isEditing ? getPreviewUrl(editFormData.image) : getImageUrl(league.image)} 
+                alt={league.name}
+                style={{
+                  width: '100%',
+                  height: '200px',
+                  borderRadius: '8px',
+                  objectFit: 'cover',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                }}
+              />
+              {isEditing && (
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
+                  sx={{
+                    mt: 2,
+                    borderColor: '#8B5CF6',
+                    color: '#8B5CF6',
+                    '&:hover': {
+                      borderColor: '#7C3AED',
+                      backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                    },
+                  }}
+                >
+                  Change Image
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                </Button>
+              )}
+            </Box>
+
+            {/* Description Section */}
+            <Box sx={{ flex: 1 }}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: '#94A3B8',
+                  mb: 2,
+                  fontWeight: 500
+                }}
+              >
+                About the League
+              </Typography>
+              {isEditing ? (
+                <TextField
+                  name="description"
+                  value={editFormData.description}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                  fullWidth
+                  multiline
+                  rows={4}
+                  placeholder="Add a description for your league"
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': {
+                      color: '#CBD5E1',
+                      backgroundColor: 'rgba(15, 23, 42, 0.3)',
+                      '& fieldset': {
+                        borderColor: 'rgba(148, 163, 184, 0.2)'
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(148, 163, 184, 0.3)'
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#8B5CF6'
+                      }
+                    }
                   }}
                 />
-              </Box>
-            )}
-            {isEditing ? (
-              <TextField
-                name="description"
-                value={editFormData.description}
-                onChange={handleInputChange}
-                variant="outlined"
-                fullWidth
-                multiline
-                rows={3}
-                placeholder="Add a description for your league"
-                sx={{ input: { color: '#CBD5E1' } }}
-              />
-            ) : (
-              <Typography variant="body1" sx={{ color: '#CBD5E1' }}>
-                {league.description || 'A league for sports betting'}
-              </Typography>
-            )}
+              ) : (
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    color: '#CBD5E1',
+                    lineHeight: 1.7,
+                    fontSize: '1.05rem'
+                  }}
+                >
+                  {league.description || 'A league for sports betting enthusiasts to compete and have fun.'}
+                </Typography>
+              )}
+            </Box>
           </Box>
         )}
 
