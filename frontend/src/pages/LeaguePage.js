@@ -52,6 +52,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { 
   inviteToLeague, 
@@ -67,9 +70,11 @@ import {
   getLeagueEvents,
   addBet,
   deleteBet,
+  updateLeague,
   getLeagueBets,
 } from '../services/api';
 import NavBar from '../components/NavBar';
+import ImageCropper from '../components/ImageCropper';
 
 function LeaguePage() {
   const { id } = useParams();
@@ -87,6 +92,19 @@ function LeaguePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectAll, setSelectAll] = useState(false);
   const [leagueEvents, setLeagueEvents] = useState([]);
+  
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    description: '',
+    image: null
+  });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   // Navbar state
   const [notifAnchorEl, setNotifAnchorEl] = useState(null);
@@ -104,6 +122,9 @@ function LeaguePage() {
     action: null,
     memberId: null,
   });
+
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -137,6 +158,16 @@ function LeaguePage() {
 
     loadData();
   }, [id]);
+
+  useEffect(() => {
+    if (league) {
+      setEditFormData({
+        name: league.name || '',
+        description: league.description || '',
+        image: league.image || null
+      });
+    }
+  }, [league]);
 
   const loadFriendRequests = async () => {
     try {
@@ -321,6 +352,116 @@ function LeaguePage() {
     setConfirmDialog({ ...confirmDialog, open: false });
   };
 
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditFormData({
+      name: league.name || '',
+      description: league.description || '',
+      image: league.image || null
+    });
+    setIsEditing(false);
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      setShowCropper(true);
+    }
+  };
+
+  const handleCropComplete = (croppedImage) => {
+    setEditFormData(prev => ({
+      ...prev,
+      image: croppedImage
+    }));
+    setShowCropper(false);
+  };
+
+  const handleCropCancel = () => {
+    setSelectedImage(null);
+    setShowCropper(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editFormData.name.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'League name cannot be empty',
+        severity: 'error'
+      });
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('name', editFormData.name);
+      formData.append('description', editFormData.description);
+      if (editFormData.image) {
+        formData.append('image', editFormData.image);
+      }
+
+      const updatedLeague = await updateLeague(id, formData);
+      
+      setLeague(updatedLeague);
+      setIsEditing(false);
+      setSnackbar({
+        open: true,
+        message: 'League details updated successfully',
+        severity: 'success'
+      });
+    } catch (err) {
+      console.error('Failed to update league:', err);
+      setSnackbar({
+        open: true,
+        message: 'Failed to update league details',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData({
+      ...editFormData,
+      [name]: value
+    });
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar({
+      ...snackbar,
+      open: false
+    });
+  };
+
+  // Add a function to get the full image URL
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    // If the URL is already absolute (starts with http or https), return it as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    // If the URL starts with /media/, prepend the API URL
+    if (imageUrl.startsWith('/media/')) {
+      return `${process.env.REACT_APP_API_URL}${imageUrl}`;
+    }
+    // Otherwise, assume it's a relative media path and construct the full URL
+    return `${process.env.REACT_APP_API_URL}/media/${imageUrl.replace('media/', '')}`;
+  };
+
+  // Add a function to get preview URL
+  const getPreviewUrl = (image) => {
+    if (!image) return null;
+    if (image instanceof File) {
+      return URL.createObjectURL(image);
+    }
+    return getImageUrl(image);
+  };
+
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh', pb: 4 }}>
       <NavBar />
@@ -340,9 +481,47 @@ function LeaguePage() {
             >
               <ArrowBackIcon />
             </IconButton>
-            <Typography variant="h4" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
-              {loading ? 'Loading...' : league?.name}
-            </Typography>
+            
+            {isEditing ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <TextField
+                  name="name"
+                  value={editFormData.name}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                  size="small"
+                  sx={{ input: { color: '#f8fafc' } }}
+                />
+                <IconButton 
+                  onClick={handleSaveEdit}
+                  sx={{ color: '#10B981', ml: 1 }}
+                >
+                  <SaveIcon />
+                </IconButton>
+                <IconButton 
+                  onClick={handleCancelEdit}
+                  sx={{ color: '#EF4444', ml: 1 }}
+                >
+                  <CancelIcon />
+                </IconButton>
+              </Box>
+            ) : (
+              <>
+                <Typography variant="h4" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                  {loading ? 'Loading...' : league?.name}
+                </Typography>
+                {isCaptain && (
+                  <Tooltip title="Edit league details">
+                    <IconButton 
+                      onClick={handleEditClick}
+                      sx={{ color: '#60A5FA', ml: 1 }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </>
+            )}
           </Box>
           
           {/* User Money Display */}
@@ -371,17 +550,113 @@ function LeaguePage() {
         {!loading && league && (
           <Box 
             sx={{ 
-              px: 2, 
-              py: 3, 
-              mb: 3,
+              px: 4, 
+              py: 4, 
+              mb: 4,
               backgroundColor: 'rgba(22, 28, 36, 0.4)', 
-              borderRadius: '8px',
+              borderRadius: '12px',
               border: '1px solid rgba(30, 41, 59, 0.8)',
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              gap: 4,
+              alignItems: 'flex-start'
             }}
           >
-            <Typography variant="body1" sx={{ color: '#CBD5E1' }}>
-              {league.description || 'A league for testing various sports betting'}
-          </Typography>
+            {/* Image Section */}
+            <Box 
+              sx={{ 
+                width: { xs: '100%', md: '300px' },
+                flexShrink: 0
+              }}
+            >
+              <img 
+                src={isEditing ? getPreviewUrl(editFormData.image) : getImageUrl(league.image)} 
+                alt={league.name}
+                style={{
+                  width: '100%',
+                  height: '200px',
+                  borderRadius: '8px',
+                  objectFit: 'cover',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                }}
+              />
+              {isEditing && (
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
+                  sx={{
+                    mt: 2,
+                    borderColor: '#8B5CF6',
+                    color: '#8B5CF6',
+                    '&:hover': {
+                      borderColor: '#7C3AED',
+                      backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                    },
+                  }}
+                >
+                  Change Image
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                </Button>
+              )}
+            </Box>
+
+            {/* Description Section */}
+            <Box sx={{ flex: 1 }}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: '#94A3B8',
+                  mb: 2,
+                  fontWeight: 500
+                }}
+              >
+                About the League
+              </Typography>
+              {isEditing ? (
+                <TextField
+                  name="description"
+                  value={editFormData.description}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                  fullWidth
+                  multiline
+                  rows={4}
+                  placeholder="Add a description for your league"
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': {
+                      color: '#CBD5E1',
+                      backgroundColor: 'rgba(15, 23, 42, 0.3)',
+                      '& fieldset': {
+                        borderColor: 'rgba(148, 163, 184, 0.2)'
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(148, 163, 184, 0.3)'
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#8B5CF6'
+                      }
+                    }
+                  }}
+                />
+              ) : (
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    color: '#CBD5E1',
+                    lineHeight: 1.7,
+                    fontSize: '1.05rem'
+                  }}
+                >
+                  {league.description || 'A league for sports betting enthusiasts to compete and have fun.'}
+                </Typography>
+              )}
+            </Box>
           </Box>
         )}
 
@@ -877,6 +1152,25 @@ function LeaguePage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        <Snackbar 
+          open={snackbar.open} 
+          autoHideDuration={6000} 
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={handleSnackbarClose} severity={snackbar.severity}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+
+        {showCropper && selectedImage && (
+          <ImageCropper
+            image={selectedImage}
+            onCropComplete={handleCropComplete}
+            onCancel={handleCropCancel}
+          />
+        )}
       </Box>
   );
 }

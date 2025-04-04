@@ -36,14 +36,18 @@ const handleResponse = async (response) => {
 };
 
 export const createLeague = async (leagueData) => {
+  const isFormData = leagueData instanceof FormData;
   const response = await fetch(`${API_URL}/api/leagues/create/`, {
     method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify(leagueData),
+    headers: isFormData ? {
+      'Authorization': getHeaders().Authorization
+    } : getHeaders(),
+    body: isFormData ? leagueData : JSON.stringify(leagueData),
   });
 
   if (!response.ok) {
-    throw new Error('Failed to create league');
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to create league');
   }
 
   return response.json();
@@ -205,6 +209,19 @@ export const getLeague = async (leagueId) => {
     console.error('Error fetching league:', error);
     throw error;
   }
+};
+
+export const updateLeague = async (leagueId, updateData) => {
+  const isFormData = updateData instanceof FormData;
+  const response = await fetch(`${API_URL}/api/leagues/${leagueId}/update/`, {
+    method: 'PUT',
+    headers: isFormData ? {
+      'Authorization': getHeaders().Authorization
+    } : getHeaders(),
+    body: isFormData ? updateData : JSON.stringify(updateData),
+  });
+  
+  return handleResponse(response);
 };
 
 export const browseMarket = async () => {

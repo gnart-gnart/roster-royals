@@ -16,6 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { createLeague } from '../services/api';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ImageCropper from '../components/ImageCropper';
 
 const SPORTS_LIST = ['NFL', 'NBA', 'MLB', 'Soccer', 'NHL', 'UFC'];
 
@@ -25,8 +26,11 @@ function CreateLeaguePage() {
     name: '',
     description: '',
     sports: [],
+    image: null
   });
   const [error, setError] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,12 +40,40 @@ function CreateLeaguePage() {
     }
 
     try {
-      const response = await createLeague(formData);
-      // Navigate to the new league's page
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('sports', JSON.stringify(formData.sports));
+      if (formData.image) {
+        formDataToSend.append('image', formData.image);
+      }
+
+      const response = await createLeague(formDataToSend);
       navigate(`/league/${response.id}`);
     } catch (err) {
       setError(err.message || 'Failed to create league');
     }
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      setShowCropper(true);
+    }
+  };
+
+  const handleCropComplete = (croppedImage) => {
+    setFormData({
+      ...formData,
+      image: croppedImage
+    });
+    setShowCropper(false);
+  };
+
+  const handleCropCancel = () => {
+    setSelectedImage(null);
+    setShowCropper(false);
   };
 
   return (
@@ -96,6 +128,44 @@ function CreateLeaguePage() {
               rows={3}
             />
 
+            <Button
+              variant="outlined"
+              component="label"
+              fullWidth
+              sx={{
+                mt: 2,
+                borderColor: '#8B5CF6',
+                color: '#8B5CF6',
+                '&:hover': {
+                  borderColor: '#7C3AED',
+                  backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                },
+              }}
+            >
+              Upload League Image (Optional)
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+            </Button>
+
+            {formData.image && (
+              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                <img
+                  src={URL.createObjectURL(formData.image)}
+                  alt="League preview"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '200px',
+                    borderRadius: '8px',
+                    objectFit: 'cover'
+                  }}
+                />
+              </Box>
+            )}
+
             <FormControl fullWidth margin="normal">
               <InputLabel>Sports (Optional)</InputLabel>
               <Select
@@ -130,6 +200,14 @@ function CreateLeaguePage() {
           </form>
         </Card>
       </Box>
+
+      {showCropper && selectedImage && (
+        <ImageCropper
+          image={selectedImage}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </Container>
   );
 }

@@ -44,6 +44,8 @@ services:
       PROD_DEBUG: ${PROD_DEBUG}
     volumes:
       - ./backend:/app
+      - ./media:/app/media
+      - media_files:/app/media
     ports:
       - "${DJANGO_PORT}:${DJANGO_CONTAINER_PORT}"
     env_file:
@@ -75,8 +77,8 @@ services:
     env_file:
       - .env
     volumes:
-      - node_modules:/app/node_modules
-      - ${ENVIRONMENT_VOLUMES:-./frontend:/app}
+      - ./frontend:/app
+      - /app/node_modules
     ports:
       - "${REACT_PORT}:${REACT_CONTAINER_PORT}"
     stdin_open: true
@@ -98,6 +100,7 @@ services:
       - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template
       - ./nginx/production.conf.template:/etc/nginx/production.conf.template
       - ./nginx/development.conf.template:/etc/nginx/development.conf.template
+      - media_files:/app/media:ro
     command: >
       /bin/sh -c "envsubst '$$SERVER_IP' < /etc/nginx/${ENVIRONMENT}.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
     environment:
@@ -115,6 +118,7 @@ services:
 volumes:
   postgres_data:
   node_modules:
+  media_files:
 
 networks:
   app_network:

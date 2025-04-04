@@ -9,6 +9,14 @@ class League(models.Model):
     captain = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='owned_leagues')
     members = models.ManyToManyField('users.User', related_name='leagues')
     created_at = models.DateTimeField(auto_now_add=True)
+    image = models.ImageField(upload_to='league_images/', default='league_images/default_image_updated.png', blank=True)
+
+    @property
+    def image_url(self):
+        """Return the URL of the image."""
+        if self.image and hasattr(self.image, 'url'):
+            return self.image.url
+        return '/media/league_images/default_image_updated.png'
 
 class Bet(models.Model):
     """Model for bets within a league"""
