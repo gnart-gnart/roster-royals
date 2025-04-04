@@ -27,7 +27,13 @@ function LeagueCard({ league }) {
 
   // Function to get the proper image URL
   const getImageUrl = (imageUrl) => {
-    if (!imageUrl) return null;
+    if (!imageUrl) return `${process.env.REACT_APP_API_URL}/media/league_images/default_image_updated.png`;
+    
+    // Check if this is the default image path
+    if (imageUrl.includes('default_image_updated.png')) {
+      return `${process.env.REACT_APP_API_URL}/media/league_images/default_image_updated.png`;
+    }
+    
     // If the URL is already absolute (starts with http or https), return it as is
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl;
@@ -62,18 +68,16 @@ function LeagueCard({ league }) {
       }}
     >
       {/* League Image */}
-      {league.image && (
-        <CardMedia
-          component="img"
-          height="140"
-          image={getImageUrl(league.image)}
-          alt={league.name}
-          sx={{
-            objectFit: 'cover',
-            borderBottom: '1px solid rgba(226, 232, 240, 0.1)',
-          }}
-        />
-      )}
+      <CardMedia
+        component="img"
+        height="140"
+        image={getImageUrl(league.image)}
+        alt={league.name}
+        sx={{
+          objectFit: 'cover',
+          borderBottom: '1px solid rgba(226, 232, 240, 0.1)',
+        }}
+      />
       
       {/* Gradient overlay at the top */}
       <Box
