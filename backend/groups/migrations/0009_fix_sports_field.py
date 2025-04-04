@@ -10,7 +10,7 @@ def convert_sports_to_json(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('groups', '0004_league_image'),
+        ('groups', '0002_alter_league_image'),
     ]
 
     operations = [
