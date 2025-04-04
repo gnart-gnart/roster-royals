@@ -82,6 +82,61 @@ class GroupModelTests(TestCase):
         )
         self.assertEqual(invite.status, 'pending')
 
+    def test_user_bet_unique_constraint(self):
+        group = BettingGroup.objects.create(
+            name='Test Group',
+            president=self.user1
+        )
+        bet = Bet.objects.create(
+            group=group,
+            name='Test Bet',
+            type='spread',
+            points=100,
+            deadline=timezone.now() + timedelta(days=1)
+        )
+        UserBet.objects.create(
+            user=self.user1,
+            bet=bet,
+            choice='over',
+            points_wagered=50
+        )
+        with self.assertRaises(Exception):
+            UserBet.objects.create(
+                user=self.user1,
+                bet=bet,
+                choice='under',
+                points_wagered=30
+            )
+
+    def test_group_invite_unique_constraint(self):
+        group = BettingGroup.objects.create(
+            name='Test Group',
+            president=self.user1
+        )
+        GroupInvite.objects.create(
+            group=group,
+            to_user=self.user2
+        )
+        with self.assertRaises(Exception):
+            GroupInvite.objects.create(
+                group=group,
+                to_user=self.user2
+            )
+
+    def test_bet_deadline_validation(self):
+        group = BettingGroup.objects.create(
+            name='Test Group',
+            president=self.user1
+        )
+        with self.assertRaises(Exception):
+            Bet.objects.create(
+                group=group,
+                name='Test Bet',
+                type='spread',
+                points=100,
+                deadline=timezone.now() - timedelta(days=1)
+            )
+
 class GroupAPITests(APITestCase):
     def setUp(self):
         self.client = Client()
@@ -157,6 +212,67 @@ class GroupAPITests(APITestCase):
             to_user=self.user2
         ).exists())
 
+    def test_accept_group_invite(self):
+        invite = GroupInvite.objects.create(
+            group=self.group,
+            to_user=self.user2
+        )
+        url = reverse('accept-group-invite', args=[invite.id])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(invite.status, 'accepted')
+        self.assertTrue(self.group.members.filter(id=self.user2.id).exists())
+
+    def test_reject_group_invite(self):
+        invite = GroupInvite.objects.create(
+            group=self.group,
+            to_user=self.user2
+        )
+        url = reverse('reject-group-invite', args=[invite.id])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(invite.status, 'rejected')
+        self.assertFalse(self.group.members.filter(id=self.user2.id).exists())
+
+    def test_close_bet(self):
+        bet = Bet.objects.create(
+            group=self.group,
+            name='Test Bet',
+            type='spread',
+            points=100,
+            deadline=timezone.now() + timedelta(days=1)
+        )
+        url = reverse('close-bet', args=[bet.id])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        bet.refresh_from_db()
+        self.assertEqual(bet.status, 'closed')
+
+    def test_settle_bet(self):
+        bet = Bet.objects.create(
+            group=self.group,
+            name='Test Bet',
+            type='spread',
+            points=100,
+            deadline=timezone.now() + timedelta(days=1)
+        )
+        UserBet.objects.create(
+            user=self.user1,
+            bet=bet,
+            choice='over',
+            points_wagered=50
+        )
+        url = reverse('settle-bet', args=[bet.id])
+        data = {
+            'winning_choice': 'over'
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        bet.refresh_from_db()
+        self.assertEqual(bet.status, 'settled')
+        user_bet = UserBet.objects.get(user=self.user1, bet=bet)
+        self.assertEqual(user_bet.result, 'won')
+
 class GroupViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -179,11 +295,45 @@ class GroupViewTests(TestCase):
         self.assertEqual(response.data['name'], 'Test Group')
 
     def test_group_update_view(self):
-        url = reverse('group-update', args=[this.group.id])
+        url = reverse('group-update', args=[self.group.id])
         data = {
             'description': 'Updated Description'
         }
         response = self.client.patch(url, data, content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.group.refresh_from_db()
-        self.assertEqual(self.group.description, 'Updated Description') 
+        self.assertEqual(self.group.description, 'Updated Description')
+
+    def test_group_delete(self):
+        url = reverse('group-delete', args=[self.group.id])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(BettingGroup.objects.filter(id=self.group.id).exists())
+
+    def test_group_member_remove(self):
+        self.user2 = User.objects.create_user(
+            username='testuser2',
+            email='test2@example.com',
+            password='testpass123'
+        )
+        self.group.members.add(self.user2)
+        url = reverse('group-member-remove', args=[self.group.id, self.user2.id])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(self.group.members.filter(id=self.user2.id).exists())
+
+    def test_group_president_transfer(self):
+        self.user2 = User.objects.create_user(
+            username='testuser2',
+            email='test2@example.com',
+            password='testpass123'
+        )
+        self.group.members.add(self.user2)
+        url = reverse('group-president-transfer', args=[self.group.id])
+        data = {
+            'new_president': self.user2.id
+        }
+        response = self.client.post(url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        self.group.refresh_from_db()
+        self.assertEqual(self.group.president, self.user2) 
