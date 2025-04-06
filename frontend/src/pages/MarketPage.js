@@ -4,7 +4,7 @@ import {
   Container, Typography, Grid, Card, CardContent, Box, Button,
   CircularProgress, Divider, List, ListItem, ListItemText,
   Accordion, AccordionSummary, AccordionDetails, Chip,
-  Paper, Table, TableHead, TableRow, TableCell, TableBody, TableContainer
+  Paper, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, SvgIcon
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
@@ -12,26 +12,91 @@ import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import SportsBaseballIcon from '@mui/icons-material/SportsBaseball';
 import SportsHockeyIcon from '@mui/icons-material/SportsHockey';
+import SportsTennisIcon from '@mui/icons-material/SportsTennis';
+import SportsGolfIcon from '@mui/icons-material/SportsGolf';
+import SportsMmaIcon from '@mui/icons-material/SportsMma';
+import SportsRugbyIcon from '@mui/icons-material/SportsRugby';
+import SportsKabaddiIcon from '@mui/icons-material/SportsKabaddi';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import AddIcon from '@mui/icons-material/Add';
 import { browseMarket, getAvailableSportEvents, getEventDetails, placeBet } from '../services/api';
 import NavBar from '../components/NavBar';
 
+// Custom cricket icon in Material style
+const CricketIcon = (props) => (
+  <SvgIcon {...props}>
+    <path d="M14.73,2C14.92,2 15.07,2 15.2,2C15.38,2.1 15.47,2.28 15.47,2.54C15.5,2.79 15.39,2.95 15.14,3.05C14.89,3.14 14.67,3.3 14.42,3.5C13.77,4.06 13.22,4.73 12.75,5.5C11.97,6.94 11.47,8.5 11.25,10.19C11.25,10.38 11.27,10.59 11.28,10.75C11.31,11.04 11.22,11.19 10.91,11.25C10.57,11.33 10.22,11.5 9.83,11.75C9.39,12.04 9,12.36 8.61,12.75C7.97,13.36 7.35,13.97 6.75,14.59C6.69,14.67 6.61,14.75 6.55,14.82L17.25,14.75C17.39,14.75 17.55,14.78 17.68,14.84C17.92,14.94 18,15.14 17.93,15.39C17.84,15.67 17.61,15.75 17.22,15.75C15.27,15.75 13.33,15.75 11.38,15.75C10.94,15.75 10.5,15.75 10.05,15.75C9.59,15.75 9.13,15.75 8.66,15.75C7.77,15.75 6.89,15.75 6,15.75C5.23,15.75 4.53,15.75 3.8,15.75C3.68,15.75 3.56,15.72 3.44,15.66C3.2,15.55 3.11,15.38 3.19,15.12C3.25,14.88 3.42,14.77 3.78,14.75C4.64,14.73 5.5,14.63 6.34,14.48C6.71,14.42 7.04,14.25 7.34,14C7.81,13.62 8.25,13.23 8.67,12.81C9.09,12.39 9.5,11.95 9.91,11.52C10.19,11.23 10.53,11.04 10.94,10.97C11.07,10.94 11.16,10.85 11.22,10.72C11.27,10.54 11.3,10.34 11.33,10.12C11.54,8.42 12.04,6.86 12.84,5.44C13.33,4.55 13.94,3.75 14.73,3.05C14.73,3.04 14.74,3.02 14.75,3C14.96,2.81 15.13,2.61 15.28,2.38C15.34,2.28 15.31,2.19 15.19,2.12C15.05,2.04 14.9,2 14.75,2L14.73,2M19.5,7.5C20.33,7.5 21,8.17 21,9C21,9.83 20.33,10.5 19.5,10.5C18.67,10.5 18,9.83 18,9C18,8.17 18.67,7.5 19.5,7.5M19.5,13.5C20.33,13.5 21,14.17 21,15C21,15.83 20.33,16.5 19.5,16.5C18.67,16.5 18,15.83 18,15C18,14.17 18.67,13.5 19.5,13.5M16.5,10.5C17.33,10.5 18,11.17 18,12C18,12.83 17.33,13.5 16.5,13.5C15.67,13.5 15,12.83 15,12C15,11.17 15.67,10.5 16.5,10.5Z" />
+  </SvgIcon>
+);
+
+// Custom boxing icon in Material style
+const BoxingIcon = (props) => (
+  <SvgIcon {...props}>
+    <path d="M12,2C9,7 4,9 4,14C4,16 6,18 8,18C9,18 10,18 11,17C11,17 11.32,19 9,22H15C14,22 13,21 13,20C14,21 15,22 17,22C18,22 19,21 19,20C19,19 19,17 17,15C15,13 13,13 13,12C13,11 15,9 15,7C15,5 14,2 12,2Z" />
+  </SvgIcon>
+);
+
+// Custom lacrosse icon in Material style
+const LacrosseIcon = (props) => (
+  <SvgIcon {...props}>
+    <path d="M20.87,12.5C20.87,16 17.93,18.75 14.39,18.75C13.14,18.75 11.97,18.38 11,17.75V20.5H5V14L9.33,14V16.29C10.26,16.94 12.14,17.25 13.21,17.25C15.63,17.25 17.57,15.38 17.57,12.5C17.57,9.62 15.63,7.75 13.21,7.75C12.14,7.75 10.26,8.07 9.33,8.71V11H5V4.5H11V7.25C11.97,6.63 13.14,6.25 14.39,6.25C17.93,6.25 20.87,9 20.87,12.5Z" />
+  </SvgIcon>
+);
+
 const getSportIcon = (sportGroup) => {
+  // Define icon and use consistent purple color for all sports
+  let icon;
+  const color = '#8B5CF6'; // Purple for all sports
+
   switch (sportGroup.toLowerCase()) {
     case 'soccer':
-      return <SportsSoccerIcon />;
+      icon = <SportsSoccerIcon />;
+      break;
     case 'basketball':
-      return <SportsBasketballIcon />;
+      icon = <SportsBasketballIcon />;
+      break;
     case 'american football':
-      return <SportsFootballIcon />;
+      icon = <SportsFootballIcon />;
+      break;
     case 'baseball':
-      return <SportsBaseballIcon />;
+      icon = <SportsBaseballIcon />;
+      break;
     case 'hockey':
-      return <SportsHockeyIcon />;
+    case 'ice hockey':
+      icon = <SportsHockeyIcon />;
+      break;
+    case 'tennis':
+      icon = <SportsTennisIcon />;
+      break;
+    case 'golf':
+      icon = <SportsGolfIcon />;
+      break;
+    case 'mixed martial arts':
+    case 'boxing':
+      icon = <SportsMmaIcon />;
+      break;
+    case 'rugby league':
+      icon = <SportsRugbyIcon />;
+      break;
+    case 'aussie rules':
+      icon = <SportsKabaddiIcon />;
+      break;
+    case 'cricket':
+      icon = <CricketIcon />;
+      break;
+    case 'lacrosse':
+      icon = <LacrosseIcon />;
+      break;
+    case 'politics':
+      icon = <HowToVoteIcon />;
+      break;
     default:
-      return null;
+      icon = <SportsBaseballIcon />;
+      break;
   }
+
+  return { icon, color };
 };
 
 function MarketPage() {
@@ -155,17 +220,32 @@ function MarketPage() {
                 cursor: 'pointer',
                 backgroundColor: 'rgba(30, 41, 59, 0.8)',
                 borderRadius: '12px',
+                borderTop: '3px solid #8B5CF6',
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   transform: 'translateY(-5px)',
-                  boxShadow: '0 10px 20px rgba(0, 0, 0, 0.2)',
+                  boxShadow: '0 10px 20px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(139, 92, 246, 0.2)',
                   background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(51, 65, 85, 0.9))',
                 }
               }}
             >
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
-                  {getSportIcon(group)}
+                  <Box 
+                    sx={{ 
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      width: '45px',
+                      height: '45px',
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                      color: '#8B5CF6',
+                      '& > *': { fontSize: '1.8rem' },
+                    }}
+                  >
+                    {getSportIcon(group).icon}
+                  </Box>
                   <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
                     {group}
                   </Typography>
