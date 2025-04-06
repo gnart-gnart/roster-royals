@@ -7,8 +7,6 @@ import {
   Card,
   CardContent,
   Button,
-  Tabs,
-  Tab,
   Badge,
   Avatar,
   Chip,
@@ -30,18 +28,19 @@ import LeagueCard from '../components/LeagueCard';
 import NavBar from '../components/NavBar';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import InfiniteIcon from '@mui/icons-material/AllInclusiveOutlined';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 
 function HomePage() {
   const [leagues, setLeagues] = useState([]);
   const [friends, setFriends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedTab, setSelectedTab] = useState(0);
   const [notifAnchorEl, setNotifAnchorEl] = useState(null);
   const [friendRequests, setFriendRequests] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -116,10 +115,6 @@ function HomePage() {
     };
   }, []);
 
-  const handleTabChange = (event, newValue) => {
-    setSelectedTab(newValue);
-  };
-
   const handleNotificationsOpen = (event) => {
     setNotifAnchorEl(event.currentTarget);
   };
@@ -178,15 +173,12 @@ function HomePage() {
     setProfileAnchorEl(null);
   };
 
-  const renderSportTabs = () => {
-    const sportTabs = [
-      { label: "All Sports", icon: <InfiniteIcon />, count: "1" },
-      { label: "NBA", icon: "🏀", count: "1" },
-      { label: "NFL", icon: "🏈", count: "1" },
-      { label: "MLB", icon: "⚾", count: null },
-      { label: "Soccer", icon: "⚽", count: null },
-      { label: "NHL", icon: "🏒", count: null },
-      { label: "UFC", icon: "🥊", count: null },
+  const renderFeatureHighlights = () => {
+    const features = [
+      { label: "Active Leagues", value: leagues.length, icon: <EmojiEventsOutlinedIcon /> },
+      { label: "Friends", value: friends.length, icon: <PeopleOutlineIcon /> },
+      { label: "Notifications", value: notifications.filter(n => !n.is_read).length, icon: <NotificationsNoneIcon /> },
+      { label: "Success Rate", value: "87%", icon: <ShowChartIcon /> },
     ];
 
     return (
@@ -194,66 +186,47 @@ function HomePage() {
         sx={{ 
           backgroundColor: 'rgba(22, 28, 36, 0.8)', 
           borderRadius: '8px',
-          p: 1,
+          p: 2,
           mb: 4,
-          overflowX: 'auto',
           display: 'flex',
-          '&::-webkit-scrollbar': {
-            display: 'none'
-          }
+          justifyContent: 'space-around',
+          flexWrap: 'wrap',
         }}
       >
-        <Tabs 
-          value={selectedTab} 
-          onChange={handleTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
-          TabIndicatorProps={{
-            style: { display: 'none' }
-          }}
-          sx={{ 
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              fontSize: '14px',
-              fontWeight: 500,
-              minHeight: '36px',
-              borderRadius: '18px',
-              mr: 1,
-              color: '#CBD5E1',
-              '&.Mui-selected': {
+        {features.map((feature, index) => (
+          <Box 
+            key={index}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              px: 3,
+              py: 1,
+            }}
+          >
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                mb: 1,
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
                 backgroundColor: 'rgba(139, 92, 246, 0.15)',
                 color: '#f8fafc',
-              }
-            }
-          }}
-        >
-          {sportTabs.map((tab, index) => (
-            <Tab 
-              key={index} 
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <span>{typeof tab.icon === 'string' ? tab.icon : tab.icon}</span>
-                  {tab.label}
-                  {tab.count && 
-                    <Badge 
-                      badgeContent={tab.count} 
-                      color="primary"
-                      sx={{ 
-                        '& .MuiBadge-badge': {
-                          fontSize: '10px',
-                          height: '18px',
-                          minWidth: '18px',
-                          borderRadius: '9px',
-                          backgroundColor: 'rgba(139, 92, 246, 0.8)',
-                        }
-                      }}
-                    />
-                  }
-                </Box>
-              }
-            />
-          ))}
-        </Tabs>
+              }}
+            >
+              {feature.icon}
+            </Box>
+            <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+              {feature.value}
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
+              {feature.label}
+            </Typography>
+          </Box>
+        ))}
       </Box>
     );
   };
@@ -301,8 +274,8 @@ function HomePage() {
           </Button>
         </Box>
         
-        {/* Sports Navigation Tabs */}
-        {renderSportTabs()}
+        {/* Feature Highlights (replacing Sports Navigation Tabs) */}
+        {renderFeatureHighlights()}
         
         {/* Main Content */}
         <Grid container spacing={3}>
