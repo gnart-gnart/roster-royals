@@ -6,26 +6,17 @@ import {
   Button,
   Box,
   Card,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  OutlinedInput,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { createLeague } from '../services/api';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ImageCropper from '../components/ImageCropper';
 
-const SPORTS_LIST = ['NFL', 'NBA', 'MLB', 'Soccer', 'NHL', 'UFC'];
-
 function CreateLeaguePage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    sports: [],
     image: null
   });
   const [error, setError] = useState('');
@@ -43,7 +34,6 @@ function CreateLeaguePage() {
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
-      formDataToSend.append('sports', JSON.stringify(formData.sports));
       if (formData.image) {
         formDataToSend.append('image', formData.image);
       }
@@ -165,29 +155,6 @@ function CreateLeaguePage() {
                 />
               </Box>
             )}
-
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Sports (Optional)</InputLabel>
-              <Select
-                multiple
-                value={formData.sports}
-                onChange={(e) => setFormData({ ...formData, sports: e.target.value })}
-                input={<OutlinedInput label="Sports (Optional)" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} />
-                    ))}
-                  </Box>
-                )}
-              >
-                {SPORTS_LIST.map((sport) => (
-                  <MenuItem key={sport} value={sport}>
-                    {sport}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
 
             <Button
               type="submit"
