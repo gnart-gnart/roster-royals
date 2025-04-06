@@ -440,7 +440,13 @@ function LeaguePage() {
 
   // Add a function to get the full image URL
   const getImageUrl = (imageUrl) => {
-    if (!imageUrl) return null;
+    if (!imageUrl) return `/images/default_image_updated.png`;
+    
+    // Check if this is the default image path
+    if (imageUrl.includes('default_image_updated.png')) {
+      return `/images/default_image_updated.png`;
+    }
+    
     // If the URL is already absolute (starts with http or https), return it as is
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl;
@@ -455,7 +461,7 @@ function LeaguePage() {
 
   // Add a function to get preview URL
   const getPreviewUrl = (image) => {
-    if (!image) return null;
+    if (!image) return `/images/default_image_updated.png`;
     if (image instanceof File) {
       return URL.createObjectURL(image);
     }
@@ -572,6 +578,11 @@ function LeaguePage() {
               <img 
                 src={isEditing ? getPreviewUrl(editFormData.image) : getImageUrl(league.image)} 
                 alt={league.name}
+                onError={(e) => {
+                  // If image fails to load, replace with local fallback
+                  e.target.onerror = null; // Prevent infinite error loop
+                  e.target.src = "/images/default_image_updated.png";
+                }}
                 style={{
                   width: '100%',
                   height: '200px',
