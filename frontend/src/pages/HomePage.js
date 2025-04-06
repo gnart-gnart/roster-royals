@@ -175,58 +175,164 @@ function HomePage() {
 
   const renderFeatureHighlights = () => {
     const features = [
-      { label: "Active Leagues", value: leagues.length, icon: <EmojiEventsOutlinedIcon /> },
-      { label: "Friends", value: friends.length, icon: <PeopleOutlineIcon /> },
-      { label: "Notifications", value: notifications.filter(n => !n.is_read).length, icon: <NotificationsNoneIcon /> },
-      { label: "Success Rate", value: "87%", icon: <ShowChartIcon /> },
+      { 
+        label: "Active Leagues", 
+        value: leagues.length, 
+        icon: <EmojiEventsOutlinedIcon />, 
+        color: '#8B5CF6',
+        tooltip: "Leagues you're currently participating in"
+      },
+      { 
+        label: "Friends", 
+        value: friends.length, 
+        icon: <PeopleOutlineIcon />, 
+        color: '#3B82F6',
+        tooltip: "Your connected friends" 
+      },
+      { 
+        label: "Notifications", 
+        value: notifications.filter(n => !n.is_read).length, 
+        icon: <NotificationsNoneIcon />, 
+        color: '#F59E0B',
+        tooltip: "Unread notifications awaiting your attention" 
+      },
+      { 
+        label: "Success Rate", 
+        value: "87%", 
+        icon: <ShowChartIcon />, 
+        color: '#10B981',
+        tooltip: "Your prediction success rate" 
+      },
     ];
+
+    // Function to format the display value for better presentation
+    const formatValue = (value) => {
+      if (value === 0) return "0";
+      if (value === "0%") return "0%";
+      return value || "0";
+    };
 
     return (
       <Box 
         sx={{ 
-          backgroundColor: 'rgba(22, 28, 36, 0.8)', 
-          borderRadius: '8px',
-          p: 2,
+          background: 'linear-gradient(to right, rgba(17, 24, 39, 0.8), rgba(32, 39, 55, 0.8))',
+          borderRadius: '12px',
+          p: 3,
           mb: 4,
           display: 'flex',
           justifyContent: 'space-around',
           flexWrap: 'wrap',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: '-50%',
+            left: '-50%',
+            width: '200%',
+            height: '200%',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 70%)',
+            opacity: 0.8,
+            animation: 'pulse 15s infinite',
+          },
+          '@keyframes pulse': {
+            '0%': { transform: 'scale(1)' },
+            '50%': { transform: 'scale(1.05)' },
+            '100%': { transform: 'scale(1)' },
+          },
         }}
       >
-        {features.map((feature, index) => (
-          <Box 
-            key={index}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              px: 3,
-              py: 1,
-            }}
-          >
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center',
-                justifyContent: 'center',
-                mb: 1,
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                backgroundColor: 'rgba(139, 92, 246, 0.15)',
-                color: '#f8fafc',
-              }}
-            >
-              {feature.icon}
-            </Box>
-            <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
-              {feature.value}
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
-              {feature.label}
-            </Typography>
-          </Box>
-        ))}
+        <Grid container spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
+          {features.map((feature, index) => (
+            <Grid item xs={6} sm={3} key={index}>
+              <Tooltip title={feature.tooltip} arrow placement="top">
+                <Box 
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    py: 2,
+                    px: { xs: 1, sm: 2 },
+                    height: '100%',
+                    transition: 'transform 0.3s ease, filter 0.3s ease',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      transform: 'translateY(-5px)',
+                      filter: 'brightness(1.1)',
+                    },
+                    animation: `fadeIn 0.6s ease ${index * 0.2}s both`,
+                    '@keyframes fadeIn': {
+                      '0%': { opacity: 0, transform: 'translateY(10px)' },
+                      '100%': { opacity: 1, transform: 'translateY(0)' },
+                    },
+                  }}
+                >
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 1.5,
+                      width: { xs: 46, sm: 50, md: 56 },
+                      height: { xs: 46, sm: 50, md: 56 },
+                      borderRadius: '50%',
+                      background: `linear-gradient(135deg, ${feature.color}80, ${feature.color})`,
+                      color: '#ffffff',
+                      boxShadow: `0 4px 12px ${feature.color}50`,
+                      transition: 'all 0.3s ease',
+                      position: 'relative',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: '-4px',
+                        left: '-4px',
+                        right: '-4px',
+                        bottom: '-4px',
+                        borderRadius: '50%',
+                        background: `radial-gradient(circle, ${feature.color}30 0%, transparent 70%)`,
+                        opacity: 0.6,
+                        zIndex: -1,
+                      },
+                      '&:hover': {
+                        transform: 'scale(1.15) rotate(5deg)',
+                        boxShadow: `0 8px 20px ${feature.color}70`,
+                      }
+                    }}
+                  >
+                    {feature.icon}
+                  </Box>
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      color: formatValue(feature.value) === "0" ? `${feature.color}90` : '#f8fafc', 
+                      fontWeight: 'bold',
+                      textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                      mb: 0.5,
+                      fontSize: { xs: '1.4rem', sm: '1.5rem', md: '1.8rem' },
+                    }}
+                  >
+                    {formatValue(feature.value)}
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: feature.color, 
+                      fontWeight: 500,
+                      letterSpacing: '0.5px',
+                      textAlign: 'center',
+                      fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' },
+                    }}
+                  >
+                    {feature.label}
+                  </Typography>
+                </Box>
+              </Tooltip>
+            </Grid>
+          ))}
+        </Grid>
       </Box>
     );
   };
