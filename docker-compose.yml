@@ -79,6 +79,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - react_build:/app/build
     ports:
       - "${REACT_PORT}:${REACT_CONTAINER_PORT}"
     stdin_open: true
@@ -101,6 +102,7 @@ services:
       - ./nginx/production.conf.template:/etc/nginx/production.conf.template
       - ./nginx/development.conf.template:/etc/nginx/development.conf.template
       - media_files:/app/media:ro
+      - react_build:/usr/share/nginx/html:ro
     command: >
       /bin/sh -c "envsubst '$$SERVER_IP' < /etc/nginx/${ENVIRONMENT}.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
     environment:
@@ -119,6 +121,7 @@ volumes:
   postgres_data:
   node_modules:
   media_files:
+  react_build:
 
 networks:
   app_network:

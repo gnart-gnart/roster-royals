@@ -3,4 +3,7 @@ services:
     ports:
       - "443:443"
     volumes:
-      - /etc/letsencrypt:/etc/letsencrypt:ro 
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+
+  react-app:
+    volumes: [] 
