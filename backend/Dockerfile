@@ -8,14 +8,14 @@ WORKDIR /app
 ARG ENVIRONMENT=development
 ENV ENVIRONMENT=${ENVIRONMENT}
 
-# Install dependencies
+# Copy project files first
+COPY . .
+
+# Install dependencies (Now requirements.txt exists)
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make the reset script executable (Keep for now, though script won't run from CMD)
-RUN chmod +x db_init.sh
-
-# Copy project files (Moved after pip install to potentially improve caching)
-COPY . .
+# Remove chmod for deleted script
+# RUN chmod +x db_init.sh
 
 # Collect static files during build
 RUN python manage.py collectstatic --noinput
