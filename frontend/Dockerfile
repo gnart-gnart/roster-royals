@@ -28,10 +28,8 @@ RUN mkdir -p /app/node_modules/.cache && chmod -R 777 /app/node_modules/.cache
 # Remove the global ENV PUBLIC_URL=/
 # ENV PUBLIC_URL=/
 
-# If in production mode, build the static files with PUBLIC_URL explicitly set
-RUN if [ "$ENVIRONMENT" = "production" ]; then \
-        PUBLIC_URL=/ npm run build; \
-    fi
+# Force production build with explicit PUBLIC_URL (removing conditional for testing)
+RUN PUBLIC_URL=/ npm run build
 
 # Install serve for production or use development server
 RUN if [ "$ENVIRONMENT" = "production" ]; then \
