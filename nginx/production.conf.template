@@ -15,54 +15,81 @@ http {
     
     # Remove global CORS settings as they cause duplicate headers
     
+    # Server block for HTTP (Port 80) - Redirects to HTTPS
     server {
         listen 80;
-        # Use direct SERVER_IP variable
-        server_name ${SERVER_IP};
+        # Replace SERVER_IP with the actual domain name
+        server_name rosterroyals.com www.rosterroyals.com; # Add www if applicable
 
-        # Frontend
+        # Redirect all HTTP traffic to HTTPS
+        location / {
+            return 301 https://$host$request_uri;
+        }
+
+        # Optional: Handle Let's Encrypt ACME challenge (if using HTTP-01 challenge)
+        location /.well-known/acme-challenge/ {
+            root /var/www/certbot; # Or the path Certbot uses
+        }
+    }
+
+    # Server block for HTTPS (Port 443)
+    server {
+        listen 443 ssl http2; # Enable SSL and HTTP/2
+        # Replace SERVER_IP with the actual domain name
+        server_name rosterroyals.com www.rosterroyals.com; # Add www if applicable
+
+        # SSL Certificate paths (assuming standard Let's Encrypt paths)
+        ssl_certificate /etc/letsencrypt/live/rosterroyals.com/fullchain.pem; # Use your actual domain
+        ssl_certificate_key /etc/letsencrypt/live/rosterroyals.com/privkey.pem; # Use your actual domain
+
+        # Improve SSL Security (Optional but recommended)
+        include /etc/letsencrypt/options-ssl-nginx.conf; # Recommended by Certbot
+        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # Recommended by Certbot
+
+        # Add Strict Transport Security header (Optional but recommended)
+        # add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+        # Prevent clickjacking (Optional but recommended)
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+
+        # Frontend (Same as HTTP block, maybe adjust headers if needed)
         location / {
             proxy_pass http://react-app:3000;
-            
-            # Basic proxy headers
             proxy_http_version 1.1;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            
-            # WebSocket support
+            proxy_set_header X-Forwarded-Proto $scheme; # Important: Nginx sets this to 'https'
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_cache_bypass $http_upgrade;
             proxy_redirect off;
             proxy_buffering off;
-            
-            # CORS headers
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
-            add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
-            
+
+            # CORS headers (Usually not needed here if backend/frontend handle it, but kept for consistency)
+            # add_header 'Access-Control-Allow-Origin' '*' always;
+            # ... other CORS headers ...
+
             # Browser caching for static assets
             location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|otf|eot)$ {
                 expires 30d;
                 add_header Cache-Control "public, no-transform";
-                add_header 'Access-Control-Allow-Origin' '*' always;
+                # add_header 'Access-Control-Allow-Origin' '*' always; # Keep if needed
             }
         }
 
-        # Backend API
+        # Backend API (Same as HTTP block, maybe adjust headers if needed)
         location /api/ {
             proxy_pass http://django-web:8000;
-            
-            # Basic proxy headers
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            
+            proxy_set_header X-Forwarded-Proto $scheme; # Important: Nginx sets this to 'https'
+
             # Handle preflight OPTIONS requests specially
+            # ... (same OPTIONS handling as before) ...
             if ($request_method = 'OPTIONS') {
                 add_header 'Access-Control-Allow-Origin' '*';
                 add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE';
@@ -73,25 +100,28 @@ http {
                 add_header 'Content-Length' '0';
                 return 204;
             }
-            
-            # CORS headers for normal responses - only applied to non-OPTIONS requests
+            # CORS headers for normal responses (Keep if backend doesn't handle CORS)
             add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
-            add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
+            # ... other CORS headers ...
         }
-        
-        # Serve static files
+
+        # Serve static files (Same as HTTP block, maybe adjust headers if needed)
         location /static/ {
-            alias /app/staticfiles/;
+            alias /app/staticfiles/; # Check if this path is correct inside Nginx container
             expires 30d;
             add_header Cache-Control "public, no-transform";
-            
-            # CORS for static files
+            # CORS headers (Keep if needed)
             add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS' always;
-            add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            # ... other CORS headers ...
+        }
+
+        # Serve media files (Make sure this path is correct and volume mounted)
+        location /media/ {
+             alias /app/media/; # Matches the volume mount in Nginx service
+             expires 30d;
+             add_header Cache-Control "public, no-transform";
+             # CORS headers (Keep if needed)
+             add_header 'Access-Control-Allow-Origin' '*' always;
         }
     }
 } 
