@@ -27,7 +27,8 @@ jobs:
             echo "Running database migrations..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec django-web python manage.py migrate
             echo "Rebuilding and restarting Docker containers..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --no-cache react-app
+            # Use both compose files for up, rebuild ALL services without cache to ensure react-app updates
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --no-cache
             # Optional: Prune unused Docker images, containers, and volumes to save space
             # echo "Pruning Docker system..."
             # docker system prune -af
