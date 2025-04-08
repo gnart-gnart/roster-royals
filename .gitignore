@@ -18,6 +18,7 @@ media/
 staticfiles/
 
 # React/Node
+frontend/build
 node_modules/
 /build
 .DS_Store
