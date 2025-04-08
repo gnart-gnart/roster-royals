@@ -53,15 +53,22 @@ http {
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-XSS-Protection "1; mode=block" always;
 
-        # Root directory for static frontend files
-        root /usr/share/nginx/html; # <-- Point to where react_build is mounted
-        index index.html index.htm; # <-- Default file to serve
-
-        # Frontend - Serve static files directly
+        # Frontend - Serve index.html and handle SPA routing
         location / {
+            root /usr/share/nginx/html; # <-- Root moved here, points to react_build mount
+            index index.html index.htm;
             # try_files looks for the file locally first, then falls back to index.html
             # This is standard for single-page applications (SPAs)
             try_files $uri $uri/ /index.html;
+        }
+
+        # NEW: Explicitly serve React static assets from the build volume mount
+        location /static/ {
+            alias /usr/share/nginx/html/static/; # Points to static dir inside the volume mount
+            expires 30d;
+            add_header Cache-Control "public, no-transform";
+            # Optional: Add CORS if needed, but usually not for same-origin
+            # add_header 'Access-Control-Allow-Origin' '*' always;
         }
 
         # Backend API (Keep as is)
@@ -84,14 +91,6 @@ http {
                 return 204;
             }
             # CORS headers for normal responses (Keep if backend doesn't handle CORS)
-            add_header 'Access-Control-Allow-Origin' '*' always;
-        }
-
-        # Serve static files from Django collectstatic (Keep as is)
-        location /static/ {
-            alias /app/staticfiles/; # Check if this path is correct inside Nginx container
-            expires 30d;
-            add_header Cache-Control "public, no-transform";
             add_header 'Access-Control-Allow-Origin' '*' always;
         }
 
