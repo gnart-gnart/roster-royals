@@ -15,9 +15,11 @@ ENV REACT_APP_API_URL=${REACT_APP_API_URL}
 ENV ENVIRONMENT=${ENVIRONMENT}
 ENV NODE_ENV=${NODE_ENV}
 
-# Install dependencies
-RUN npm install --legacy-peer-deps && \
-    npm install react-image-crop@latest
+# Install dependencies using npm ci for faster, more reliable builds
+# RUN npm install --legacy-peer-deps && \
+#     npm install react-image-crop@latest
+RUN npm ci && \
+    npm install react-image-crop@latest # Still need to install this one explicitly if not in package.json/lock
 
 # Copy the rest of the application
 COPY . .
