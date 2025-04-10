@@ -26,6 +26,8 @@ jobs:
             git pull origin main
             echo "Running database migrations..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec django-web python manage.py migrate
+            echo "Cleaning up Docker build cache on runner..."
+            docker builder prune -af || true # Prune build cache, continue even if it fails
             echo "Rebuilding Docker images without cache..."
             # Explicitly pass the API URL from GitHub secrets to the build command
             # Note: We set the REACT_APP_API_URL environment variable *for the build command itself*
