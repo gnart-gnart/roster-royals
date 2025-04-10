@@ -28,9 +28,10 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose.prod.yml down
             echo "Removing stale react_build volume..."
             docker volume rm roster-royals_react_build || true # Remove volume, continue if it doesn't exist
-            echo "Starting DB service for migrations..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d pgdb # Start only DB
+            echo "Starting DB and Web services for migrations..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d pgdb django-web # Start DB and Web
             echo "Running database migrations..."
+            # Now the exec command should find the running django-web container
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec django-web python manage.py migrate
             echo "Cleaning up Docker build cache on runner..."
             docker builder prune -af || true # Prune build cache, continue even if it fails
