@@ -27,8 +27,9 @@ jobs:
             echo "Running database migrations..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec django-web python manage.py migrate
             echo "Rebuilding Docker images without cache..."
-            # Separate build step with no-cache
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
+            # Explicitly pass the API URL from GitHub secrets to the build command
+            # Note: We set the REACT_APP_API_URL environment variable *for the build command itself*
+            REACT_APP_API_URL="${{ secrets.REACT_APP_API_URL_SECRET }}" docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
             echo "Starting Docker containers..."
             # Separate up step (no --build needed now)
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
