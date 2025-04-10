@@ -1,8 +1,0 @@
- How U.S./Moneyline Odds Work
-
-Moneyline odds (aka "American odds" or "U.S. odds") are popular in the U.S.
-
-    Favorites: Denoted with a minus (-) sign. The number shows how much you need to bet to win $100.
-    Underdogs: Denoted with a plus (+) sign. The number shows how much you'll win if you bet $100.
-
-For example, if a team has odds of -150, you'd need to bet $150 to win $100. If the odds are +200, a $100 bet would win you $200. In both cases, your original bet is returned along with your winnings. The larger the gap between the favorite and underdog odds, the higher the favorite's chances of winning.1
