@@ -8,8 +8,10 @@ WORKDIR /app
 COPY package*.json ./
 
 # Add build arguments
+ARG REACT_APP_API_URL
 ARG ENVIRONMENT=development
 ARG NODE_ENV=production
+ENV REACT_APP_API_URL=${REACT_APP_API_URL}
 ENV ENVIRONMENT=${ENVIRONMENT}
 ENV NODE_ENV=${NODE_ENV}
 
@@ -26,8 +28,8 @@ RUN mkdir -p /app/node_modules/.cache && chmod -R 777 /app/node_modules/.cache
 # Remove the global ENV PUBLIC_URL=/
 # ENV PUBLIC_URL=/
 
-# Force production build with explicit PUBLIC_URL (removing conditional for testing)
-RUN REACT_APP_API_URL=https://rosterroyals.com PUBLIC_URL=/ npm run build
+# Use build args for API URL and force production build with explicit PUBLIC_URL
+RUN PUBLIC_URL=/ npm run build
 
 # Install serve for production or use development server
 RUN if [ "$ENVIRONMENT" = "production" ]; then \

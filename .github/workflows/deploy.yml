@@ -24,6 +24,12 @@ jobs:
             cd /root/roster-royals
             echo "Pulling latest code from main branch..."
             git pull origin main
+            echo "Stopping containers to allow volume removal..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+            echo "Removing stale react_build volume..."
+            docker volume rm roster-royals_react_build || true # Remove volume, continue if it doesn't exist
+            echo "Starting DB service for migrations..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d pgdb # Start only DB
             echo "Running database migrations..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec django-web python manage.py migrate
             echo "Cleaning up Docker build cache on runner..."
@@ -32,8 +38,8 @@ jobs:
             # Explicitly pass the API URL from GitHub secrets to the build command
             # Note: We set the REACT_APP_API_URL environment variable *for the build command itself*
             REACT_APP_API_URL="${{ secrets.REACT_APP_API_URL_SECRET }}" docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
-            echo "Starting Docker containers..."
-            # Separate up step (no --build needed now)
+            echo "Starting ALL Docker containers..."
+            # Use 'up -d' which will recreate the react_build volume automatically if missing
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
             # Optional: Prune unused Docker images, containers, and volumes to save space
             # echo "Pruning Docker system..."
