@@ -34,13 +34,19 @@ jobs:
             # Now the exec command should find the running django-web container
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec django-web python manage.py migrate
             echo "Cleaning up Docker build cache on runner..."
-            docker builder prune -af || true # Prune build cache, continue even if it fails
-            echo "Rebuilding Docker images without cache..."
-            # Explicitly pass the API URL from GitHub secrets to the build command
-            # Note: We set the REACT_APP_API_URL environment variable *for the build command itself*
-            REACT_APP_API_URL="${{ secrets.REACT_APP_API_URL_SECRET }}" docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
+            # Build cache pruning on runner is less relevant now, but harmless to keep
+            docker builder prune -af || true
+            # REMOVE Build step from runner environment
+            # echo "Rebuilding Docker images without cache..."
+            # REACT_APP_API_URL="${{ secrets.REACT_APP_API_URL_SECRET }}" docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
+
+            # ADD Build step to run on the droplet itself
+            echo "Rebuilding Docker images on the droplet..."
+            # This build command uses the .env file present on the droplet
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
+
             echo "Starting ALL Docker containers..."
-            # Use 'up -d' which will recreate the react_build volume automatically if missing
+            # Use 'up -d' which will use the images just built on the droplet
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
             # Optional: Prune unused Docker images, containers, and volumes to save space
             # echo "Pruning Docker system..."
