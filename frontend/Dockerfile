@@ -1,49 +1,38 @@
-# Use a smaller Node.js base image
-FROM node:16-alpine
+# Stage 1: Build the React application
+FROM node:16-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
-
-# Add build arguments
+# Add build arguments needed for build stage
 ARG REACT_APP_API_URL
-ARG ENVIRONMENT=development
-ARG NODE_ENV=production
 ENV REACT_APP_API_URL=${REACT_APP_API_URL}
-ENV ENVIRONMENT=${ENVIRONMENT}
-ENV NODE_ENV=${NODE_ENV}
-
-# Install dependencies using npm ci for faster, more reliable builds
-# RUN npm install --legacy-peer-deps && \
-#     npm install react-image-crop@latest
+# Use npm ci for reliable installs
 RUN npm ci && \
-    npm install react-image-crop@latest # Still need to install this one explicitly if not in package.json/lock
+    npm install react-image-crop@latest
 
-# Copy the rest of the application
+# Copy the rest of the application source code
 COPY . .
 
-# Create .cache directory with proper permissions
-RUN mkdir -p /app/node_modules/.cache && chmod -R 777 /app/node_modules/.cache
-
-# Remove the global ENV PUBLIC_URL=/
-# ENV PUBLIC_URL=/
-
-# Use build args for API URL and force production build with explicit PUBLIC_URL
+# Build the application
+# Note: PUBLIC_URL is set here, NODE_ENV=production is default for npm run build
 RUN PUBLIC_URL=/ npm run build
 
-# Install serve for production or use development server
-RUN if [ "$ENVIRONMENT" = "production" ]; then \
-        npm install -g serve; \
-    fi
+# Stage 2: Serve the built application using a minimal Node server
+FROM node:16-alpine
 
-# Expose the app port
+WORKDIR /app
+
+# Install 'serve' globally
+RUN npm install -g serve
+
+# Copy only the build output from the builder stage
+COPY --from=builder /app/build ./build
+
+# Expose the default port for 'serve'
 EXPOSE 3000
 
-# Start the appropriate server based on environment
-CMD if [ "$ENVIRONMENT" = "production" ]; then \
-        serve -s build -l 3000 --single -n; \
-    else \
-        npm start; \
-    fi
+# Start 'serve' to serve the build directory
+# CMD serves the build folder, listens on 3000, handles SPA routing (-s), and disables printing network interfaces (-n)
+CMD ["serve", "-s", "build", "-l", "3000", "-n"]
