@@ -400,3 +400,20 @@ export const createCustomEvent = async (eventData) => {
   }
 };
 
+/**
+ * Fetch circuits for a specific league
+ * @param {string|number} leagueId - The ID of the league
+ * @returns {Promise<Array>} - A promise that resolves to an array of circuits
+ */
+export const getLeagueCircuits = async (leagueId) => {
+    try {
+        const response = await fetch(`${API_URL}/api/leagues/${leagueId}/circuits/`, {
+            headers: getHeaders(),
+        });
+        return handleResponse(response);
+    } catch (error) {
+        console.error('Error fetching league circuits:', error);
+        throw error;
+    }
+};
+

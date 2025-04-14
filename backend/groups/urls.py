@@ -10,6 +10,9 @@ urlpatterns = [
     path('leagues/<int:league_id>/invite/<int:user_id>/', views.invite_to_league),
     path('league-invites/<int:invite_id>/handle/', views.handle_league_invite),
     
+    # Circuits
+    path('leagues/<int:league_id>/circuits/', views.get_league_circuits, name='get_league_circuits'),
+    
     # Market browsing endpoints
     path('market/browse/', views.browse_market, name='browse_market'),
     

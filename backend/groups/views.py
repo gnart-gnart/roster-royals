@@ -4,9 +4,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import generics, status
-from .models import League, Bet, UserBet, LeagueInvite, LeagueEvent
+from .models import League, Bet, UserBet, LeagueInvite, LeagueEvent, Circuit
 from users.models import User, Notification, FriendRequest
-from .serializers import LeagueSerializer, BetSerializer, LeagueEventSerializer
+from .serializers import LeagueSerializer, BetSerializer, LeagueEventSerializer, CircuitSerializer
 import logging
 import json
 import requests
@@ -766,3 +766,23 @@ def update_league(request, league_id):
     except Exception as e:
         logger.error(f"Error updating league: {str(e)}")
         return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_league_circuits(request, league_id):
+    """Retrieve all circuits belonging to a specific league."""
+    try:
+        league = League.objects.get(pk=league_id)
+        # Ensure the requesting user is a member of the league
+        if not league.members.filter(id=request.user.id).exists():
+            return Response({'error': 'User is not a member of this league'}, status=status.HTTP_403_FORBIDDEN)
+
+        circuits = Circuit.objects.filter(league=league).order_by('-created_at')
+        serializer = CircuitSerializer(circuits, many=True)
+        return Response(serializer.data)
+
+    except League.DoesNotExist:
+        return Response({'error': 'League not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error fetching circuits for league {league_id}: {e}")
+        return Response({'error': 'An error occurred while fetching circuits'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

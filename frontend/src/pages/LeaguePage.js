@@ -56,6 +56,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import LayersIcon from '@mui/icons-material/Layers';
 import { 
   inviteToLeague, 
   getFriends, 
@@ -72,6 +74,7 @@ import {
   deleteBet,
   updateLeague,
   getLeagueBets,
+  getLeagueCircuits,
 } from '../services/api';
 import NavBar from '../components/NavBar';
 import ImageCropper from '../components/ImageCropper';
@@ -92,6 +95,7 @@ function LeaguePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectAll, setSelectAll] = useState(false);
   const [leagueEvents, setLeagueEvents] = useState([]);
+  const [leagueCircuits, setLeagueCircuits] = useState([]);
   
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -142,12 +146,13 @@ function LeaguePage() {
         loadFriendRequests();
         loadNotifications();
 
-        // Load league bets (these would be the bets added to the league)
-        loadLeagueBets();
-
         // Get league events
         const eventsData = await getLeagueEvents(id);
-        setLeagueEvents(eventsData);
+        setLeagueEvents(eventsData || []);
+
+        // Get league circuits
+        const circuitsData = await getLeagueCircuits(id);
+        setLeagueCircuits(circuitsData || []);
       } catch (err) {
         setError('Failed to load league data');
         console.error(err);
@@ -184,32 +189,6 @@ function LeaguePage() {
       setNotifications(data);
     } catch (err) {
       console.error('Failed to load notifications:', err);
-    }
-  };
-
-  const loadLeagueBets = async () => {
-    try {
-      // Get events from the dedicated endpoint
-      const eventsData = await getLeagueEvents(id);
-      if (eventsData && Array.isArray(eventsData)) {
-        setBets(eventsData.map(event => ({
-          id: event.id,
-          event_key: event.event_key,
-          event_name: event.event_name,
-          sport: event.sport,
-          marketKey: event.market_data?.marketKey,
-          outcomeKey: event.market_data?.outcomeKey,
-          odds: event.market_data?.odds,
-          amount: event.market_data?.amount,
-          status: 'ACTIVE',
-          created_at: event.created_at
-        })));
-      } else {
-        setBets([]);
-      }
-    } catch (err) {
-      console.error('Failed to load league bets:', err);
-      setBets([]);
     }
   };
 
@@ -254,20 +233,15 @@ function LeaguePage() {
   const handleLeagueInviteAction = async (notificationId, inviteId, action) => {
     try {
       await handleLeagueInvite(inviteId, action);
-      
-      // Remove the notification from the list
-      setNotifications(prev => 
-        prev.filter(n => n.id !== notificationId)
-      );
-      
-      // Refresh leagues list if accepted
+      loadNotifications();
       if (action === 'accept') {
-        // Dispatch event before loading leagues to ensure all listeners are notified
-        window.dispatchEvent(new Event('leaguesUpdated'));
-        navigate('/home');
+        const updatedLeagueData = await getLeague(id);
+        setLeague(updatedLeagueData);
+        setMembers(updatedLeagueData.members || []);
       }
     } catch (err) {
-      console.error('Failed to handle league invite:', err);
+      console.error(`Failed to ${action} league invite:`, err);
+      setSnackbar({ open: true, message: `Failed to ${action} invite`, severity: 'error' });
     }
   };
 
@@ -675,160 +649,69 @@ function LeaguePage() {
           <Grid item xs={12} md={8}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
-                League Events
+                Circuits
               </Typography>
-        {isCaptain && (
-            <Box sx={{ display: 'flex', gap: 2 }}>
+              {isCaptain && (
                 <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => navigate(`/league/${id}/create-event`)}
-                    sx={{
-                        bgcolor: '#8B5CF6',
-                        color: 'white',
-                        borderRadius: '20px',
-                        textTransform: 'none',
-                        fontWeight: 'medium',
-                        px: 2,
-                        '&:hover': {
-                            backgroundColor: '#7C3AED',
-                        },
-                    }}
+                  startIcon={<AddCircleOutlineIcon />}
+                  size="small"
+                  onClick={() => navigate(`/league/${id}/create-circuit`)}
+                  sx={{
+                    backgroundColor: 'rgba(22, 28, 36, 0.7)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#f8fafc',
+                    borderRadius: '20px',
+                    '&:hover': {
+                      backgroundColor: 'rgba(22, 28, 36, 0.9)',
+                    },
+                  }}
                 >
-                    Create Event
+                  Create Circuit
                 </Button>
-                
-                <Button
-                    variant="outlined"
-                    startIcon={<AddIcon />}
-                    onClick={() => navigate(`/league/${id}/market`)}
-                    sx={{
-                        borderColor: '#8B5CF6',
-                        color: '#8B5CF6',
-                        borderRadius: '20px',
-                        textTransform: 'none',
-                        fontWeight: 'medium',
-                        px: 2,
-                        '&:hover': {
-                            borderColor: '#7C3AED',
-                            backgroundColor: 'rgba(139, 92, 246, 0.08)',
-                        },
-                    }}
-                >
-                    Browse Market
-                </Button>
-            </Box>
               )}
             </Box>
             
-            {/* Display league events */}
-            {leagueEvents && leagueEvents.length > 0 ? (
+            {leagueCircuits.length === 0 ? (
+              <Card sx={{ bgcolor: 'rgba(30, 41, 59, 0.7)', p: 2, textAlign: 'center', color: '#CBD5E1', borderRadius: 2 }}>
+                No active circuits.
+              </Card>
+            ) : (
               <Grid container spacing={2}>
-                {leagueEvents.map((event) => (
-                  <Grid item xs={12} key={event.id}>
-                    <Card sx={{ 
-                      bgcolor: 'rgba(22, 28, 36, 0.4)', 
-                      borderRadius: '8px', 
-                      border: '1px solid rgba(30, 41, 59, 0.8)',
-                      overflow: 'hidden',
-                      boxShadow: 'none',
-                    }}>
+                {leagueCircuits.map((circuit) => (
+                  <Grid item xs={12} sm={6} key={circuit.id}>
+                    <Card sx={{
+                      bgcolor: 'rgba(139, 92, 246, 0.15)',
+                      border: '1px solid rgba(139, 92, 246, 0.3)',
+                      borderRadius: 2,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        transform: 'translateY(-3px)',
+                        boxShadow: '0 6px 12px rgba(139, 92, 246, 0.2)'
+                      },
+                    }}
+                     onClick={() => navigate(`/league/${id}/circuit/${circuit.id}`)}
+                    >
                       <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                          <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
-                            {event.event_name || 'Event'}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                             <LayersIcon sx={{ color: '#A78BFA', mr: 1 }} />
+                             <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{circuit.name}</Typography>
+                           </Box>
+                           <Chip label={circuit.status} size="small" color={circuit.status === 'active' ? 'success' : circuit.status === 'completed' ? 'default' : 'warning'} />
+                         </Box>
+                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            {circuit.description ? `${circuit.description.substring(0, 60)}...` : 'No description'}
                           </Typography>
-                          <Chip 
-                            label={event.completed ? 'Completed' : 'Active'} 
-                            color={event.completed ? 'error' : 'success'}
-                            size="small"
-                          />
-                        </Box>
-                        
-                        <Grid container spacing={2} sx={{ mb: 2 }}>
-                          <Grid item xs={6} sm={3}>
-                            <Typography variant="body2" sx={{ color: '#94A3B8' }}>
-                              Sport:
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
-                              {event.sport || 'Not specified'}
-                            </Typography>
-                          </Grid>
-                          
-                          <Grid item xs={6} sm={3}>
-                            <Typography variant="body2" sx={{ color: '#94A3B8' }}>
-                              Market:
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
-                              {event.markets?.[0]?.key || 'Moneyline'}
-                            </Typography>
-                          </Grid>
-                          
-                          <Grid item xs={6} sm={3}>
-                            <Typography variant="body2" sx={{ color: '#94A3B8' }}>
-                              Home Team:
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
-                              {event.home_team || 'Home'}
-                            </Typography>
-                          </Grid>
-                          
-                          <Grid item xs={6} sm={3}>
-                            <Typography variant="body2" sx={{ color: '#94A3B8' }}>
-                              Away Team:
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
-                              {event.away_team || 'Away'}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                        
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                          {!event.completed && (
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              onClick={() => navigate(`/league/${id}/event/${event.id}/place-user-bet`)}
-                              sx={{
-                                borderColor: '#10B981',
-                                color: '#10B981',
-                                '&:hover': {
-                                  borderColor: '#059669',
-                                  backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                                },
-                              }}
-                            >
-                              Place Bet
-                            </Button>
-                          )}
-                          
-                          {isCaptain && !event.completed && (
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              onClick={() => navigate(`/league/${id}/event/${event.id}/complete`)}
-                              sx={{
-                                borderColor: '#F59E0B',
-                                color: '#F59E0B',
-                                '&:hover': {
-                                  borderColor: '#D97706',
-                                  backgroundColor: 'rgba(245, 158, 11, 0.08)',
-                                },
-                              }}
-                            >
-                              Complete Event
-                            </Button>
-                          )}
-                        </Box>
+                         <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#9CA3AF' }}>
+                          <span>Entry: ${circuit.entry_fee}</span>
+                          <span>Participants: {circuit.participant_count}</span>
+                         </Box>
                       </CardContent>
                     </Card>
                   </Grid>
                 ))}
               </Grid>
-            ) : (
-              <Box sx={{ p: 3, textAlign: 'center', color: '#6B7280', bgcolor: 'rgba(22, 28, 36, 0.4)', borderRadius: '8px', border: '1px solid rgba(30, 41, 59, 0.8)' }}>
-                No events available yet.
-              </Box>
             )}
           </Grid>
           
@@ -843,23 +726,23 @@ function LeaguePage() {
                 Leaderboard
               </Typography>
               {isCaptain && (
-            <Button
+                <Button
                   variant="outlined"
                   size="small"
                   onClick={() => setInviteDialogOpen(true)}
-              sx={{
+                  sx={{
                     borderColor: '#8B5CF6',
                     color: '#8B5CF6',
                     borderRadius: '20px',
                     textTransform: 'none',
-                '&:hover': {
+                    '&:hover': {
                       borderColor: '#7C3AED',
                       backgroundColor: 'rgba(139, 92, 246, 0.08)',
-                },
-              }}
-            >
+                    },
+                  }}
+                >
                   Invite
-            </Button>
+                </Button>
               )}
             </Box>
             
@@ -876,7 +759,7 @@ function LeaguePage() {
               ) : members.length === 0 ? (
                 <Box sx={{ p: 3, textAlign: 'center', color: '#6B7280' }}>
                   No members yet
-          </Box>
+                </Box>
               ) : (
                 <List disablePadding>
                   {members
