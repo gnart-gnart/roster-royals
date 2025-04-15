@@ -316,9 +316,6 @@ function LeaguePage() {
         loadFriendRequests();
         loadNotifications();
 
-        // Load league bets
-        loadLeagueBets();
-
         // Get league events
         const eventsData = await getLeagueEvents(id);
         setLeagueEvents(eventsData || []);
