@@ -285,13 +285,23 @@ function LeaguePage() {
   const [showCropper, setShowCropper] = useState(false);
   const [tabValue, setTabValue] = useState(0);
 
+  const refreshLeagueData = async () => {
+    try {
+      const leagueData = await getLeague(id);
+      console.log('League data received:', leagueData);
+      console.log('League balance:', leagueData.balance);
+      setLeague(leagueData);
+      setMembers(leagueData.members || []);
+    } catch (err) {
+      console.error('Failed to refresh league data:', err);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load league data
-        const leagueData = await getLeague(id);
-        setLeague(leagueData);
-        setMembers(leagueData.members || []);
+        setLoading(true);
+        await refreshLeagueData();
         
         // Load friends for invite functionality
         const friendsData = await getFriends();
@@ -301,7 +311,7 @@ function LeaguePage() {
         loadFriendRequests();
         loadNotifications();
 
-        // Load league bets (these would be the bets added to the league)
+        // Load league bets
         loadLeagueBets();
 
         // Get league events
@@ -316,6 +326,18 @@ function LeaguePage() {
     };
 
     loadData();
+  }, [id]);
+
+  // Add event listener for balance updates
+  useEffect(() => {
+    const handleBalanceUpdate = async () => {
+      await refreshLeagueData();
+    };
+
+    window.addEventListener('leagueBalanceUpdated', handleBalanceUpdate);
+    return () => {
+      window.removeEventListener('leagueBalanceUpdated', handleBalanceUpdate);
+    };
   }, [id]);
 
   useEffect(() => {
@@ -722,9 +744,29 @@ function LeaguePage() {
               Edit League
             </Button>
           )}
-          <Typography variant="h5" sx={{ color: '#f8fafc' }}>
-            ${league?.balance || '0.00'}
-          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              bgcolor: 'rgba(234, 179, 8, 0.1)',
+              border: '1px solid rgba(234, 179, 8, 0.5)',
+              borderRadius: '8px',
+              px: 2,
+              py: 1,
+            }}
+          >
+            <AttachMoneyIcon sx={{ color: '#EAB308' }} />
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: '#EAB308',
+                fontWeight: 'bold'
+              }}
+            >
+              {league?.balance !== undefined && league?.balance !== null ? parseFloat(league.balance).toFixed(2) : '0.00'}
+            </Typography>
+          </Box>
         </Box>
 
         {/* League Details Card */}
