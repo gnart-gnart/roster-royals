@@ -15,24 +15,38 @@ RUN npm ci && \
 # Copy the rest of the application source code
 COPY . .
 
-# Build the application
-# Note: PUBLIC_URL is set here, NODE_ENV=production is default for npm run build
+# Build the application (only for production use in final stage)
 RUN PUBLIC_URL=/ npm run build
 
-# Stage 2: Serve the built application using a minimal Node server
+# Stage 2: Serve the built application OR run dev server
 FROM node:16-alpine
 
 WORKDIR /app
 
-# Install 'serve' globally
+# Install 'serve' globally (needed for production)
 RUN npm install -g serve
 
-# Copy only the build output from the builder stage
+# Copy the build output from the builder stage (for production)
 COPY --from=builder /app/build ./build
 
-# Expose the default port for 'serve'
+# --- For Development Server --- 
+# Copy necessary source files and dependencies from builder
+# This allows running 'npm start' without reinstalling in the final stage
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/src ./src
+# ----------------------------
+
+# Expose the default port
 EXPOSE 3000
 
-# Start 'serve' to serve the build directory
-# CMD serves the build folder, listens on 3000, handles SPA routing (-s), and disables printing network interfaces (-n)
-CMD ["serve", "-s", "build", "-l", "3000", "-n"]
+# Check environment variable passed from docker-compose to decide command
+# Use NODE_ENV as create-react-app uses this convention
+CMD if [ "$NODE_ENV" = "production" ] ; then \
+      # Production: Serve static build files
+      serve -s build -l 3000 -n ; \
+    else \
+      # Development: Run the React development server (watches mounted volumes)
+      npm start ; \
+    fi

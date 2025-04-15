@@ -414,3 +414,57 @@ export const removeMember = async (leagueId, memberId) => {
   return response.json();
 };
 
+/**
+ * Fetch circuits for a specific league
+ * @param {string|number} leagueId - The ID of the league
+ * @returns {Promise<Array>} - A promise that resolves to an array of circuits
+ */
+export const getLeagueCircuits = async (leagueId) => {
+    try {
+        const response = await fetch(`${API_URL}/api/leagues/${leagueId}/circuits/`, {
+            headers: getHeaders(),
+        });
+        return handleResponse(response);
+    } catch (error) {
+        console.error('Error fetching league circuits:', error);
+        throw error;
+    }
+};
+
+/**
+ * Create a new circuit within a league
+ * @param {string|number} leagueId - The ID of the league
+ * @param {Object} circuitData - Data for the new circuit, including name, description, entry_fee, component_events_data, etc.
+ * @returns {Promise<Object>} - A promise resolving to the newly created circuit object
+ */
+export const createCircuit = async (leagueId, circuitData) => {
+    try {
+        const response = await fetch(`${API_URL}/api/leagues/${leagueId}/circuits/create/`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(circuitData),
+        });
+        return handleResponse(response);
+    } catch (error) {
+        console.error('Error creating circuit:', error);
+        throw error; // Re-throw the error to be caught by the calling component
+    }
+};
+
+/**
+ * Fetch detailed information for a specific circuit
+ * @param {string|number} circuitId - The ID of the circuit
+ * @returns {Promise<Object>} - A promise that resolves to the detailed circuit object
+ */
+export const getCircuitDetail = async (circuitId) => {
+    try {
+        const response = await fetch(`${API_URL}/api/circuits/${circuitId}/`, {
+            headers: getHeaders(),
+        });
+        return handleResponse(response);
+    } catch (error) {
+        console.error('Error fetching circuit detail:', error);
+        throw error;
+    }
+};
+

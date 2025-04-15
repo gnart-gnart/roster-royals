@@ -60,6 +60,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import LayersIcon from '@mui/icons-material/Layers';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { 
   inviteToLeague, 
   getFriends, 
@@ -77,6 +80,7 @@ import {
   updateLeague,
   getLeagueBets,
   removeMember,
+  getLeagueCircuits,
 } from '../services/api';
 import NavBar from '../components/NavBar';
 import ImageCropper from '../components/ImageCropper';
@@ -250,6 +254,7 @@ function LeaguePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectAll, setSelectAll] = useState(false);
   const [leagueEvents, setLeagueEvents] = useState([]);
+  const [leagueCircuits, setLeagueCircuits] = useState([]);
   
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -311,12 +316,13 @@ function LeaguePage() {
         loadFriendRequests();
         loadNotifications();
 
-        // Load league bets
-        loadLeagueBets();
-
         // Get league events
         const eventsData = await getLeagueEvents(id);
-        setLeagueEvents(eventsData);
+        setLeagueEvents(eventsData || []);
+
+        // Get league circuits
+        const circuitsData = await getLeagueCircuits(id);
+        setLeagueCircuits(circuitsData || []);
       } catch (err) {
         setError('Failed to load league data');
         console.error(err);
@@ -368,32 +374,6 @@ function LeaguePage() {
     }
   };
 
-  const loadLeagueBets = async () => {
-    try {
-      // Get events from the dedicated endpoint
-      const eventsData = await getLeagueEvents(id);
-      if (eventsData && Array.isArray(eventsData)) {
-        setBets(eventsData.map(event => ({
-          id: event.id,
-          event_key: event.event_key,
-          event_name: event.event_name,
-          sport: event.sport,
-          marketKey: event.market_data?.marketKey,
-          outcomeKey: event.market_data?.outcomeKey,
-          odds: event.market_data?.odds,
-          amount: event.market_data?.amount,
-          status: 'ACTIVE',
-          created_at: event.created_at
-        })));
-      } else {
-        setBets([]);
-      }
-    } catch (err) {
-      console.error('Failed to load league bets:', err);
-      setBets([]);
-    }
-  };
-
   const handleNotificationsOpen = (event) => {
     setNotifAnchorEl(event.currentTarget);
   };
@@ -435,20 +415,15 @@ function LeaguePage() {
   const handleLeagueInviteAction = async (notificationId, inviteId, action) => {
     try {
       await handleLeagueInvite(inviteId, action);
-      
-      // Remove the notification from the list
-      setNotifications(prev => 
-        prev.filter(n => n.id !== notificationId)
-      );
-      
-      // Refresh leagues list if accepted
+      loadNotifications();
       if (action === 'accept') {
-        // Dispatch event before loading leagues to ensure all listeners are notified
-        window.dispatchEvent(new Event('leaguesUpdated'));
-        navigate('/home');
+        const updatedLeagueData = await getLeague(id);
+        setLeague(updatedLeagueData);
+        setMembers(updatedLeagueData.members || []);
       }
     } catch (err) {
-      console.error('Failed to handle league invite:', err);
+      console.error(`Failed to ${action} league invite:`, err);
+      setSnackbar({ open: true, message: `Failed to ${action} invite`, severity: 'error' });
     }
   };
 
@@ -891,6 +866,98 @@ function LeaguePage() {
         {/* Events Tab */}
         <TabPanel value={tabValue} index={0}>
           <Grid container spacing={3}>
+            {/* Circuits Section */}
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                  Circuits
+                </Typography>
+                {isCaptain && (
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => navigate(`/league/${id}/create-circuit`)}
+                    sx={{
+                      bgcolor: '#10B981',
+                      color: 'white',
+                      borderRadius: '20px',
+                      textTransform: 'none',
+                      fontWeight: 'medium',
+                      px: 2,
+                      '&:hover': {
+                        backgroundColor: '#059669',
+                      },
+                    }}
+                  >
+                    Create Circuit
+                  </Button>
+                )}
+              </Box>
+
+              {/* Circuits List */}
+              {leagueCircuits && leagueCircuits.length > 0 ? (
+                <Grid container spacing={2}>
+                  {leagueCircuits.map((circuit) => (
+                    <Grid item xs={12} sm={6} md={4} key={circuit.id}>
+                      <Card 
+                        onClick={() => navigate(`/league/${id}/circuit/${circuit.id}`)}
+                        sx={{ 
+                          bgcolor: 'rgba(22, 28, 36, 0.6)',
+                          borderRadius: '8px', 
+                          border: '1px solid rgba(30, 41, 59, 0.9)',
+                          overflow: 'hidden',
+                          boxShadow: 'none',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s',
+                          '&:hover': {
+                            backgroundColor: 'rgba(30, 41, 59, 0.7)',
+                          },
+                        }}
+                      >
+                        <CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                             <EmojiEventsIcon sx={{ color: '#F59E0B', mr: 1.5 }} />
+                             <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold', flexGrow: 1 }}>
+                               {circuit.name}
+                             </Typography>
+                             <Chip 
+                               label={circuit.status || 'Upcoming'} 
+                               color={circuit.status === 'active' ? 'success' : circuit.status === 'completed' ? 'default' : 'warning'}
+                               size="small"
+                             />
+                          </Box>
+                          <Typography variant="body2" sx={{ color: '#CBD5E1', mb: 1 }}>
+                             Entry: ${circuit.entry_fee}
+                          </Typography>
+                           <Typography variant="body2" sx={{ color: '#94A3B8' }}>
+                             {circuit.participant_count || 0} participant(s)
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : (
+                <Card sx={{ 
+                  bgcolor: 'rgba(22, 28, 36, 0.4)', 
+                  borderRadius: '8px', 
+                  border: '1px solid rgba(30, 41, 59, 0.8)',
+                  p: 3,
+                  textAlign: 'center'
+                }}>
+                  <Typography sx={{ color: '#94A3B8' }}>
+                    No circuits running yet. {isCaptain && 'Create one!'}
+                  </Typography>
+                </Card>
+              )}
+            </Grid>
+
+            {/* Divider */}
+             <Grid item xs={12}>
+                <Divider sx={{ my: 3, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+            </Grid>
+
+            {/* League Events Section */}
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
