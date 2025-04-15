@@ -13,9 +13,6 @@ import CreateEventPage from './pages/CreateEventPage';
 import CreateCircuitPage from './pages/CreateCircuitPage';
 import CircuitPage from './pages/CircuitPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import SportEventsPage from './pages/SportEventsPage';
-import SettingsPage from './pages/SettingsPage';
-import AddBetPage from './pages/AddBetPage';
 import CompleteEventPage from './pages/CompleteEventPage';
 
 const theme = createTheme({
