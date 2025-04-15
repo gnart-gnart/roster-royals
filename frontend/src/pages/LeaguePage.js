@@ -38,6 +38,10 @@ import {
   InputLabel,
   Snackbar,
   Alert,
+  ListItemAvatar,
+  ListItemSecondaryAction,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -74,10 +78,164 @@ import {
   deleteBet,
   updateLeague,
   getLeagueBets,
+  removeMember,
   getLeagueCircuits,
 } from '../services/api';
 import NavBar from '../components/NavBar';
 import ImageCropper from '../components/ImageCropper';
+import Chat from '../components/Chat';
+
+// Add the InviteDialog component before the LeaguePage component
+function InviteDialog({ open, onClose, friends, onInvite, loading }) {
+  const [selectedFriends, setSelectedFriends] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleToggleFriend = (friendId) => {
+    setSelectedFriends(prev => {
+      if (prev.includes(friendId)) {
+        return prev.filter(id => id !== friendId);
+      } else {
+        return [...prev, friendId];
+      }
+    });
+  };
+
+  const handleInvite = () => {
+    onInvite(selectedFriends);
+    setSelectedFriends([]);
+    setSearchQuery('');
+  };
+
+  const filteredFriends = friends.filter(friend =>
+    friend.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <Dialog 
+      open={open} 
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          bgcolor: 'rgba(30, 41, 59, 0.95)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(226, 232, 240, 0.1)',
+          minWidth: '400px',
+        }
+      }}
+    >
+      <DialogTitle sx={{ color: '#f8fafc' }}>Invite Friends</DialogTitle>
+      <DialogContent>
+        <TextField
+          fullWidth
+          placeholder="Search friends..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{
+            mb: 2,
+            '& .MuiOutlinedInput-root': {
+              color: '#CBD5E1',
+              '& fieldset': {
+                borderColor: 'rgba(148, 163, 184, 0.2)',
+              },
+              '&:hover fieldset': {
+                borderColor: 'rgba(148, 163, 184, 0.3)',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#8B5CF6',
+              },
+            },
+          }}
+        />
+        <List sx={{ maxHeight: 300, overflow: 'auto' }}>
+          {filteredFriends.map((friend) => (
+            <ListItem key={friend.id} sx={{ px: 0 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={selectedFriends.includes(friend.id)}
+                    onChange={() => handleToggleFriend(friend.id)}
+                    sx={{
+                      color: '#8B5CF6',
+                      '&.Mui-checked': {
+                        color: '#8B5CF6',
+                      },
+                    }}
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Avatar
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        mr: 1,
+                        bgcolor: '#3B82F6',
+                      }}
+                    >
+                      {friend.username[0].toUpperCase()}
+                    </Avatar>
+                    <Typography sx={{ color: '#f8fafc' }}>
+                      {friend.username}
+                    </Typography>
+                  </Box>
+                }
+              />
+            </ListItem>
+          ))}
+        </List>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button
+          onClick={onClose}
+          sx={{
+            color: '#94A3B8',
+            '&:hover': {
+              backgroundColor: 'rgba(148, 163, 184, 0.1)',
+            },
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleInvite}
+          disabled={selectedFriends.length === 0 || loading}
+          variant="contained"
+          sx={{
+            bgcolor: '#8B5CF6',
+            '&:hover': {
+              bgcolor: '#7C3AED',
+            },
+            '&.Mui-disabled': {
+              bgcolor: 'rgba(139, 92, 246, 0.4)',
+            },
+          }}
+        >
+          {loading ? 'Inviting...' : 'Invite Selected'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`league-tabpanel-${index}`}
+      aria-labelledby={`league-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ py: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
 
 function LeaguePage() {
   const { id } = useParams();
@@ -129,14 +287,25 @@ function LeaguePage() {
 
   const [selectedImage, setSelectedImage] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
+  const [tabValue, setTabValue] = useState(0);
+
+  const refreshLeagueData = async () => {
+    try {
+      const leagueData = await getLeague(id);
+      console.log('League data received:', leagueData);
+      console.log('League balance:', leagueData.balance);
+      setLeague(leagueData);
+      setMembers(leagueData.members || []);
+    } catch (err) {
+      console.error('Failed to refresh league data:', err);
+    }
+  };
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load league data
-        const leagueData = await getLeague(id);
-        setLeague(leagueData);
-        setMembers(leagueData.members || []);
+        setLoading(true);
+        await refreshLeagueData();
         
         // Load friends for invite functionality
         const friendsData = await getFriends();
@@ -145,6 +314,9 @@ function LeaguePage() {
         // Load notifications and friend requests for navbar
         loadFriendRequests();
         loadNotifications();
+
+        // Load league bets
+        loadLeagueBets();
 
         // Get league events
         const eventsData = await getLeagueEvents(id);
@@ -162,6 +334,18 @@ function LeaguePage() {
     };
 
     loadData();
+  }, [id]);
+
+  // Add event listener for balance updates
+  useEffect(() => {
+    const handleBalanceUpdate = async () => {
+      await refreshLeagueData();
+    };
+
+    window.addEventListener('leagueBalanceUpdated', handleBalanceUpdate);
+    return () => {
+      window.removeEventListener('leagueBalanceUpdated', handleBalanceUpdate);
+    };
   }, [id]);
 
   useEffect(() => {
@@ -245,19 +429,29 @@ function LeaguePage() {
     }
   };
 
-  const handleInvite = async () => {
-    if (selectedFriends.length === 0) return;
-    
+  const handleInvite = async (selectedFriendIds) => {
     try {
-      const invitePromises = selectedFriends.map(friendId => 
+      setLoading(true);
+      // Invite each selected friend
+      await Promise.all(selectedFriendIds.map(friendId => 
         inviteToLeague(id, friendId)
-      );
+      ));
       
-      await Promise.all(invitePromises);
+      setSnackbar({
+        open: true,
+        message: 'Invites sent successfully!',
+        severity: 'success'
+      });
       setInviteDialogOpen(false);
-      setSelectedFriends([]);
     } catch (err) {
-      console.error('Failed to invite friends:', err);
+      console.error('Failed to send invites:', err);
+      setSnackbar({
+        open: true,
+        message: 'Failed to send invites. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -311,14 +505,24 @@ function LeaguePage() {
     });
   };
 
-  const handleRemoveMember = (memberId) => {
-    setConfirmDialog({
-      open: true,
-      title: 'Remove Member',
-      message: 'Are you sure you want to remove this member from the league?',
-      action: 'remove',
-      memberId,
-    });
+  const handleRemoveMember = async (memberId) => {
+    try {
+      await removeMember(id, memberId);
+      // Update the members list
+      setMembers(prev => prev.filter(member => member.id !== memberId));
+      setSnackbar({
+        open: true,
+        message: 'Member removed successfully',
+        severity: 'success'
+      });
+    } catch (err) {
+      console.error('Failed to remove member:', err);
+      setSnackbar({
+        open: true,
+        message: 'Failed to remove member. Please try again.',
+        severity: 'error'
+      });
+    }
   };
 
   const handleConfirmAction = () => {
@@ -442,119 +646,126 @@ function LeaguePage() {
     return getImageUrl(image);
   };
 
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
   return (
-    <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh', pb: 4 }}>
+    <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh' }}>
       <NavBar />
-      <Container maxWidth="lg" sx={{ pt: 4 }}>
-        {/* Header with back button and league name */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton 
-              onClick={() => navigate('/home')} 
-              sx={{ 
-                color: '#f8fafc',
-                mr: 1,
+      <Container maxWidth="lg" sx={{ mt: 4, pb: 4 }}>
+        {/* League Header */}
+        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <IconButton 
+            onClick={() => navigate('/home')}
+            sx={{ color: '#f8fafc' }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          {isEditing ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+              <TextField
+                name="name"
+                value={editFormData.name}
+                onChange={handleInputChange}
+                variant="outlined"
+                size="small"
+                sx={{ 
+                  flex: 1,
+                  '& .MuiOutlinedInput-root': {
+                    color: '#f8fafc',
+                    '& fieldset': {
+                      borderColor: 'rgba(148, 163, 184, 0.2)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(148, 163, 184, 0.3)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#8B5CF6',
+                    },
+                  }
+                }}
+              />
+              <IconButton 
+                onClick={handleSaveEdit}
+                sx={{ color: '#10B981' }}
+              >
+                <SaveIcon />
+              </IconButton>
+              <IconButton 
+                onClick={handleCancelEdit}
+                sx={{ color: '#EF4444' }}
+              >
+                <CancelIcon />
+              </IconButton>
+            </Box>
+          ) : (
+            <Typography variant="h4" sx={{ color: '#f8fafc', fontWeight: 'bold', flex: 1 }}>
+              {league?.name}
+            </Typography>
+          )}
+          {isCaptain && !isEditing && (
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={handleEditClick}
+              sx={{
+                borderColor: '#8B5CF6',
+                color: '#8B5CF6',
                 '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.1)'
-                }
+                  borderColor: '#7C3AED',
+                  backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                },
               }}
             >
-              <ArrowBackIcon />
-            </IconButton>
-            
-            {isEditing ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <TextField
-                  name="name"
-                  value={editFormData.name}
-                  onChange={handleInputChange}
-                  variant="outlined"
-                  size="small"
-                  sx={{ input: { color: '#f8fafc' } }}
-                />
-                <IconButton 
-                  onClick={handleSaveEdit}
-                  sx={{ color: '#10B981', ml: 1 }}
-                >
-                  <SaveIcon />
-                </IconButton>
-                <IconButton 
-                  onClick={handleCancelEdit}
-                  sx={{ color: '#EF4444', ml: 1 }}
-                >
-                  <CancelIcon />
-                </IconButton>
-              </Box>
-            ) : (
-              <>
-                <Typography variant="h4" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
-                  {loading ? 'Loading...' : league?.name}
-                </Typography>
-                {isCaptain && (
-                  <Tooltip title="Edit league details">
-                    <IconButton 
-                      onClick={handleEditClick}
-                      sx={{ color: '#60A5FA', ml: 1 }}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </>
-            )}
-          </Box>
-          
-          {/* User Money Display */}
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              bgcolor: 'rgba(255, 215, 0, 0.15)', 
-              p: '8px 16px', 
-              borderRadius: 2,
-              border: '1px solid rgba(255, 215, 0, 0.3)'
+              Edit League
+            </Button>
+          )}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              bgcolor: 'rgba(234, 179, 8, 0.1)',
+              border: '1px solid rgba(234, 179, 8, 0.5)',
+              borderRadius: '8px',
+              px: 2,
+              py: 1,
             }}
           >
-            <Typography sx={{ color: '#FFD700', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-              <Box component="span" sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
-                <AttachMoneyIcon fontSize="small" />
-              </Box>
-              {typeof user.money === 'number' 
-                ? user.money.toFixed(2) 
-                : parseFloat(user.money || 0).toFixed(2)
-              }
+            <AttachMoneyIcon sx={{ color: '#EAB308' }} />
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: '#EAB308',
+                fontWeight: 'bold'
+              }}
+            >
+              {league?.balance !== undefined && league?.balance !== null ? parseFloat(league.balance).toFixed(2) : '0.00'}
             </Typography>
           </Box>
         </Box>
 
-        {!loading && league && (
-          <Box 
-            sx={{ 
-              px: 4, 
-              py: 4, 
-              mb: 4,
-              backgroundColor: 'rgba(22, 28, 36, 0.4)', 
-              borderRadius: '12px',
-              border: '1px solid rgba(30, 41, 59, 0.8)',
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              gap: 4,
-              alignItems: 'flex-start'
-            }}
-          >
+        {/* League Details Card */}
+        <Card sx={{ 
+          bgcolor: 'rgba(22, 28, 36, 0.4)', 
+          borderRadius: '8px', 
+          border: '1px solid rgba(30, 41, 59, 0.8)',
+          mb: 4,
+        }}>
+          <CardContent sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: 4,
+            alignItems: 'flex-start'
+          }}>
             {/* Image Section */}
-            <Box 
-              sx={{ 
-                width: { xs: '100%', md: '300px' },
-                flexShrink: 0
-              }}
-            >
+            <Box sx={{ width: { xs: '100%', md: '300px' }, flexShrink: 0 }}>
               <img 
-                src={isEditing ? getPreviewUrl(editFormData.image) : getImageUrl(league.image)} 
-                alt={league.name}
+                src={isEditing ? getPreviewUrl(editFormData.image) : getImageUrl(league?.image)}
+                alt={league?.name}
                 onError={(e) => {
-                  // If image fails to load, replace with local fallback
-                  e.target.onerror = null; // Prevent infinite error loop
+                  e.target.onerror = null;
                   e.target.src = "/images/default_image_updated.png";
                 }}
                 style={{
@@ -593,14 +804,7 @@ function LeaguePage() {
 
             {/* Description Section */}
             <Box sx={{ flex: 1 }}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  color: '#94A3B8',
-                  mb: 2,
-                  fontWeight: 500
-                }}
-              >
+              <Typography variant="h6" sx={{ color: '#94A3B8', mb: 2, fontWeight: 500 }}>
                 About the League
               </Typography>
               {isEditing ? (
@@ -613,7 +817,7 @@ function LeaguePage() {
                   multiline
                   rows={4}
                   placeholder="Add a description for your league"
-                  sx={{ 
+                  sx={{
                     '& .MuiOutlinedInput-root': {
                       color: '#CBD5E1',
                       backgroundColor: 'rgba(15, 23, 42, 0.3)',
@@ -630,442 +834,439 @@ function LeaguePage() {
                   }}
                 />
               ) : (
-                <Typography 
-                  variant="body1" 
-                  sx={{ 
-                    color: '#CBD5E1',
-                    lineHeight: 1.7,
-                    fontSize: '1.05rem'
-                  }}
-                >
-                  {league.description || 'A league for sports betting enthusiasts to compete and have fun.'}
+                <Typography variant="body1" sx={{ color: '#CBD5E1', lineHeight: 1.7, fontSize: '1.05rem' }}>
+                  {league?.description || 'No description available.'}
                 </Typography>
               )}
             </Box>
-          </Box>
-        )}
+          </CardContent>
+        </Card>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
-                Circuits
-              </Typography>
-              {isCaptain && (
-                <Button
-                  startIcon={<AddCircleOutlineIcon />}
-                  size="small"
-                  onClick={() => navigate(`/league/${id}/create-circuit`)}
-                  sx={{
-                    backgroundColor: 'rgba(22, 28, 36, 0.7)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#f8fafc',
-                    borderRadius: '20px',
-                    '&:hover': {
-                      backgroundColor: 'rgba(22, 28, 36, 0.9)',
-                    },
-                  }}
-                >
-                  Create Circuit
-                </Button>
-              )}
-            </Box>
-            
-            {leagueCircuits.length === 0 ? (
-              <Card sx={{ bgcolor: 'rgba(30, 41, 59, 0.7)', p: 2, textAlign: 'center', color: '#CBD5E1', borderRadius: 2 }}>
-                No active circuits.
-              </Card>
-            ) : (
-              <Grid container spacing={2}>
-                {leagueCircuits.map((circuit) => (
-                  <Grid item xs={12} sm={6} key={circuit.id}>
-                    <Card sx={{
-                      bgcolor: 'rgba(139, 92, 246, 0.15)',
-                      border: '1px solid rgba(139, 92, 246, 0.3)',
-                      borderRadius: 2,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        transform: 'translateY(-3px)',
-                        boxShadow: '0 6px 12px rgba(139, 92, 246, 0.2)'
-                      },
-                    }}
-                     onClick={() => navigate(`/league/${id}/circuit/${circuit.id}`)}
+        {/* Tabs Navigation */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange}
+            sx={{
+              '& .MuiTab-root': {
+                color: '#94A3B8',
+                '&.Mui-selected': {
+                  color: '#8B5CF6',
+                },
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#8B5CF6',
+              },
+            }}
+          >
+            <Tab label="Events" />
+            <Tab label="Members & Leaderboard" />
+            <Tab label="Chat" />
+          </Tabs>
+        </Box>
+
+        {/* Events Tab */}
+        <TabPanel value={tabValue} index={0}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                  League Events
+                </Typography>
+                {isCaptain && (
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => navigate(`/league/${id}/create-event`)}
+                      sx={{
+                        bgcolor: '#8B5CF6',
+                        color: 'white',
+                        borderRadius: '20px',
+                        textTransform: 'none',
+                        fontWeight: 'medium',
+                        px: 2,
+                        '&:hover': {
+                          backgroundColor: '#7C3AED',
+                        },
+                      }}
                     >
-                      <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                             <LayersIcon sx={{ color: '#A78BFA', mr: 1 }} />
-                             <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{circuit.name}</Typography>
-                           </Box>
-                           <Chip label={circuit.status} size="small" color={circuit.status === 'active' ? 'success' : circuit.status === 'completed' ? 'default' : 'warning'} />
-                         </Box>
-                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                            {circuit.description ? `${circuit.description.substring(0, 60)}...` : 'No description'}
-                          </Typography>
-                         <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#9CA3AF' }}>
-                          <span>Entry: ${circuit.entry_fee}</span>
-                          <span>Participants: {circuit.participant_count}</span>
-                         </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            )}
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Box sx={{ 
-              mb: 2, 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center' 
-            }}>
-              <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
-                Leaderboard
-              </Typography>
-              {isCaptain && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => setInviteDialogOpen(true)}
-                  sx={{
-                    borderColor: '#8B5CF6',
-                    color: '#8B5CF6',
-                    borderRadius: '20px',
-                    textTransform: 'none',
-                    '&:hover': {
-                      borderColor: '#7C3AED',
-                      backgroundColor: 'rgba(139, 92, 246, 0.08)',
-                    },
-                  }}
-                >
-                  Invite
-                </Button>
-              )}
-            </Box>
-            
-            <Box sx={{ 
-              bgcolor: 'rgba(22, 28, 36, 0.4)', 
-              borderRadius: '8px',
-              border: '1px solid rgba(30, 41, 59, 0.8)',
-              overflow: 'hidden'
-            }}>
-              {loading ? (
-                <Box sx={{ p: 3, textAlign: 'center', color: '#6B7280' }}>
-                  Loading members...
-                </Box>
-              ) : members.length === 0 ? (
-                <Box sx={{ p: 3, textAlign: 'center', color: '#6B7280' }}>
-                  No members yet
-                </Box>
-              ) : (
-                <List disablePadding>
-                  {members
-                    .sort((a, b) => (b.points || 0) - (a.points || 0))
-                    .map((member, index) => (
-                      <ListItem 
-                        key={member.id}
-                        sx={{ 
-                          py: 2, 
-                          borderBottom: index === members.length - 1 ? 'none' : '1px solid rgba(30, 41, 59, 0.8)',
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
-                          <Typography 
-                            sx={{ 
-                              width: 30, 
-                              fontWeight: 'bold', 
-                              color: index < 3 ? '#FFD700' : '#CBD5E1',
-                              textAlign: 'center' 
-                            }}
-                          >
-                            {index + 1}
-                          </Typography>
-                          
-                          <Avatar 
-                            sx={{ 
-                              bgcolor: index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : '#8B5CF6',
-                              width: 36, 
-                              height: 36, 
-                              mx: 1,
-                              fontSize: '16px',
-                              color: index < 3 ? '#111827' : '#FFFFFF',
-                            }}
-                          >
-                            {member.username ? member.username[0].toUpperCase() : 'U'}
-                          </Avatar>
-                          
-                          <Box sx={{ flexGrow: 1 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <Typography sx={{ color: '#f8fafc', fontWeight: 'medium' }}>
-                                {member.username}
-                              </Typography>
-                              {league?.captain?.id === member.id && (
-                                <Typography 
-                                  variant="caption" 
-                                  sx={{ 
-                                    ml: 1, 
-                                    color: '#8B5CF6',
-                                    bgcolor: 'rgba(139, 92, 246, 0.1)',
-                                    px: 1,
-                                    py: 0.5,
-                                    borderRadius: '4px',
-                                  }}
-                                >
-                                  Captain
-                                </Typography>
-                              )}
-                              {member.is_co_captain && (
-                                <Typography 
-                                  variant="caption" 
-                                  sx={{ 
-                                    ml: 1, 
-                                    color: '#8B5CF6',
-                                    bgcolor: 'rgba(139, 92, 246, 0.1)',
-                                    px: 1,
-                                    py: 0.5,
-                                    borderRadius: '4px',
-                                  }}
-                                >
-                                  Co-Captain
-                                </Typography>
-                              )}
-                            </Box>
-                            <Typography variant="caption" sx={{ color: '#6B7280' }}>
-                              Win Rate: {Math.floor(Math.random() * 30) + 50}%
+                      Create Event
+                    </Button>
+                    
+                    <Button
+                      variant="outlined"
+                      startIcon={<AddIcon />}
+                      onClick={() => navigate(`/league/${id}/market`)}
+                      sx={{
+                        borderColor: '#8B5CF6',
+                        color: '#8B5CF6',
+                        borderRadius: '20px',
+                        textTransform: 'none',
+                        fontWeight: 'medium',
+                        px: 2,
+                        '&:hover': {
+                          borderColor: '#7C3AED',
+                          backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                        },
+                      }}
+                    >
+                      Browse Market
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+              
+              {/* Events List */}
+              {leagueEvents && leagueEvents.length > 0 ? (
+                <Grid container spacing={2}>
+                  {leagueEvents.map((event) => (
+                    <Grid item xs={12} key={event.id}>
+                      <Card sx={{ 
+                        bgcolor: 'rgba(22, 28, 36, 0.4)', 
+                        borderRadius: '8px', 
+                        border: '1px solid rgba(30, 41, 59, 0.8)',
+                        overflow: 'hidden',
+                        boxShadow: 'none',
+                      }}>
+                        <CardContent>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                            <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                              {event.event_name || 'Event'}
                             </Typography>
+                            <Chip 
+                              label={event.completed ? 'Completed' : 'Active'} 
+                              color={event.completed ? 'error' : 'success'}
+                              size="small"
+                            />
                           </Box>
                           
-                          <Typography sx={{ color: '#10B981', fontWeight: 'bold' }}>
-                            {member.points || 0}
-                          </Typography>
+                          <Grid container spacing={2} sx={{ mb: 2 }}>
+                            <Grid item xs={6} sm={3}>
+                              <Typography variant="body2" sx={{ color: '#94A3B8' }}>
+                                Sport:
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
+                                {event.sport || 'Not specified'}
+                              </Typography>
+                            </Grid>
+                            
+                            <Grid item xs={6} sm={3}>
+                              <Typography variant="body2" sx={{ color: '#94A3B8' }}>
+                                Market:
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
+                                {event.markets?.[0]?.key || 'Moneyline'}
+                              </Typography>
+                            </Grid>
+                            
+                            <Grid item xs={6} sm={3}>
+                              <Typography variant="body2" sx={{ color: '#94A3B8' }}>
+                                Home Team:
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
+                                {event.home_team || 'Home'}
+                              </Typography>
+                            </Grid>
+                            
+                            <Grid item xs={6} sm={3}>
+                              <Typography variant="body2" sx={{ color: '#94A3B8' }}>
+                                Away Team:
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
+                                {event.away_team || 'Away'}
+                              </Typography>
+                            </Grid>
+                          </Grid>
                           
-                          {isCaptain && member.id !== league.captain.id && (
-                            <Box sx={{ display: 'flex', ml: 2 }}>
-                              <Tooltip title={member.is_co_captain ? "Remove Co-Captain" : "Promote to Co-Captain"}>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handlePromoteToCoCaptain(member.id)}
-                                  sx={{ 
-                                    color: member.is_co_captain ? '#8B5CF6' : '#CBD5E1',
-                                    '&:hover': { bgcolor: 'rgba(139, 92, 246, 0.1)' }
-                                  }}
-                                >
-                                  {member.is_co_captain ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
-                                </IconButton>
-                              </Tooltip>
-                              
-                              <Tooltip title="Remove Member">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleRemoveMember(member.id)}
-                                  sx={{ 
-                                    color: '#F87171',
-                                    '&:hover': { bgcolor: 'rgba(248, 113, 113, 0.1)' }
-                                  }}
-                                >
-                                  <PersonRemoveIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          )}
-                        </Box>
-                      </ListItem>
-                    ))}
-                </List>
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                            {!event.completed && (
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                onClick={() => navigate(`/league/${id}/event/${event.id}/place-user-bet`)}
+                                sx={{
+                                  borderColor: '#10B981',
+                                  color: '#10B981',
+                                  '&:hover': {
+                                    borderColor: '#059669',
+                                    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                                  },
+                                }}
+                              >
+                                Place Bet
+                              </Button>
+                            )}
+                            
+                            {isCaptain && !event.completed && (
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                onClick={() => navigate(`/league/${id}/event/${event.id}/complete`)}
+                                sx={{
+                                  borderColor: '#F59E0B',
+                                  color: '#F59E0B',
+                                  '&:hover': {
+                                    borderColor: '#D97706',
+                                    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                                  }
+                                }}
+                              >
+                                Complete Event
+                              </Button>
+                            )}
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : (
+                <Card sx={{ 
+                  bgcolor: 'rgba(22, 28, 36, 0.4)', 
+                  borderRadius: '8px', 
+                  border: '1px solid rgba(30, 41, 59, 0.8)',
+                  p: 3,
+                  textAlign: 'center'
+                }}>
+                  <Typography sx={{ color: '#94A3B8' }}>
+                    No events yet. {isCaptain && 'Create one to get started!'}
+                  </Typography>
+                </Card>
               )}
-            </Box>
+            </Grid>
           </Grid>
-        </Grid>
-      </Container>
+        </TabPanel>
 
-      <Dialog
-        open={inviteDialogOpen}
-        onClose={() => setInviteDialogOpen(false)}
-      PaperProps={{
-        sx: {
-          backgroundColor: 'rgba(22, 28, 36, 0.95)',
-          backdropFilter: 'blur(8px)',
-          borderRadius: '12px',
-          color: '#f8fafc',
-          maxWidth: '500px',
-          width: '100%',
-        }
-      }}
-      >
-        <DialogTitle sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', pb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            Invite Friends to Join
-          </Typography>
-        </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
-              <TextField
-            placeholder="Search friends"
-                fullWidth
-                value={searchQuery}
-            onChange={handleSearch}
-                InputProps={{
-              startAdornment: <SearchIcon sx={{ color: '#CBD5E1', mr: 1 }} />,
-            }}
-            sx={{ 
-              mb: 2,
-              '& .MuiOutlinedInput-root': {
-                bgcolor: 'rgba(15, 23, 42, 0.8)',
-                borderRadius: '8px',
-                '& fieldset': {
-                  borderColor: 'rgba(255, 255, 255, 0.1)',
-                },
-                '&:hover fieldset': {
-                  borderColor: 'rgba(255, 255, 255, 0.2)',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#8B5CF6',
-                  borderWidth: '2px',
-                },
-              }
-            }}
-          />
-          
-          {filteredFriends.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 2, color: '#CBD5E1' }}>
-              {searchQuery ? 'No matching friends found' : 'No friends available to invite'}
-            </Box>
-          ) : (
-            <>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={selectAll}
-                    onChange={handleSelectAllToggle}
-                    sx={{
-                      color: '#CBD5E1',
-                      '&.Mui-checked': {
-                        color: '#8B5CF6',
-                      },
-                    }}
-                />
-              }
-              label="Select All"
-                sx={{ mb: 1, color: '#f8fafc' }}
-              />
-              <List sx={{ maxHeight: '300px', overflow: 'auto' }}>
-                {filteredFriends.map((friend) => (
-                  <ListItem key={friend.id} sx={{ px: 0 }}>
-                  <ListItemIcon>
-                    <Checkbox
-                      checked={selectedFriends.includes(friend.id)}
-                        onChange={() => handleFriendSelect(friend.id)}
+        {/* Members & Leaderboard Tab */}
+        <TabPanel value={tabValue} index={1}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              {/* Members Section */}
+              <Card sx={{ 
+                bgcolor: 'rgba(22, 28, 36, 0.4)', 
+                borderRadius: '8px', 
+                border: '1px solid rgba(30, 41, 59, 0.8)',
+                height: '100%'
+              }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                    <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                      Members
+                    </Typography>
+                    {isCaptain && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<AddIcon />}
+                        onClick={() => setInviteDialogOpen(true)}
                         sx={{
-                          color: '#CBD5E1',
-                          '&.Mui-checked': {
-                            color: '#8B5CF6',
+                          borderColor: '#8B5CF6',
+                          color: '#8B5CF6',
+                          '&:hover': {
+                            borderColor: '#7C3AED',
+                            backgroundColor: 'rgba(139, 92, 246, 0.08)',
                           },
                         }}
-                      />
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Avatar 
-                            sx={{ 
-                              bgcolor: '#8B5CF6', 
-                              width: 32, 
-                              height: 32, 
-                              mr: 1,
-                              fontSize: '14px',
-                            }}
-                          >
-                            {friend.username[0].toUpperCase()}
+                      >
+                        Invite
+                      </Button>
+                    )}
+                  </Box>
+
+                  {/* Existing Members List */}
+                  <List sx={{ maxHeight: 500, overflow: 'auto' }}>
+                    {members.map((member) => (
+                      <ListItem
+                        key={member.id}
+                        secondaryAction={
+                          isCaptain && member.id !== user.id && (
+                            <IconButton
+                              edge="end"
+                              onClick={() => handleRemoveMember(member.id)}
+                              sx={{ color: '#EF4444' }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          )
+                        }
+                      >
+                        <ListItemAvatar>
+                          <Avatar sx={{ bgcolor: member.id === league?.captain?.id ? '#8B5CF6' : '#3B82F6' }}>
+                            {member.username[0].toUpperCase()}
                           </Avatar>
-                          <Typography sx={{ color: '#f8fafc' }}>
-                            {friend.username}
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography sx={{ color: '#f8fafc' }}>
+                                {member.username}
+                              </Typography>
+                              {member.id === league?.captain?.id && (
+                                <Chip
+                                  label="Captain"
+                                  size="small"
+                                  sx={{
+                                    bgcolor: 'rgba(139, 92, 246, 0.2)',
+                                    color: '#8B5CF6',
+                                    fontSize: '0.7rem',
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          }
+                          secondary={
+                            <Typography variant="body2" sx={{ color: '#64748B' }}>
+                              Points: {member.points || 0}
+                            </Typography>
+                          }
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              {/* Leaderboard Section */}
+              <Card sx={{ 
+                bgcolor: 'rgba(22, 28, 36, 0.4)', 
+                borderRadius: '8px', 
+                border: '1px solid rgba(30, 41, 59, 0.8)',
+                height: '100%'
+              }}>
+                <CardContent>
+                  <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold', mb: 3 }}>
+                    Leaderboard
+                  </Typography>
+
+                  {/* Existing Leaderboard */}
+                  {[...members]
+                    .sort((a, b) => (b.points || 0) - (a.points || 0))
+                    .map((member, index) => (
+                      <Box
+                        key={member.id}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          mb: 2,
+                          p: 1.5,
+                          borderRadius: '8px',
+                          bgcolor: member.id === user.id ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
+                          border: member.id === user.id ? '1px solid rgba(139, 92, 246, 0.2)' : 'none',
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            mr: 2,
+                            fontSize: '0.875rem',
+                            fontWeight: 'bold',
+                            color: index < 3 ? '#f8fafc' : '#64748B',
+                            bgcolor: index === 0 ? '#F59E0B' : index === 1 ? '#94A3B8' : index === 2 ? '#B45309' : 'transparent',
+                          }}
+                        >
+                          {index + 1}
+                        </Typography>
+                        
+                        <Avatar
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            mr: 2,
+                            bgcolor: member.id === league?.captain?.id ? '#8B5CF6' : '#3B82F6',
+                          }}
+                        >
+                          {member.username[0].toUpperCase()}
+                        </Avatar>
+                        
+                        <Box sx={{ flex: 1 }}>
+                          <Typography sx={{ color: '#f8fafc', fontWeight: 'medium' }}>
+                            {member.username}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#10B981' }}>
+                            {member.points || 0} points
                           </Typography>
                         </Box>
-                      }
-                    />
-                </ListItem>
-              ))}
-              </List>
-            </>
-          )}
-          </DialogContent>
-        <DialogActions sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', p: 2 }}>
-          <Button 
-            onClick={() => setInviteDialogOpen(false)}
-            sx={{ 
-              color: '#CBD5E1',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              }
-            }}
+                      </Box>
+                    ))}
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </TabPanel>
+
+        {/* Chat Tab */}
+        <TabPanel value={tabValue} index={2}>
+          <Card sx={{ 
+            bgcolor: 'rgba(22, 28, 36, 0.4)', 
+            borderRadius: '8px', 
+            border: '1px solid rgba(30, 41, 59, 0.8)'
+          }}>
+            <CardContent>
+              <Chat leagueId={id} />
+            </CardContent>
+          </Card>
+        </TabPanel>
+      </Container>
+
+      <InviteDialog
+        open={inviteDialogOpen}
+        onClose={() => setInviteDialogOpen(false)}
+        friends={friends}
+        onInvite={handleInvite}
+        loading={loading}
+      />
+
+      <Dialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog({ ...confirmDialog, open: false })}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>{confirmDialog.title}</DialogTitle>
+        <DialogContent>
+          <Typography>{confirmDialog.message}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDialog({ ...confirmDialog, open: false })}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmAction}
+            variant="contained"
+            color={confirmDialog.action === 'remove' ? 'error' : 'primary'}
           >
-              Cancel
-            </Button>
-            <Button 
-            onClick={handleInvite}
-              disabled={selectedFriends.length === 0}
-            sx={{
-              backgroundColor: '#8B5CF6',
-              color: 'white',
-              '&:hover': {
-                backgroundColor: '#7C3AED',
-              },
-              '&.Mui-disabled': {
-                backgroundColor: 'rgba(139, 92, 246, 0.3)',
-                color: 'rgba(255, 255, 255, 0.5)',
-              }
-            }}
-          >
-            Send Invites
-            </Button>
-          </DialogActions>
-        </Dialog>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-        <Dialog
-          open={confirmDialog.open}
-          onClose={() => setConfirmDialog({ ...confirmDialog, open: false })}
-          maxWidth="xs"
-          fullWidth
-        >
-          <DialogTitle>{confirmDialog.title}</DialogTitle>
-          <DialogContent>
-            <Typography>{confirmDialog.message}</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setConfirmDialog({ ...confirmDialog, open: false })}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmAction}
-              variant="contained"
-              color={confirmDialog.action === 'remove' ? 'error' : 'primary'}
-            >
-              Confirm
-            </Button>
-          </DialogActions>
-        </Dialog>
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
-        <Snackbar 
-          open={snackbar.open} 
-          autoHideDuration={6000} 
-          onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={handleSnackbarClose} severity={snackbar.severity}>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-
-        {showCropper && selectedImage && (
-          <ImageCropper
-            image={selectedImage}
-            onCropComplete={handleCropComplete}
-            onCancel={handleCropCancel}
-          />
-        )}
-      </Box>
+      {showCropper && selectedImage && (
+        <ImageCropper
+          image={selectedImage}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
+    </Box>
   );
 }
 

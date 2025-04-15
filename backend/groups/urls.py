@@ -52,4 +52,11 @@ urlpatterns = [
     
     # Testing
     path('leagues/bets/test/', views.test_bets_endpoint, name='test-bets'),
+
+    # Chat endpoints
+    path('leagues/<int:league_id>/chat/messages/', views.get_league_chat_messages, name='get-league-chat-messages'),
+    path('leagues/<int:league_id>/chat/send/', views.send_chat_message, name='send-chat-message'),
+
+    path('leagues/<int:league_id>/members/<int:user_id>/add/', views.add_league_member, name='add_league_member'),
+    path('leagues/<int:league_id>/members/<int:user_id>/remove/', views.remove_league_member, name='remove_league_member'),
 ] 

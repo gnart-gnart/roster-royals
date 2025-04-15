@@ -170,6 +170,9 @@ function PlaceBetPage() {
       // After successful bet placement, clear form
       setAmount('');
       
+      // Dispatch event to trigger league balance update
+      window.dispatchEvent(new Event('leagueBalanceUpdated'));
+      
       // Navigate to league page after short delay
       setTimeout(() => {
         navigate(`/league/${leagueId}`);
