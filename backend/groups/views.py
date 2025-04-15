@@ -4,9 +4,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import generics, status
-from .models import League, Bet, UserBet, LeagueInvite, LeagueEvent, Circuit
+from .models import League, Bet, UserBet, LeagueInvite, LeagueEvent, Circuit, CircuitComponentEvent, CircuitParticipant
 from users.models import User, Notification, FriendRequest
-from .serializers import LeagueSerializer, BetSerializer, LeagueEventSerializer, CircuitSerializer
+from .serializers import LeagueSerializer, BetSerializer, LeagueEventSerializer, CircuitSerializer, CircuitCreateSerializer, CircuitDetailSerializer
 import logging
 import json
 import requests
@@ -786,3 +786,77 @@ def get_league_circuits(request, league_id):
     except Exception as e:
         logger.error(f"Error fetching circuits for league {league_id}: {e}")
         return Response({'error': 'An error occurred while fetching circuits'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class CreateCircuitView(generics.CreateAPIView):
+    """API endpoint for creating new Circuits within a League."""
+    serializer_class = CircuitCreateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        try:
+            league_id = self.kwargs.get('league_id')
+            league = League.objects.get(pk=league_id)
+
+            # Permission Check: Only league captain can create circuits
+            if league.captain != self.request.user:
+                # Although caught by get_queryset, double-check here for clarity
+                raise serializers.ValidationError("Only the league captain can create circuits.")
+
+            # Save the circuit, associating it with the league and captain
+            serializer.save(league=league, captain=self.request.user)
+        except League.DoesNotExist:
+             raise serializers.ValidationError("League not found.")
+        except Exception as e:
+            logger.error(f"Error creating circuit in league {league_id}: {str(e)}")
+            # Re-raise validation errors, otherwise raise a generic one
+            if isinstance(e, serializers.ValidationError):
+                raise e
+            raise serializers.ValidationError("An unexpected error occurred while creating the circuit.")
+
+    def create(self, request, *args, **kwargs):
+        # Override create to provide better error handling/response
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            # Return the detailed circuit data using the read serializer
+            circuit_instance = serializer.instance
+            read_serializer = CircuitSerializer(circuit_instance)
+            return Response(read_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except serializers.ValidationError as e:
+            logger.warning(f"Circuit creation validation failed: {e.detail}")
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # Catch unexpected errors from perform_create or elsewhere
+            logger.error(f"Unexpected error during circuit creation: {str(e)}")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GetCircuitDetailView(generics.RetrieveAPIView):
+    """API endpoint to retrieve details of a specific Circuit."""
+    queryset = Circuit.objects.prefetch_related(
+        'component_events__league_event', # Prefetch related events
+        'participants__user' # Prefetch participant user data
+    ).all()
+    serializer_class = CircuitDetailSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_url_kwarg = 'circuit_id' # The name of the URL parameter for the circuit ID
+
+    def get_object(self):
+        # Ensure the user is a member of the league the circuit belongs to
+        circuit = super().get_object()
+        if not circuit.league.members.filter(id=self.request.user.id).exists():
+            raise serializers.ValidationError("You are not a member of the league this circuit belongs to.")
+        return circuit
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            return super().retrieve(request, *args, **kwargs)
+        except serializers.ValidationError as e:
+            # Handle permission errors raised in get_object
+            return Response({"error": str(e)}, status=status.HTTP_403_FORBIDDEN)
+        except Circuit.DoesNotExist:
+            return Response({"error": "Circuit not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error retrieving circuit detail: {str(e)}")
+            return Response({"error": "An unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

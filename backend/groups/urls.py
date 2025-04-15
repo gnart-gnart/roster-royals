@@ -12,6 +12,8 @@ urlpatterns = [
     
     # Circuits
     path('leagues/<int:league_id>/circuits/', views.get_league_circuits, name='get_league_circuits'),
+    path('leagues/<int:league_id>/circuits/create/', views.CreateCircuitView.as_view(), name='create_circuit'),
+    path('circuits/<int:circuit_id>/', views.GetCircuitDetailView.as_view(), name='get_circuit_detail'),
     
     # Market browsing endpoints
     path('market/browse/', views.browse_market, name='browse_market'),

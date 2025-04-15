@@ -10,6 +10,8 @@ import AddFriendPage from './pages/AddFriendPage';
 import MarketPage from './pages/MarketPage';
 import PlaceBetPage from './pages/PlaceBetPage';
 import CreateEventPage from './pages/CreateEventPage';
+import CreateCircuitPage from './pages/CreateCircuitPage';
+import CircuitPage from './pages/CircuitPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import SportEventsPage from './pages/SportEventsPage';
 import SettingsPage from './pages/SettingsPage';
@@ -125,10 +127,26 @@ function App() {
             }
           />
           <Route
+            path="/league/:leagueId/circuit/:circuitId"
+            element={
+              <ProtectedRoute>
+                <CircuitPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/create-league"
             element={
               <ProtectedRoute>
                 <CreateLeaguePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/league/:leagueId/create-circuit"
+            element={
+              <ProtectedRoute>
+                <CreateCircuitPage />
               </ProtectedRoute>
             }
           />
