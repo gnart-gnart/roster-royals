@@ -76,4 +76,17 @@ class LeagueEvent(models.Model):
     completed = models.BooleanField(default=False)  # Added to track if the event is completed
 
     def __str__(self):
-        return f'{self.event_name} ({self.sport}) in league {self.league.name}' 
+        return f'{self.event_name} ({self.sport}) in league {self.league.name}'
+
+class ChatMessage(models.Model):
+    """Model for league chat messages"""
+    league = models.ForeignKey(League, on_delete=models.CASCADE, related_name='chat_messages')
+    sender = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='chat_messages')
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'{self.sender.username} in {self.league.name}: {self.message[:50]}' 

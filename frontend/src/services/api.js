@@ -400,3 +400,17 @@ export const createCustomEvent = async (eventData) => {
   }
 };
 
+export const removeMember = async (leagueId, memberId) => {
+  const response = await fetch(`${API_URL}/api/leagues/${leagueId}/members/${memberId}/remove/`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.error || 'Failed to remove member');
+  }
+
+  return response.json();
+};
+

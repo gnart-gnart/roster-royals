@@ -4,9 +4,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import generics, status
-from .models import League, Bet, UserBet, LeagueInvite, LeagueEvent
+from .models import League, Bet, UserBet, LeagueInvite, LeagueEvent, ChatMessage
 from users.models import User, Notification, FriendRequest
-from .serializers import LeagueSerializer, BetSerializer, LeagueEventSerializer
+from .serializers import LeagueSerializer, BetSerializer, LeagueEventSerializer, ChatMessageSerializer
 import logging
 import json
 import requests
@@ -765,4 +765,91 @@ def update_league(request, league_id):
         return Response({'error': 'League not found'}, status=404)
     except Exception as e:
         logger.error(f"Error updating league: {str(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_league_chat_messages(request, league_id):
+    """Get all chat messages for a specific league."""
+    try:
+        # Ensure the league exists
+        league = League.objects.get(id=league_id)
+        
+        # Ensure user is a member of the league
+        if request.user not in league.members.all():
+            return Response({'error': 'You are not a member of this league'}, status=403)
+            
+        # Get all messages for this league
+        messages = ChatMessage.objects.filter(league=league)
+        
+        # Serialize and return the messages
+        serializer = ChatMessageSerializer(messages, many=True)
+        return Response(serializer.data)
+        
+    except League.DoesNotExist:
+        return Response({'error': 'League not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error fetching chat messages: {str(e)}", exc_info=True)
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def send_chat_message(request, league_id):
+    """Send a new chat message to a league."""
+    try:
+        # Ensure the league exists
+        league = League.objects.get(id=league_id)
+        
+        # Ensure user is a member of the league
+        if request.user not in league.members.all():
+            return Response({'error': 'You are not a member of this league'}, status=403)
+            
+        # Create the message
+        message = ChatMessage.objects.create(
+            league=league,
+            sender=request.user,
+            message=request.data.get('message', '')
+        )
+        
+        # Serialize and return the created message
+        serializer = ChatMessageSerializer(message)
+        return Response(serializer.data, status=201)
+        
+    except League.DoesNotExist:
+        return Response({'error': 'League not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error sending chat message: {str(e)}", exc_info=True)
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def remove_league_member(request, league_id, user_id):
+    """Remove a member from a league. Only the captain can remove members."""
+    try:
+        league = League.objects.get(id=league_id)
+        user_to_remove = User.objects.get(id=user_id)
+        
+        # Check if the requesting user is the captain
+        if request.user != league.captain:
+            return Response({'error': 'Only the league captain can remove members'}, status=403)
+            
+        # Check if the user is actually a member
+        if user_to_remove not in league.members.all():
+            return Response({'error': 'User is not a member of this league'}, status=404)
+            
+        # Cannot remove the captain
+        if user_to_remove == league.captain:
+            return Response({'error': 'Cannot remove the league captain'}, status=400)
+            
+        # Remove the member
+        league.members.remove(user_to_remove)
+        
+        return Response({'message': 'Member removed successfully'})
+        
+    except League.DoesNotExist:
+        return Response({'error': 'League not found'}, status=404)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error removing league member: {str(e)}")
         return Response({'error': str(e)}, status=500)

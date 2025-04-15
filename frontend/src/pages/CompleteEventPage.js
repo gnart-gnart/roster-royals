@@ -111,6 +111,9 @@ function CompleteEventPage() {
       console.log('API response:', response);
       setSuccess('Event completed successfully! Payouts have been processed.');
       
+      // Dispatch event to trigger league balance update
+      window.dispatchEvent(new Event('leagueBalanceUpdated'));
+      
       // Redirect to league page after a short delay
       setTimeout(() => {
         navigate(`/league/${leagueId}`);
