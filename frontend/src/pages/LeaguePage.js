@@ -658,7 +658,7 @@ function LeaguePage() {
         {/* League Header */}
         <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
           <IconButton 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/home')}
             sx={{ color: '#f8fafc' }}
           >
             <ArrowBackIcon />
