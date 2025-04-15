@@ -62,6 +62,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import LayersIcon from '@mui/icons-material/Layers';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { 
   inviteToLeague, 
   getFriends, 
@@ -868,6 +869,98 @@ function LeaguePage() {
         {/* Events Tab */}
         <TabPanel value={tabValue} index={0}>
           <Grid container spacing={3}>
+            {/* Circuits Section */}
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                  Circuits
+                </Typography>
+                {isCaptain && (
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => navigate(`/league/${id}/create-circuit`)}
+                    sx={{
+                      bgcolor: '#10B981',
+                      color: 'white',
+                      borderRadius: '20px',
+                      textTransform: 'none',
+                      fontWeight: 'medium',
+                      px: 2,
+                      '&:hover': {
+                        backgroundColor: '#059669',
+                      },
+                    }}
+                  >
+                    Create Circuit
+                  </Button>
+                )}
+              </Box>
+
+              {/* Circuits List */}
+              {leagueCircuits && leagueCircuits.length > 0 ? (
+                <Grid container spacing={2}>
+                  {leagueCircuits.map((circuit) => (
+                    <Grid item xs={12} sm={6} md={4} key={circuit.id}>
+                      <Card 
+                        onClick={() => navigate(`/league/${id}/circuit/${circuit.id}`)}
+                        sx={{ 
+                          bgcolor: 'rgba(22, 28, 36, 0.6)',
+                          borderRadius: '8px', 
+                          border: '1px solid rgba(30, 41, 59, 0.9)',
+                          overflow: 'hidden',
+                          boxShadow: 'none',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s',
+                          '&:hover': {
+                            backgroundColor: 'rgba(30, 41, 59, 0.7)',
+                          },
+                        }}
+                      >
+                        <CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                             <EmojiEventsIcon sx={{ color: '#F59E0B', mr: 1.5 }} />
+                             <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold', flexGrow: 1 }}>
+                               {circuit.name}
+                             </Typography>
+                             <Chip 
+                               label={circuit.status || 'Upcoming'} 
+                               color={circuit.status === 'active' ? 'success' : circuit.status === 'completed' ? 'default' : 'warning'}
+                               size="small"
+                             />
+                          </Box>
+                          <Typography variant="body2" sx={{ color: '#CBD5E1', mb: 1 }}>
+                             Entry: ${circuit.entry_fee}
+                          </Typography>
+                           <Typography variant="body2" sx={{ color: '#94A3B8' }}>
+                             {circuit.participant_count || 0} participant(s)
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : (
+                <Card sx={{ 
+                  bgcolor: 'rgba(22, 28, 36, 0.4)', 
+                  borderRadius: '8px', 
+                  border: '1px solid rgba(30, 41, 59, 0.8)',
+                  p: 3,
+                  textAlign: 'center'
+                }}>
+                  <Typography sx={{ color: '#94A3B8' }}>
+                    No circuits running yet. {isCaptain && 'Create one!'}
+                  </Typography>
+                </Card>
+              )}
+            </Grid>
+
+            {/* Divider */}
+             <Grid item xs={12}>
+                <Divider sx={{ my: 3, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+            </Grid>
+
+            {/* League Events Section */}
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
