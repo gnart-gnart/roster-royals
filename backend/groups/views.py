@@ -922,7 +922,7 @@ class CreateCircuitView(generics.CreateAPIView):
 class GetCircuitDetailView(generics.RetrieveAPIView):
     """API endpoint to retrieve details of a specific Circuit."""
     queryset = Circuit.objects.prefetch_related(
-        'component_events__league_event', # Prefetch related events
+        'circuitcomponentevent_set__league_event', # Correct prefetch path through the intermediate model
         'participants__user' # Prefetch participant user data
     ).all()
     serializer_class = CircuitDetailSerializer
