@@ -48,8 +48,9 @@ jobs:
             echo "Using POSTGRES_USER='${POSTGRES_USER:-'(unset)'}' POSTGRES_DB='${POSTGRES_DB:-'(unset)'}'"
 
             # Execute commands as the POSTGRES_USER inside the 'pgdb' container
-            # These should now use the values sourced from .env
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -c "ALTER DATABASE \"${POSTGRES_DB:-postgres}\" OWNER TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error changing DB owner..."
+            # Connect to the 'postgres' db for the ALTER DATABASE command
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d postgres -c "ALTER DATABASE \"${POSTGRES_DB:-postgres}\" OWNER TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error changing DB owner..."
+            # Connect to the specific application DB for GRANT commands
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting schema privileges..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting table privileges..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting sequence privileges..."
