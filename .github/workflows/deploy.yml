@@ -33,15 +33,15 @@ jobs:
 
             echo "Ensuring correct database ownership and permissions..."
             # Wait a brief moment for PostgreSQL to initialize fully
-            sleep 5 
-            # Execute commands as the 'postgres' superuser inside the 'pgdb' container
+            sleep 5
+            # Execute commands as the POSTGRES_USER inside the 'pgdb' container
+            # This user should own the POSTGRES_DB database or have superuser privileges
             # Ensure the user defined by POSTGRES_USER owns the database defined by POSTGRES_DB
-            # These env vars should be available on your droplet, likely from an .env file used by docker-compose
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U postgres -c "ALTER DATABASE \"${POSTGRES_DB:-postgres}\" OWNER TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error changing DB owner..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -c "ALTER DATABASE \"${POSTGRES_DB:-postgres}\" OWNER TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error changing DB owner..."
             # Grant necessary privileges on the public schema to the Django user
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U postgres -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting schema privileges..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U postgres -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting table privileges..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U postgres -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting sequence privileges..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting schema privileges..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting table privileges..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting sequence privileges..."
 
             echo "Running database migrations..."
             # Now the exec command should find the running django-web container
