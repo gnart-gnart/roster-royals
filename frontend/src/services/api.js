@@ -475,6 +475,13 @@ export const getUserProfile = async () => {
   return handleResponse(response);
 };
 
+export const getUserBettingStats = async () => {
+  const response = await fetch(`${API_URL}/api/profile/betting-stats/`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
 export const updateUserProfile = async (profileData) => {
   const isFormData = profileData instanceof FormData;
   const response = await fetch(`${API_URL}/api/profile/update/`, {

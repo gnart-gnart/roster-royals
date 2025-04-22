@@ -10,6 +10,7 @@ from django.db.models import Q
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.conf import settings
+from groups.models import LeagueEvent, UserBet  # Add this import
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
@@ -362,4 +363,87 @@ def update_profile(request):
     
     # Return the updated user data
     serializer = UserSerializer(user)
-    return Response(serializer.data) 
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_betting_stats(request):
+    """Get the current user's betting statistics"""
+    user = request.user
+    
+    try:
+        # Find all of the user's bets across all leagues
+        # We'll check both the UserBet model and the user_bets in LeagueEvent market_data
+        
+        # Stats to collect
+        total_bets = 0
+        won_bets = 0
+        current_streak = 0
+        
+        # Get all league events with user bets
+        league_events = LeagueEvent.objects.filter(market_data__has_key='user_bets')
+        
+        # Track all bets chronologically for streak calculation
+        all_bets_results = []
+        
+        # Process bets from LeagueEvent market_data
+        for event in league_events:
+            if event.market_data and 'user_bets' in event.market_data:
+                user_bets = [bet for bet in event.market_data.get('user_bets', []) 
+                            if bet.get('user_id') == user.id]
+                
+                for bet in user_bets:
+                    total_bets += 1
+                    # Check if the event is completed and has a result
+                    if event.completed and 'result' in bet:
+                        result = bet.get('result', '').lower()
+                        if result == 'won':
+                            won_bets += 1
+                        
+                        # Add to chronological list for streak calculation
+                        all_bets_results.append({
+                            'date': bet.get('bet_time', event.created_at),
+                            'result': result
+                        })
+        
+        # Process UserBet model if it's used in the system
+        user_bet_objects = UserBet.objects.filter(user=user)
+        for bet in user_bet_objects:
+            total_bets += 1
+            if bet.result == 'won':
+                won_bets += 1
+            
+            # Add to chronological list for streak calculation
+            all_bets_results.append({
+                'date': bet.created_at,
+                'result': bet.result
+            })
+        
+        # Sort all bets by date
+        all_bets_results = sorted(all_bets_results, key=lambda x: x['date'], reverse=True)
+        
+        # Calculate current streak
+        if all_bets_results:
+            current_result = all_bets_results[0]['result']
+            for bet in all_bets_results:
+                if bet['result'] == current_result:
+                    if current_result == 'won':
+                        current_streak += 1
+                    elif current_result == 'lost':
+                        current_streak -= 1
+                else:
+                    break
+        
+        # Calculate win rate
+        win_rate = 0
+        if total_bets > 0:
+            win_rate = (won_bets / total_bets) * 100
+        
+        return Response({
+            'total_bets': total_bets,
+            'win_rate': round(win_rate, 1),
+            'current_streak': current_streak
+        })
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 

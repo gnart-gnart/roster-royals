@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, 
@@ -22,7 +22,8 @@ import {
   DialogContent,
   DialogActions,
   Snackbar,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
@@ -36,7 +37,7 @@ import WhatshotIcon from '@mui/icons-material/Whatshot';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import NavBar from '../components/NavBar';
 import CircularImageCropper from '../components/CircularImageCropper';
-import { getUserProfile, updateUserProfile } from '../services/api';
+import { getUserProfile, updateUserProfile, getUserBettingStats } from '../services/api';
 
 function ProfilePage() {
   const navigate = useNavigate();
@@ -55,6 +56,14 @@ function ProfilePage() {
     message: '',
     severity: 'success'
   });
+  
+  // Add betting stats state
+  const [bettingStats, setBettingStats] = useState({
+    total_bets: 0,
+    win_rate: 0,
+    current_streak: 0
+  });
+  const [loadingStats, setLoadingStats] = useState(false);
   
   // Mock data for the betting history
   const recentBets = [
@@ -111,37 +120,49 @@ function ProfilePage() {
     return true;
   };
 
-  // Fetch user profile on component mount
-  useEffect(() => {
-    fetchUserProfile();
+  // Add a function to fetch betting stats
+  const fetchBettingStats = useCallback(async () => {
+    try {
+      setLoadingStats(true);
+      const stats = await getUserBettingStats();
+      setBettingStats(stats);
+    } catch (error) {
+      console.error('Failed to fetch betting stats:', error);
+      setError('Failed to load betting statistics. Please try again later.');
+    } finally {
+      setLoadingStats(false);
+    }
   }, []);
 
-  const fetchUserProfile = async () => {
-    setLoading(true);
-    try {
-      const userData = await getUserProfile();
-      console.log("Profile data received:", userData);
-      console.log("Profile image URL:", userData.profile_image_url);
-      
-      // Validate the profile image URL for debugging
-      validateProfileImageUrl(userData.profile_image_url);
-      
-      setUser(userData);
-      
-      // Update localStorage with updated user data
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      setEditFormData({
-        username: userData.username || '',
-        bio: userData.bio || ''
-      });
-    } catch (err) {
-      setError('Failed to load profile data');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Update useEffect to also fetch betting stats
+  useEffect(() => {
+    // Attempt to load user data if not already present
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const userData = await getUserProfile();
+        setUser(userData);
+        
+        // Store in localStorage
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Set form data with current values
+        setEditFormData({
+          username: userData.username || '',
+          bio: userData.bio || ''
+        });
+      } catch (err) {
+        console.error('Failed to load user profile:', err);
+        setError('Failed to load user profile. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    // Execute fetch operations
+    fetchUserData();
+    fetchBettingStats();
+  }, [fetchBettingStats]);
 
   const handleEditProfile = () => {
     setEditDialogOpen(true);
@@ -456,12 +477,16 @@ function ProfilePage() {
                 </Typography>
               </Paper>
               
-              {/* Stats Grid (keep existing code) */}
+              {/* Stats Grid */}
               <Grid container spacing={2}>
                 <Grid item xs={4}>
                   <Paper sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2 }}>
                     <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                      42
+                      {loadingStats ? (
+                        <CircularProgress size={20} sx={{ color: '#f8fafc' }} />
+                      ) : (
+                        bettingStats.total_bets
+                      )}
                     </Typography>
                     <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
                       Bets
@@ -471,7 +496,11 @@ function ProfilePage() {
                 <Grid item xs={4}>
                   <Paper sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2 }}>
                     <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                      68%
+                      {loadingStats ? (
+                        <CircularProgress size={20} sx={{ color: '#f8fafc' }} />
+                      ) : (
+                        `${bettingStats.win_rate}%`
+                      )}
                     </Typography>
                     <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
                       Win Rate
@@ -480,8 +509,23 @@ function ProfilePage() {
                 </Grid>
                 <Grid item xs={4}>
                   <Paper sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                      5
+                    <Typography variant="h6" sx={{ 
+                      fontWeight: 'bold', 
+                      color: loadingStats 
+                        ? '#f8fafc' 
+                        : bettingStats.current_streak > 0 
+                          ? '#10B981' // green for positive streak
+                          : bettingStats.current_streak < 0 
+                            ? '#EF4444' // red for negative streak
+                            : '#f8fafc' // default color for zero
+                    }}>
+                      {loadingStats ? (
+                        <CircularProgress size={20} sx={{ color: '#f8fafc' }} />
+                      ) : (
+                        bettingStats.current_streak > 0 
+                          ? `+${bettingStats.current_streak}` // add plus sign for positive streak
+                          : bettingStats.current_streak
+                      )}
                     </Typography>
                     <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
                       Streak
