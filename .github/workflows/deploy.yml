@@ -57,40 +57,34 @@ jobs:
 
             echo "Re-assigning ownership of all tables and sequences in ${POSTGRES_DB}…"
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb \
-              psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 <<'SQL'
-    DO $$
-    DECLARE
-      rec RECORD;
-    BEGIN
-      -- Tables
-      FOR rec IN
-        SELECT schemaname, tablename
-          FROM pg_tables WHERE schemaname = 'public'
-      LOOP
-        EXECUTE format(
-          'ALTER TABLE %I.%I OWNER TO %I;',
-          rec.schemaname, rec.tablename, :'POSTGRES_USER'
-        );
-      END LOOP;
+              psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 \
+              -c "DO \$\$ 
+                DECLARE rec RECORD; 
+                BEGIN 
+                  FOR rec IN SELECT schemaname, tablename 
+                             FROM pg_tables 
+                            WHERE schemaname = 'public' 
+                  LOOP 
+                    EXECUTE format(
+                      'ALTER TABLE %I.%I OWNER TO %I;',
+                      rec.schemaname, rec.tablename, '${POSTGRES_USER}'
+                    ); 
+                  END LOOP; 
+                  FOR rec IN SELECT sequence_schema, sequence_name 
+                             FROM information_schema.sequences 
+                            WHERE sequence_schema = 'public' 
+                  LOOP 
+                    EXECUTE format(
+                      'ALTER SEQUENCE %I.%I OWNER TO %I;',
+                      rec.sequence_schema, rec.sequence_name, '${POSTGRES_USER}'
+                    ); 
+                  END LOOP; 
+                END 
+              \$\$;" 
 
-      -- Sequences
-      FOR rec IN
-        SELECT sequence_schema, sequence_name
-          FROM information_schema.sequences
-         WHERE sequence_schema = 'public'
-      LOOP
-        EXECUTE format(
-          'ALTER SEQUENCE %I.%I OWNER TO %I;',
-          rec.sequence_schema, rec.sequence_name, :'POSTGRES_USER'
-        );
-      END LOOP;
-    END
-    $$;
-    SQL
-
-            echo "Running database migrations..."
-            # Now the exec command should find the running django-web container
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec django-web python manage.py migrate
+            echo "Running database migrations…"
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec django-web \
+              python manage.py migrate
             echo "Cleaning up Docker build cache on runner..."
             # Build cache pruning on runner is less relevant now, but harmless to keep
             docker builder prune -af || true
