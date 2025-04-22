@@ -292,11 +292,40 @@ function LeaguePage() {
 
   const refreshLeagueData = async () => {
     try {
+      console.log(`Loading league data for ID: ${id}`);
       const leagueData = await getLeague(id);
       console.log('League data received:', leagueData);
       console.log('League balance:', leagueData.balance);
+      
+      // Log the member data to inspect structure
+      if (leagueData.members) {
+        console.log("League members data:", leagueData.members);
+        console.log("First member profile data sample:", leagueData.members[0]);
+      }
+      
       setLeague(leagueData);
       setMembers(leagueData.members || []);
+      
+      // Set the edit form data
+      setEditFormData({
+        name: leagueData.name || '',
+        description: leagueData.description || '',
+        image: leagueData.image || null
+      });
+      
+      loadFriendRequests();
+      loadNotifications();
+      
+      // Load league events and circuits
+      const eventsData = await getLeagueEvents(id);
+      setLeagueEvents(eventsData || []);
+      
+      try {
+        const circuitsData = await getLeagueCircuits(id);
+        setLeagueCircuits(circuitsData || []);
+      } catch (circuitErr) {
+        console.error('Error loading league circuits:', circuitErr);
+      }
     } catch (err) {
       console.error('Failed to refresh league data:', err);
     }
@@ -305,27 +334,42 @@ function LeaguePage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        setLoading(true);
-        await refreshLeagueData();
+        console.log(`Loading league data for ID: ${id}`);
+        const leagueData = await getLeague(id);
+        console.log("League data received:", leagueData);
         
-        // Load friends for invite functionality
-        const friendsData = await getFriends();
-        setFriends(friendsData);
+        // Log the member data to inspect structure
+        if (leagueData.members) {
+          console.log("League members data:", leagueData.members);
+          console.log("First member profile data sample:", leagueData.members[0]);
+        }
         
-        // Load notifications and friend requests for navbar
+        setLeague(leagueData);
+        setMembers(leagueData.members || []);
+        
+        // Set the edit form data
+        setEditFormData({
+          name: leagueData.name || '',
+          description: leagueData.description || '',
+          image: leagueData.image || null
+        });
+        
         loadFriendRequests();
         loadNotifications();
-
-        // Get league events
+        
+        // Load league events and circuits
         const eventsData = await getLeagueEvents(id);
         setLeagueEvents(eventsData || []);
-
-        // Get league circuits
-        const circuitsData = await getLeagueCircuits(id);
-        setLeagueCircuits(circuitsData || []);
+        
+        try {
+          const circuitsData = await getLeagueCircuits(id);
+          setLeagueCircuits(circuitsData || []);
+        } catch (circuitErr) {
+          console.error('Error loading league circuits:', circuitErr);
+        }
       } catch (err) {
-        setError('Failed to load league data');
         console.error(err);
+        setError('Failed to load league data');
       } finally {
         setLoading(false);
       }
@@ -661,8 +705,13 @@ function LeaguePage() {
       }
     }
     
-    // Return null to use the default fallback (initials)
-    return null;
+    // Add fallback to use API-based avatar for other users
+    if (member.profile_image_url) {
+      return getImageUrl(member.profile_image_url);
+    }
+    
+    // Return avatar API URL as fallback - this ensures all users have an image
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(member.username)}&background=random`;
   };
 
   const handleTabChange = (event, newValue) => {

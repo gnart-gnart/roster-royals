@@ -21,6 +21,12 @@ function LeagueCard({ league }) {
     navigate(`/league/${league.id}`);
   };
 
+  // Log league and member data for debugging
+  console.log(`LeagueCard - League: ${league.name}, members:`, league.members);
+  if (league.members && league.members.length > 0) {
+    console.log(`LeagueCard - First member sample:`, league.members[0]);
+  }
+
   // Check if the current user is the captain
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
   const isCaptain = league.captain?.id === currentUser.id;
@@ -63,7 +69,12 @@ function LeagueCard({ league }) {
       }
     }
     
-    // Fallback to the API-based avatar
+    // Add fallback to use API-based avatar for other users
+    if (member.profile_image_url) {
+      return getImageUrl(member.profile_image_url);
+    }
+    
+    // Return avatar API URL as fallback - this ensures all users have an image
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(member.username)}&background=random`;
   };
 
