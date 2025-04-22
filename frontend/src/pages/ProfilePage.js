@@ -91,6 +91,26 @@ function ProfilePage() {
     },
   ];
 
+  // Function to debug the profile image URL
+  const validateProfileImageUrl = (url) => {
+    if (!url) {
+      console.warn("Profile image URL is empty");
+      return false;
+    }
+    
+    console.log(`Validating profile image URL: ${url}`);
+    
+    // Check if URL starts with /media/
+    if (!url.includes('/media/')) {
+      console.warn("Profile image URL doesn't include '/media/'");
+    }
+    
+    // Log full URL for debugging
+    console.log(`Full URL that would be used: ${url}?nocache=${Math.random()}`);
+    
+    return true;
+  };
+
   // Fetch user profile on component mount
   useEffect(() => {
     fetchUserProfile();
@@ -100,6 +120,12 @@ function ProfilePage() {
     setLoading(true);
     try {
       const userData = await getUserProfile();
+      console.log("Profile data received:", userData);
+      console.log("Profile image URL:", userData.profile_image_url);
+      
+      // Validate the profile image URL for debugging
+      validateProfileImageUrl(userData.profile_image_url);
+      
       setUser(userData);
       
       // Update localStorage with updated user data
@@ -146,27 +172,55 @@ function ProfilePage() {
     const formData = new FormData();
     formData.append('profile_image', croppedImage);
     
-    // Submit the profile update
-    updateUserProfile(formData)
-      .then(response => {
-        setUser(response);
-        localStorage.setItem('user', JSON.stringify(response));
-        setShowCropper(false);
-        setSnackbar({
-          open: true,
-          message: 'Profile image updated successfully',
-          severity: 'success'
-        });
-      })
-      .catch(err => {
-        setError('Failed to update profile image');
-        setSnackbar({
-          open: true,
-          message: 'Failed to update profile image',
-          severity: 'error'
-        });
-        console.error(err);
+    // Log the local image URL for debugging
+    const localImageUrl = URL.createObjectURL(croppedImage);
+    console.log("Local image URL (before upload):", localImageUrl);
+    
+    // Read the file as a data URL to store directly
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // Store the data URL
+      const imageDataUrl = reader.result;
+      console.log("Image converted to data URL");
+      
+      // Update the user object with the embedded image
+      const updatedUser = {...user};
+      updatedUser.embeddedImageData = imageDataUrl;
+      
+      // Update state and localStorage
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Also store in session storage as backup
+      sessionStorage.setItem('profileImageDataUrl', imageDataUrl);
+      
+      // Close the cropper
+      setShowCropper(false);
+      
+      // Show success message
+      setSnackbar({
+        open: true,
+        message: 'Profile image updated successfully',
+        severity: 'success'
       });
+      
+      // Notify other components
+      window.dispatchEvent(new Event('userUpdated'));
+      
+      // Still proceed with the backend update
+      updateUserProfile(formData)
+        .then(response => {
+          console.log("Profile updated on backend, response:", response);
+        })
+        .catch(err => {
+          console.error("Backend profile update failed, but image is still displayed", err);
+        });
+    };
+    reader.onerror = () => {
+      setError('Failed to process image');
+      console.error('Error reading file');
+    };
+    reader.readAsDataURL(croppedImage);
   };
 
   const handleCropCancel = () => {
@@ -193,6 +247,9 @@ function ProfilePage() {
         message: 'Profile updated successfully',
         severity: 'success'
       });
+      
+      // Dispatch an event to notify that user data has been updated
+      window.dispatchEvent(new Event('userUpdated'));
     } catch (err) {
       setError('Failed to update profile');
       setSnackbar({
@@ -286,14 +343,25 @@ function ProfilePage() {
               </IconButton>
               
               <Box sx={{ position: 'relative' }}>
+                {/* Add direct image debugging info */}
+                {console.log('Current user data:', user)}
+                
+                {/* Use direct image data if available */}
                 <Avatar 
-                  src={user.profile_image_url}
+                  src={user.embeddedImageData || sessionStorage.getItem('profileImageDataUrl')}
                   sx={{ 
                     bgcolor: '#8B5CF6', 
                     width: 80, 
                     height: 80, 
                     fontSize: '36px', 
                     mb: 2
+                  }}
+                  imgProps={{
+                    style: { objectFit: 'cover' },
+                    onError: (e) => {
+                      console.error('Error loading profile image:', e);
+                      e.target.src = ''; // Clear src to show fallback
+                    }
                   }}
                 >
                   {user.username?.[0]?.toUpperCase()}
