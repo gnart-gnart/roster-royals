@@ -10,6 +10,7 @@ from django.db.models import Q
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.conf import settings
+from groups.models import LeagueEvent, UserBet  # Add this import
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
@@ -328,4 +329,158 @@ def google_auth(request):
         return Response({
             'error': 'Authentication failed',
             'details': str(e)
-        }, status=500) 
+        }, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_profile(request):
+    """Get the current user's profile information"""
+    serializer = UserSerializer(request.user)
+    return Response(serializer.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_profile(request):
+    """Update the current user's profile"""
+    user = request.user
+    
+    # Handle form data (for profile image)
+    if request.FILES:
+        if 'profile_image' in request.FILES:
+            user.profile_image = request.FILES['profile_image']
+    
+    # Handle JSON data for text fields
+    if request.data:
+        data = request.data
+        if 'username' in data:
+            user.username = data['username']
+        if 'bio' in data:
+            user.bio = data['bio']
+        if 'email' in data:
+            user.email = data['email']
+    
+    user.save()
+    
+    # Return the updated user data
+    serializer = UserSerializer(user)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_betting_stats(request):
+    """Get the current user's betting statistics"""
+    user = request.user
+    
+    try:
+        # Find all of the user's bets across all leagues
+        # We'll check both the UserBet model and the user_bets in LeagueEvent market_data
+        
+        # Stats to collect
+        total_bets = 0
+        won_bets = 0
+        current_streak = 0
+        lifetime_winnings = 0
+        
+        # Get all league events with user bets
+        league_events = LeagueEvent.objects.filter(market_data__has_key='user_bets')
+        
+        # Track all bets chronologically for streak calculation
+        all_bets_results = []
+        
+        # Process bets from LeagueEvent market_data
+        for event in league_events:
+            if event.market_data and 'user_bets' in event.market_data:
+                user_bets = [bet for bet in event.market_data.get('user_bets', []) 
+                            if bet.get('user_id') == user.id]
+                
+                for bet in user_bets:
+                    total_bets += 1
+                    # Check if the event is completed and has a result
+                    if event.completed and 'result' in bet:
+                        result = bet.get('result', '').lower()
+                        if result == 'won':
+                            won_bets += 1
+                            # Add payout to lifetime winnings
+                            payout = float(bet.get('payout', 0))
+                            lifetime_winnings += payout
+                        
+                        # Add to chronological list for streak calculation
+                        all_bets_results.append({
+                            'date': bet.get('bet_time', event.created_at),
+                            'result': result
+                        })
+        
+        # Process UserBet model if it's used in the system
+        user_bet_objects = UserBet.objects.filter(user=user)
+        for bet in user_bet_objects:
+            total_bets += 1
+            if bet.result == 'won':
+                won_bets += 1
+                # Need to calculate payout based on points_wagered and the odds if available
+                payout = bet.points_wagered * 2  # Default multiplier if we don't have odds
+                lifetime_winnings += payout
+            
+            # Add to chronological list for streak calculation
+            all_bets_results.append({
+                'date': bet.created_at,
+                'result': bet.result
+            })
+        
+        # Sort all bets by date
+        all_bets_results = sorted(all_bets_results, key=lambda x: x['date'], reverse=True)
+        
+        # Calculate current streak
+        if all_bets_results:
+            current_result = all_bets_results[0]['result']
+            for bet in all_bets_results:
+                if bet['result'] == current_result:
+                    if current_result == 'won':
+                        current_streak += 1
+                    elif current_result == 'lost':
+                        current_streak -= 1
+                else:
+                    break
+        
+        # Calculate win rate
+        win_rate = 0
+        if total_bets > 0:
+            win_rate = (won_bets / total_bets) * 100
+        
+        # Calculate user level based on total bets and win rate
+        # Level 1: New user (0-5 bets)
+        # Level 2: Regular bettor (6-15 bets)
+        # Level 3: Advanced bettor (16-30 bets)
+        # Level 4: Expert bettor (31-50 bets)
+        # Level 5: Pro bettor (51+ bets)
+        # Add a bonus level for high win rates
+        base_level = 1
+        if total_bets > 50:
+            base_level = 5
+        elif total_bets > 30:
+            base_level = 4
+        elif total_bets > 15:
+            base_level = 3
+        elif total_bets > 5:
+            base_level = 2
+        
+        # Bonus for high win rate
+        win_rate_bonus = 0
+        if win_rate > 65:
+            win_rate_bonus = 1
+        
+        user_level = min(10, base_level + win_rate_bonus)  # Cap at level 10
+        
+        # Format the date joined
+        date_joined = user.date_joined.strftime('%b %Y') if user.date_joined else 'Unknown'
+        
+        return Response({
+            'total_bets': total_bets,
+            'win_rate': round(win_rate, 1),
+            'current_streak': current_streak,
+            'lifetime_winnings': round(lifetime_winnings, 2),
+            'user_level': user_level,
+            'date_joined': date_joined
+        })
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 

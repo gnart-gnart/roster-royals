@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import generics, status
 from .models import League, Bet, UserBet, LeagueInvite, LeagueEvent, ChatMessage, Circuit, CircuitComponentEvent, CircuitParticipant
 from users.models import User, Notification, FriendRequest
-from .serializers import LeagueSerializer, BetSerializer, LeagueEventSerializer, ChatMessageSerializer, CircuitSerializer, CircuitCreateSerializer, CircuitDetailSerializer
+from .serializers import LeagueSerializer, BetSerializer, LeagueEventSerializer, ChatMessageSerializer, CircuitSerializer, CircuitCreateSerializer, CircuitDetailSerializer, UserBetSerializer, LeagueInviteSerializer, CircuitComponentEventSerializer
 import logging
 import json
 import requests
@@ -521,44 +521,36 @@ def browse_market(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def complete_league_event(request, event_id):
-    """Mark a league event as completed and process bet outcomes."""
     try:
-        # Get the event
-        event = LeagueEvent.objects.get(id=event_id)
+        # Retrieve the league event
+        try:
+            event = LeagueEvent.objects.get(id=event_id)
+        except LeagueEvent.DoesNotExist:
+            return Response({'error': 'Event not found'}, status=404)
         
-        # Verify the user is the league captain
+        # Check if user is authorized to complete this event
         if request.user != event.league.captain:
-            return Response({'error': 'Only the league captain can complete events'}, status=403)
+            return Response({'error': 'Only the league captain can complete this event'}, status=403)
         
-        # Check if event is already completed
-        if event.completed:
-            return Response({'error': 'This event is already completed'}, status=400)
-        
-        # Get request data
+        # Validate request data
         data = request.data
-        winning_outcome = data.get('winning_outcome')
         
-        if not winning_outcome:
-            return Response({'error': 'Winning outcome is required'}, status=400)
+        # Check for either winner or winning_outcome in the request data
+        winner = data.get('winner') or data.get('winning_outcome')
+        if not winner:
+            return Response({'error': 'Winner must be specified'}, status=400)
         
         # Mark the event as completed
         event.completed = True
-        event.save()
         
-        # Log for debugging
-        logger.info(f"Completing event {event.id}: {event.event_name}")
-        logger.info(f"Winning outcome: {winning_outcome}")
-        logger.info(f"Market data: {event.market_data}")
-        
-        # Check if we have market_data with user bets
-        if event.market_data and isinstance(event.market_data, dict):
-            # Process user bets directly from market_data if available
+        # Process results for all user bets
+        if event.market_data and 'user_bets' in event.market_data:
             user_bets = event.market_data.get('user_bets', [])
             logger.info(f"Found {len(user_bets)} user bets in market_data")
             
-            for user_bet in user_bets:
+            for i, user_bet in enumerate(user_bets):
                 try:
-                    # Get user and bet details
+                    # Get user bet details
                     user_id = user_bet.get('user_id')
                     choice = user_bet.get('outcomeKey')
                     amount = float(user_bet.get('amount', 0))
@@ -568,105 +560,72 @@ def complete_league_event(request, event_id):
                         logger.warning(f"Incomplete bet data: {user_bet}")
                         continue
                     
-                    # Get the user
-                    try:
-                        user = User.objects.get(id=user_id)
-                    except User.DoesNotExist:
-                        logger.warning(f"User with ID {user_id} not found")
-                        continue
+                    # Determine the result
+                    result = 'lost'
+                    payout = 0
                     
-                    # Check if the user won or lost
-                    if choice == winning_outcome:
-                        # User won - calculate winnings based on odds and amount wagered
-                        winnings = amount * odds
+                    # Check if the user bet matches the winning outcome
+                    if choice.lower() == winner.lower():
+                        result = 'won'
+                        # Calculate payout with odds
+                        payout = amount * odds
                         
-                        # Update user's money
-                        user.money += Decimal(str(winnings))
-                        
-                        # Award 1 point for winning
-                        user.points += 1
-                        user.save()
-                        
-                        # Create notification for the win
-                        logger.info(f"Creating win notification for user {user.username}")
-                        notification = Notification.objects.create(
-                            user=user,
-                            message=f"You won ${winnings:.2f} on {event.event_name}!",
-                            notification_type='info'
-                        )
-                        logger.info(f"Created notification ID {notification.id} for {user.username}")
+                        # Find user and update their money
+                        try:
+                            user = User.objects.get(id=user_id)
+                            user.money += Decimal(str(payout))
+                            user.save()
+                            logger.info(f"User {user.username} won {payout} on event {event.event_name}")
+                            
+                            # Create notification for the win
+                            Notification.objects.create(
+                                user=user,
+                                message=f"You won ${payout:.2f} on {event.event_name}!",
+                                notification_type='info'
+                            )
+                            logger.info(f"Created win notification for user {user.username}")
+                        except User.DoesNotExist:
+                            logger.warning(f"User with ID {user_id} not found for payout")
                     else:
-                        # User lost
-                        logger.info(f"Creating loss notification for user {user.username}")
-                        notification = Notification.objects.create(
-                            user=user,
-                            message=f"You lost your bet of ${amount:.2f} on {event.event_name}",
-                            notification_type='info'
+                        # User lost - create notification
+                        try:
+                            user = User.objects.get(id=user_id)
+                            Notification.objects.create(
+                                user=user,
+                                message=f"You lost your bet of ${amount:.2f} on {event.event_name}",
+                                notification_type='info'
+                            )
+                            logger.info(f"Created loss notification for user {user.username}")
+                        except User.DoesNotExist:
+                            logger.warning(f"User with ID {user_id} not found for loss notification")
+                    
+                    # Update the user bet with the result
+                    event.market_data['user_bets'][i]['result'] = result
+                    event.market_data['user_bets'][i]['payout'] = payout
+                    
+                    # Also update any UserBet model instances linked to this event
+                    try:
+                        user_bet_instances = UserBet.objects.filter(
+                            user_id=user_id,
+                            league_event=event
                         )
-                        logger.info(f"Created notification ID {notification.id} for {user.username}")
-                        user.save()  # Save the user to ensure any other changes are persisted
-                        
-                except Exception as bet_error:
-                    logger.error(f"Error processing bet: {str(bet_error)}", exc_info=True)
+                        for user_bet_instance in user_bet_instances:
+                            user_bet_instance.result = result
+                            user_bet_instance.save()
+                            logger.info(f"Updated UserBet model instance for user {user_id}, result: {result}")
+                    except Exception as ube:
+                        logger.warning(f"Could not update UserBet model instances: {str(ube)}")
+                    
+                except Exception as e:
+                    logger.error(f"Error processing bet for user {user_id}: {str(e)}")
         
-        # Traditional bet processing (keeping this as a fallback)
-        bets = Bet.objects.filter(name=event.event_key, league=event.league)
-        logger.info(f"Found {bets.count()} traditional Bet objects")
-        
-        for bet in bets:
-            # Mark bet as settled
-            bet.status = 'settled'
-            bet.save()
-            
-            # Get all user bets for this bet
-            user_bets = UserBet.objects.filter(bet=bet)
-            
-            for user_bet in user_bets:
-                # Check if the user won or lost
-                if user_bet.choice == winning_outcome:
-                    # User won - calculate winnings based on odds and amount wagered
-                    odds = float(event.market_data.get('odds', 2.0))
-                    winnings = user_bet.points_wagered * odds
-                    
-                    # Update user's result and money
-                    user_bet.result = 'won'
-                    user_bet.user.money += Decimal(str(winnings))
-                    
-                    # Award 1 point for winning
-                    user_bet.user.points += 1
-                    user_bet.user.save()
-                    
-                    # Create notification for the win
-                    notification = Notification.objects.create(
-                        user=user_bet.user,
-                        message=f"You won ${winnings:.2f} on {event.event_name}!",
-                        notification_type='info'
-                    )
-                    logger.info(f"Created traditional notification ID {notification.id} for {user_bet.user.username}")
-                else:
-                    # User lost
-                    user_bet.result = 'lost'
-                    
-                    # Create notification for the loss
-                    notification = Notification.objects.create(
-                        user=user_bet.user,
-                        message=f"You lost your bet of ${user_bet.points_wagered:.2f} on {event.event_name}",
-                        notification_type='info'
-                    )
-                    logger.info(f"Created traditional notification ID {notification.id} for {user_bet.user.username}")
-                
-                # Save the updated user bet
-                user_bet.save()
-        
-        # Log summary
-        logger.info(f"Event {event.id} completion finished successfully")
+        # Save the updated event
+        event.save()
         
         return Response({
-            'message': 'Event marked as completed and bets settled',
-            'event_id': event.id
+            'message': 'Event marked as completed successfully',
+            'event': LeagueEventSerializer(event).data
         })
-    except LeagueEvent.DoesNotExist:
-        return Response({'error': 'League event not found'}, status=404)
     except Exception as e:
         logger.error(f"Error completing league event: {str(e)}", exc_info=True)
         return Response({'error': str(e)}, status=500)

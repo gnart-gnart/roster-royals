@@ -21,6 +21,12 @@ function LeagueCard({ league }) {
     navigate(`/league/${league.id}`);
   };
 
+  // Log league and member data for debugging
+  console.log(`LeagueCard - League: ${league.name}, members:`, league.members);
+  if (league.members && league.members.length > 0) {
+    console.log(`LeagueCard - First member sample:`, league.members[0]);
+  }
+
   // Check if the current user is the captain
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};
   const isCaptain = league.captain?.id === currentUser.id;
@@ -44,6 +50,32 @@ function LeagueCard({ league }) {
     }
     // Otherwise, assume it's a relative media path and construct the full URL
     return `${process.env.REACT_APP_API_URL}/media/${imageUrl.replace('media/', '')}`;
+  };
+
+  // Function to get member profile image source
+  const getMemberImageSource = (member) => {
+    // If this is the current user, check for embedded image data
+    if (member.id === currentUser.id) {
+      // Try embedded image from user object first
+      if (currentUser.embeddedImageData) {
+        return currentUser.embeddedImageData;
+      }
+      
+      // Then try session storage with user-specific key
+      const userSpecificKey = `profileImageDataUrl_${member.id}`;
+      const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+      if (profileImageDataUrl) {
+        return profileImageDataUrl;
+      }
+    }
+    
+    // Add fallback to use API-based avatar for other users
+    if (member.profile_image_url) {
+      return getImageUrl(member.profile_image_url);
+    }
+    
+    // Return avatar API URL as fallback - this ensures all users have an image
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(member.username)}&background=random`;
   };
 
   return (
@@ -155,7 +187,7 @@ function LeagueCard({ league }) {
               <Avatar
                 key={member.id}
                 alt={member.username}
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(member.username)}&background=random`}
+                src={getMemberImageSource(member)}
                 sx={{ width: 28, height: 28 }}
               />
             ))}

@@ -42,6 +42,7 @@ import {
   ListItemSecondaryAction,
   Tabs,
   Tab,
+  CircularProgress,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -147,43 +148,73 @@ function InviteDialog({ open, onClose, friends, onInvite, loading }) {
             },
           }}
         />
-        <List sx={{ maxHeight: 300, overflow: 'auto' }}>
-          {filteredFriends.map((friend) => (
-            <ListItem key={friend.id} sx={{ px: 0 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={selectedFriends.includes(friend.id)}
-                    onChange={() => handleToggleFriend(friend.id)}
-                    sx={{
-                      color: '#8B5CF6',
-                      '&.Mui-checked': {
-                        color: '#8B5CF6',
-                      },
-                    }}
-                  />
-                }
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        mr: 1,
-                        bgcolor: '#3B82F6',
-                      }}
-                    >
-                      {friend.username[0].toUpperCase()}
-                    </Avatar>
-                    <Typography sx={{ color: '#f8fafc' }}>
-                      {friend.username}
-                    </Typography>
-                  </Box>
-                }
-              />
-            </ListItem>
-          ))}
-        </List>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+            <CircularProgress size={24} sx={{ color: '#8B5CF6' }} />
+          </Box>
+        ) : (
+          <>
+            {friends.length === 0 ? (
+              <Box sx={{ textAlign: 'center', color: '#94A3B8', p: 2 }}>
+                <Typography variant="body1">You don't have any friends yet.</Typography>
+                <Typography variant="body2">Add friends to invite them to your league.</Typography>
+                <Button 
+                  variant="outlined" 
+                  sx={{ mt: 2, color: '#8B5CF6', borderColor: '#8B5CF6' }}
+                  onClick={() => {
+                    onClose();
+                    // Navigate to add friends page
+                    window.location.href = '/add-friend';
+                  }}
+                >
+                  Add Friends
+                </Button>
+              </Box>
+            ) : filteredFriends.length === 0 ? (
+              <Box sx={{ textAlign: 'center', color: '#94A3B8', p: 2 }}>
+                <Typography variant="body1">No friends match your search.</Typography>
+              </Box>
+            ) : (
+              <List sx={{ maxHeight: 300, overflow: 'auto' }}>
+                {filteredFriends.map((friend) => (
+                  <ListItem key={friend.id} sx={{ px: 0 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={selectedFriends.includes(friend.id)}
+                          onChange={() => handleToggleFriend(friend.id)}
+                          sx={{
+                            color: '#8B5CF6',
+                            '&.Mui-checked': {
+                              color: '#8B5CF6',
+                            },
+                          }}
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              mr: 1,
+                              bgcolor: '#3B82F6',
+                            }}
+                          >
+                            {friend.username[0].toUpperCase()}
+                          </Avatar>
+                          <Typography sx={{ color: '#f8fafc' }}>
+                            {friend.username}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </>
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button
@@ -292,11 +323,40 @@ function LeaguePage() {
 
   const refreshLeagueData = async () => {
     try {
+      console.log(`Loading league data for ID: ${id}`);
       const leagueData = await getLeague(id);
       console.log('League data received:', leagueData);
       console.log('League balance:', leagueData.balance);
+      
+      // Log the member data to inspect structure
+      if (leagueData.members) {
+        console.log("League members data:", leagueData.members);
+        console.log("First member profile data sample:", leagueData.members[0]);
+      }
+      
       setLeague(leagueData);
       setMembers(leagueData.members || []);
+      
+      // Set the edit form data
+      setEditFormData({
+        name: leagueData.name || '',
+        description: leagueData.description || '',
+        image: leagueData.image || null
+      });
+      
+      loadFriendRequests();
+      loadNotifications();
+      
+      // Load league events and circuits
+      const eventsData = await getLeagueEvents(id);
+      setLeagueEvents(eventsData || []);
+      
+      try {
+        const circuitsData = await getLeagueCircuits(id);
+        setLeagueCircuits(circuitsData || []);
+      } catch (circuitErr) {
+        console.error('Error loading league circuits:', circuitErr);
+      }
     } catch (err) {
       console.error('Failed to refresh league data:', err);
     }
@@ -306,26 +366,39 @@ function LeaguePage() {
     const loadData = async () => {
       try {
         setLoading(true);
-        await refreshLeagueData();
         
-        // Load friends for invite functionality
+        // Load league data
+        const leagueData = await getLeague(id);
+        setLeague(leagueData);
+        setMembers(leagueData.members || []);
+        
+        // Load friends data - ensure this is included
         const friendsData = await getFriends();
         setFriends(friendsData);
         
-        // Load notifications and friend requests for navbar
+        // Set the edit form data
+        setEditFormData({
+          name: leagueData.name || '',
+          description: leagueData.description || '',
+          image: leagueData.image || null
+        });
+        
         loadFriendRequests();
         loadNotifications();
-
-        // Get league events
+        
+        // Load league events and circuits
         const eventsData = await getLeagueEvents(id);
         setLeagueEvents(eventsData || []);
-
-        // Get league circuits
-        const circuitsData = await getLeagueCircuits(id);
-        setLeagueCircuits(circuitsData || []);
+        
+        try {
+          const circuitsData = await getLeagueCircuits(id);
+          setLeagueCircuits(circuitsData || []);
+        } catch (circuitErr) {
+          console.error('Error loading league circuits:', circuitErr);
+        }
       } catch (err) {
+        console.error('Error loading initial data:', err);
         setError('Failed to load league data');
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -644,8 +717,46 @@ function LeaguePage() {
     return getImageUrl(image);
   };
 
+  // Function to get member profile image source
+  const getMemberImageSource = (member) => {
+    // If this is the current user, check for embedded image data
+    if (member.id === user.id) {
+      // Try embedded image from user object first
+      if (user.embeddedImageData) {
+        return user.embeddedImageData;
+      }
+      
+      // Then try session storage with user-specific key
+      const userSpecificKey = `profileImageDataUrl_${member.id}`;
+      const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+      if (profileImageDataUrl) {
+        return profileImageDataUrl;
+      }
+    }
+    
+    // Add fallback to use API-based avatar for other users
+    if (member.profile_image_url) {
+      return getImageUrl(member.profile_image_url);
+    }
+    
+    // Return avatar API URL as fallback - this ensures all users have an image
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(member.username)}&background=random`;
+  };
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+  };
+
+  const handleOpenInviteDialog = async () => {
+    try {
+      // Get fresh friends data when opening the dialog
+      const friendsData = await getFriends();
+      setFriends(friendsData);
+      setInviteDialogOpen(true);
+    } catch (err) {
+      console.error('Failed to load friends:', err);
+      setError('Failed to load friends list');
+    }
   };
 
   return (
@@ -1149,7 +1260,7 @@ function LeaguePage() {
                         variant="outlined"
                         size="small"
                         startIcon={<AddIcon />}
-                        onClick={() => setInviteDialogOpen(true)}
+                        onClick={handleOpenInviteDialog}
                         sx={{
                           borderColor: '#8B5CF6',
                           color: '#8B5CF6',
@@ -1182,7 +1293,10 @@ function LeaguePage() {
                         }
                       >
                         <ListItemAvatar>
-                          <Avatar sx={{ bgcolor: member.id === league?.captain?.id ? '#8B5CF6' : '#3B82F6' }}>
+                          <Avatar 
+                            src={getMemberImageSource(member)}
+                            sx={{ bgcolor: member.id === league?.captain?.id ? '#8B5CF6' : '#3B82F6' }}
+                          >
                             {member.username[0].toUpperCase()}
                           </Avatar>
                         </ListItemAvatar>
@@ -1266,6 +1380,7 @@ function LeaguePage() {
                         </Typography>
                         
                         <Avatar
+                          src={getMemberImageSource(member)}
                           sx={{
                             width: 32,
                             height: 32,

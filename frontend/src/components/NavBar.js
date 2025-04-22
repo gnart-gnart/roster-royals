@@ -43,7 +43,7 @@ function NavBar() {
   const [notifAnchorEl, setNotifAnchorEl] = useState(null);
   const [friendRequests, setFriendRequests] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const user = JSON.parse(localStorage.getItem('user'));
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')));
 
   // Add leagues state and loading function
   const [leagues, setLeagues] = useState([]);
@@ -59,6 +59,36 @@ function NavBar() {
     }
   };
 
+  // Function to refresh user data from localStorage
+  const refreshUserData = () => {
+    console.log("Refreshing user data from localStorage");
+    
+    // First, clear current user data to ensure we don't show stale data
+    setUser(null);
+    
+    // Small timeout to ensure the component re-renders
+    setTimeout(() => {
+      // Get fresh user data from localStorage
+      const userData = JSON.parse(localStorage.getItem('user'));
+      console.log("Fresh user data loaded:", userData);
+      
+      // Check if we have profile image in session storage using user-specific key
+      if (userData && userData.id) {
+        const userSpecificKey = `profileImageDataUrl_${userData.id}`;
+        const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+        
+        if (profileImageDataUrl) {
+          // Add embedded image data to user object
+          userData.embeddedImageData = profileImageDataUrl;
+          console.log(`Added embedded image data from session storage with key: ${userSpecificKey}`);
+        }
+      }
+      
+      // Update state with fresh data
+      setUser(userData);
+    }, 100);
+  };
+
   useEffect(() => {
     loadFriendRequests();
     loadNotifications();
@@ -66,9 +96,13 @@ function NavBar() {
 
     // Listen for leagues update events
     window.addEventListener('leaguesUpdated', loadLeagues);
+    
+    // Listen for user profile updates
+    window.addEventListener('userUpdated', refreshUserData);
 
     return () => {
       window.removeEventListener('leaguesUpdated', loadLeagues);
+      window.removeEventListener('userUpdated', refreshUserData);
     };
   }, []);
 
@@ -218,13 +252,22 @@ function NavBar() {
             },
           }}
         >
+          {/* Directly use embedded image data */}
           <Avatar 
+            src={user?.embeddedImageData || (user?.id ? sessionStorage.getItem(`profileImageDataUrl_${user.id}`) : null)}
             sx={{ 
               bgcolor: '#8B5CF6',
               width: 32, 
               height: 32, 
               fontSize: '14px', 
               fontWeight: 'bold' 
+            }}
+            imgProps={{
+              style: { objectFit: 'cover' },
+              onError: (e) => {
+                console.error('Error loading profile image in NavBar:', e);
+                e.target.src = ''; // Clear src to show fallback
+              }
             }}
           >
             {user?.username ? user.username[0].toUpperCase() : 'U'}

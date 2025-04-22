@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import League, Bet, LeagueEvent, ChatMessage, Circuit, CircuitParticipant, CircuitComponentEvent
+from .models import League, Bet, UserBet, LeagueEvent, LeagueInvite, ChatMessage, Circuit, CircuitParticipant, CircuitComponentEvent
 from users.serializers import UserSerializer
 
 class LeagueSerializer(serializers.ModelSerializer):
@@ -28,6 +28,16 @@ class LeagueEventSerializer(serializers.ModelSerializer):
     class Meta:
         model = LeagueEvent
         fields = '__all__'
+
+class LeagueInviteSerializer(serializers.ModelSerializer):
+    from_user = UserSerializer(read_only=True)
+    to_user = UserSerializer(read_only=True)
+    league = LeagueSerializer(read_only=True)
+
+    class Meta:
+        model = LeagueInvite
+        fields = ('id', 'league', 'from_user', 'to_user', 'status', 'created_at')
+        read_only_fields = fields
 
 class ChatMessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
@@ -160,3 +170,8 @@ class CircuitDetailSerializer(serializers.ModelSerializer):
             'participants' # Include list of participants with scores
         ]
         read_only_fields = fields # Make all fields read-only for detail view 
+
+class UserBetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserBet
+        fields = ('id', 'user', 'bet', 'choice', 'points_wagered', 'result', 'created_at', 'league_event', 'numeric_choice', 'points_earned') 
