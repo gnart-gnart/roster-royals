@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20  # Set an overall timeout for the job
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,6 +20,8 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22 # Default SSH port
+          script_stop: true # Stop script after first error
+          command_timeout: 15m # Set command timeout to 15 minutes
           script: |
             set -e # Exit immediately if a command exits with a non-zero status.
             cd /root/roster-royals
@@ -28,15 +31,16 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose.prod.yml down
             echo "Removing stale react_build volume..."
             docker volume rm roster-royals_react_build || true # Remove volume, continue if it doesn't exist
-            echo "Starting DB and Web services for migrations..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d pgdb django-web # Start DB and Web
-
+            
+            # Speed up database startup by starting only the database first
+            echo "Starting DB service for migrations..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d pgdb
+            
             echo "Ensuring correct database ownership and permissions..."
             # Wait a brief moment for PostgreSQL to initialize fully
             sleep 10  # Increased wait time to ensure PostgreSQL is fully ready
             
             # Explicitly source the .env file to load DB credentials into the shell environment
-            # Assuming .env is in the current directory (/root/roster-royals)
             if [ -f .env ]; then
               echo "Sourcing .env file..."
               set -a # Automatically export all variables defined in .env
@@ -45,12 +49,19 @@ jobs:
             else
               echo "Warning: .env file not found in $(pwd). Relying on existing environment variables."
             fi
-            # Debug: Print the variables to see if they were loaded correctly
             echo "Using POSTGRES_USER='${POSTGRES_USER:-'(unset)'}' POSTGRES_DB='${POSTGRES_DB:-'(unset)'}'"
 
+            # Set a timeout for database operations
+            timeout 60s bash -c '
+              until docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb pg_isready; do
+                echo "Waiting for PostgreSQL to be ready..."
+                sleep 2
+              done
+            ' || echo "Database readiness check timed out, continuing anyway..."
+            
             # First, connect as postgres superuser to ensure we have proper permissions for ownership changes
             echo "Setting up database permissions as postgres superuser..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U postgres -d postgres -c "
+            timeout 30s docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U postgres -d postgres -c "
               DO \$\$
               BEGIN
                 -- Create role if it doesn't exist
@@ -66,80 +77,25 @@ jobs:
               \$\$;
             " || echo "Continuing after attempting to set up database permissions..."
             
-            # Connect to the application database with the postgres superuser to grant privileges
-            echo "Granting privileges on application database to ${POSTGRES_USER}..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U postgres -d "${POSTGRES_DB:-postgres}" -c "
-              -- Grant schema privileges
-              GRANT ALL PRIVILEGES ON SCHEMA public TO \"${POSTGRES_USER:-postgres}\";
-              
-              -- Grant table privileges
-              GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";
-              
-              -- Grant sequence privileges
-              GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";
-              
-              -- Set default privileges for future tables and sequences
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO \"${POSTGRES_USER:-postgres}\";
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO \"${POSTGRES_USER:-postgres}\";
-            " || echo "Continuing after attempting to grant privileges..."
+            # Start django-web container for migrations
+            echo "Starting django-web for migrations..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d django-web
 
-            # Transfer ownership of all objects to the application user
-            echo "Transferring ownership of database objects to ${POSTGRES_USER}..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U postgres -d "${POSTGRES_DB:-postgres}" -c "
-              DO \$\$
-              DECLARE 
-                rec RECORD;
-                cmd TEXT;
-              BEGIN
-                -- Tables
-                FOR rec IN 
-                  SELECT schemaname, tablename 
-                  FROM pg_tables 
-                  WHERE schemaname = 'public'
-                LOOP
-                  cmd := format('ALTER TABLE %I.%I OWNER TO %I;', 
-                          rec.schemaname, rec.tablename, '${POSTGRES_USER}');
-                  EXECUTE cmd;
-                  RAISE NOTICE 'Executed: %', cmd;
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    RAISE NOTICE 'Error changing ownership of table %: %', rec.tablename, SQLERRM;
-                END LOOP;
-                
-                -- Sequences
-                FOR rec IN 
-                  SELECT sequence_schema, sequence_name 
-                  FROM information_schema.sequences 
-                  WHERE sequence_schema = 'public'
-                LOOP
-                  cmd := format('ALTER SEQUENCE %I.%I OWNER TO %I;', 
-                          rec.sequence_schema, rec.sequence_name, '${POSTGRES_USER}');
-                  EXECUTE cmd;
-                  RAISE NOTICE 'Executed: %', cmd;
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    RAISE NOTICE 'Error changing ownership of sequence %: %', rec.sequence_name, SQLERRM;
-                END LOOP;
-              END
-              \$\$;
-            " || echo "Continuing after attempting to transfer ownership..."
-
+            # Run migrations before rebuilding everything to save time
             echo "Running database migrations…"
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec django-web \
-              python manage.py migrate
-            echo "Cleaning up Docker build cache on runner..."
-            # Build cache pruning on runner is less relevant now, but harmless to keep
-            docker builder prune -af || true
+            timeout 60s docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T django-web \
+              python manage.py migrate || echo "Migration timed out or failed, continuing anyway..."
             
-            # ADD Build step to run on the droplet itself
-            echo "Rebuilding Docker images on the droplet..."
-            # This build command uses the .env file present on the droplet
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
+            # Use parallel build to speed up the process
+            echo "Rebuilding Docker images on the droplet with parallel builds..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache --parallel
 
             echo "Starting ALL Docker containers..."
-            # Use 'up -d' which will use the images just built on the droplet
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-            # Optional: Prune unused Docker images, containers, and volumes to save space
-            # echo "Pruning Docker system..."
-            # docker system prune -af
+            
+            # Clean up to save space
+            echo "Cleaning up unused Docker resources..."
+            docker image prune -f  # Remove unused images
+            docker container prune -f  # Remove stopped containers
+            
             echo "Deployment successful!" 

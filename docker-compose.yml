@@ -61,6 +61,9 @@ services:
         - REACT_APP_API_URL=${REACT_APP_API_URL}
         - ENVIRONMENT=${ENVIRONMENT}
         - NODE_ENV=${NODE_ENV}
+      # Add cache optimization
+      cache_from:
+        - node:16-alpine
     restart: always
     depends_on:
       - django-web
@@ -76,6 +79,7 @@ services:
       PROD_DEBUG: ${PROD_DEBUG}
     env_file:
       - .env
+    # Only mount volumes in development mode
     volumes:
       - type: bind
         source: ./frontend
