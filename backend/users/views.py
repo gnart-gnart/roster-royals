@@ -328,4 +328,38 @@ def google_auth(request):
         return Response({
             'error': 'Authentication failed',
             'details': str(e)
-        }, status=500) 
+        }, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_profile(request):
+    """Get the current user's profile information"""
+    serializer = UserSerializer(request.user)
+    return Response(serializer.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_profile(request):
+    """Update the current user's profile"""
+    user = request.user
+    
+    # Handle form data (for profile image)
+    if request.FILES:
+        if 'profile_image' in request.FILES:
+            user.profile_image = request.FILES['profile_image']
+    
+    # Handle JSON data for text fields
+    if request.data:
+        data = request.data
+        if 'username' in data:
+            user.username = data['username']
+        if 'bio' in data:
+            user.bio = data['bio']
+        if 'email' in data:
+            user.email = data['email']
+    
+    user.save()
+    
+    # Return the updated user data
+    serializer = UserSerializer(user)
+    return Response(serializer.data) 

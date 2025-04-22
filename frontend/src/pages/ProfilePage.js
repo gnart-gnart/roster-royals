@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, 
@@ -15,8 +15,16 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Chip
+  Chip,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import HistoryIcon from '@mui/icons-material/History';
@@ -27,10 +35,26 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import NavBar from '../components/NavBar';
+import CircularImageCropper from '../components/CircularImageCropper';
+import { getUserProfile, updateUserProfile } from '../services/api';
 
 function ProfilePage() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user')) || { username: 'user' };
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || { username: 'user' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    username: '',
+    bio: ''
+  });
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
   
   // Mock data for the betting history
   const recentBets = [
@@ -66,6 +90,126 @@ function ProfilePage() {
       unlocked: false
     },
   ];
+
+  // Fetch user profile on component mount
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    setLoading(true);
+    try {
+      const userData = await getUserProfile();
+      setUser(userData);
+      
+      // Update localStorage with updated user data
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      setEditFormData({
+        username: userData.username || '',
+        bio: userData.bio || ''
+      });
+    } catch (err) {
+      setError('Failed to load profile data');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditProfile = () => {
+    setEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditDialogOpen(false);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData({
+      ...editFormData,
+      [name]: value
+    });
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      setShowCropper(true);
+    }
+  };
+
+  const handleCropComplete = (croppedImage) => {
+    // Create FormData for image upload
+    const formData = new FormData();
+    formData.append('profile_image', croppedImage);
+    
+    // Submit the profile update
+    updateUserProfile(formData)
+      .then(response => {
+        setUser(response);
+        localStorage.setItem('user', JSON.stringify(response));
+        setShowCropper(false);
+        setSnackbar({
+          open: true,
+          message: 'Profile image updated successfully',
+          severity: 'success'
+        });
+      })
+      .catch(err => {
+        setError('Failed to update profile image');
+        setSnackbar({
+          open: true,
+          message: 'Failed to update profile image',
+          severity: 'error'
+        });
+        console.error(err);
+      });
+  };
+
+  const handleCropCancel = () => {
+    setSelectedImage(null);
+    setShowCropper(false);
+  };
+
+  const handleSubmitProfileUpdate = async (e) => {
+    e.preventDefault();
+    
+    // Validate form
+    if (!editFormData.username.trim()) {
+      setError('Username is required');
+      return;
+    }
+    
+    try {
+      const response = await updateUserProfile(editFormData);
+      setUser(response);
+      localStorage.setItem('user', JSON.stringify(response));
+      setEditDialogOpen(false);
+      setSnackbar({
+        open: true,
+        message: 'Profile updated successfully',
+        severity: 'success'
+      });
+    } catch (err) {
+      setError('Failed to update profile');
+      setSnackbar({
+        open: true,
+        message: 'Failed to update profile',
+        severity: 'error'
+      });
+      console.error(err);
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({
+      ...snackbar,
+      open: false
+    });
+  };
   
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh' }}>
@@ -124,24 +268,71 @@ function ProfilePage() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                textAlign: 'center'
+                textAlign: 'center',
+                position: 'relative'
               }}
             >
-              <Avatar 
+              {/* Edit button for profile */}
+              <IconButton 
                 sx={{ 
-                  bgcolor: '#8B5CF6', 
-                  width: 80, 
-                  height: 80, 
-                  fontSize: '36px', 
-                  mb: 2
+                  position: 'absolute', 
+                  top: 10, 
+                  right: 10,
+                  color: '#f8fafc'
                 }}
+                onClick={handleEditProfile}
               >
-                {user.username[0].toUpperCase()}
-              </Avatar>
+                <EditIcon />
+              </IconButton>
+              
+              <Box sx={{ position: 'relative' }}>
+                <Avatar 
+                  src={user.profile_image_url}
+                  sx={{ 
+                    bgcolor: '#8B5CF6', 
+                    width: 80, 
+                    height: 80, 
+                    fontSize: '36px', 
+                    mb: 2
+                  }}
+                >
+                  {user.username?.[0]?.toUpperCase()}
+                </Avatar>
+                
+                <IconButton 
+                  component="label"
+                  sx={{ 
+                    position: 'absolute',
+                    bottom: 10,
+                    right: -10,
+                    bgcolor: 'rgba(139, 92, 246, 0.8)',
+                    color: 'white',
+                    width: 30,
+                    height: 30,
+                    '&:hover': {
+                      bgcolor: 'rgba(139, 92, 246, 1)',
+                    }
+                  }}
+                >
+                  <EditIcon sx={{ fontSize: 16 }} />
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                </IconButton>
+              </Box>
               
               <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#f8fafc', mb: 1 }}>
                 {user.username}
               </Typography>
+              
+              {user.bio && (
+                <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 2 }}>
+                  {user.bio}
+                </Typography>
+              )}
               
               <Chip 
                 label="Level 4" 
@@ -198,6 +389,7 @@ function ProfilePage() {
                 </Typography>
               </Paper>
               
+              {/* Stats Grid (keep existing code) */}
               <Grid container spacing={2}>
                 <Grid item xs={4}>
                   <Paper sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2 }}>
@@ -399,6 +591,107 @@ function ProfilePage() {
           </Grid>
         </Grid>
       </Container>
+      
+      {/* Edit Profile Dialog */}
+      <Dialog 
+        open={editDialogOpen} 
+        onClose={handleCloseEditDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(30, 41, 59, 0.95)',
+            color: '#f8fafc',
+            backdropFilter: 'blur(8px)'
+          }
+        }}
+      >
+        <DialogTitle>Edit Profile</DialogTitle>
+        <DialogContent>
+          <form onSubmit={handleSubmitProfileUpdate}>
+            <TextField
+              margin="dense"
+              label="Username"
+              name="username"
+              value={editFormData.username}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              required
+              error={error.includes('Username')}
+              helperText={error.includes('Username') ? error : ''}
+              sx={{ mb: 2 }}
+              InputProps={{
+                sx: { color: '#f8fafc' }
+              }}
+              InputLabelProps={{
+                sx: { color: '#9CA3AF' }
+              }}
+            />
+            
+            <TextField
+              margin="dense"
+              label="Bio"
+              name="bio"
+              value={editFormData.bio}
+              onChange={handleInputChange}
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={4}
+              placeholder="Tell us about yourself..."
+              InputProps={{
+                sx: { color: '#f8fafc' }
+              }}
+              InputLabelProps={{
+                sx: { color: '#9CA3AF' }
+              }}
+            />
+          </form>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditDialog} sx={{ color: '#9CA3AF' }}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmitProfileUpdate} 
+            variant="contained"
+            sx={{ 
+              bgcolor: '#8B5CF6',
+              '&:hover': {
+                bgcolor: '#7C3AED'
+              }
+            }}
+          >
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Image Cropper Dialog */}
+      {showCropper && selectedImage && (
+        <CircularImageCropper
+          image={selectedImage}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
+      
+      {/* Snackbar for notifications */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity} 
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

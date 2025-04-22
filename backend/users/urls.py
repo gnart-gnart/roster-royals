@@ -13,4 +13,6 @@ urlpatterns = [
     path('notifications/mark-read/', views.mark_notifications_read),
     path('friends/remove/<int:friend_id>/', views.remove_friend),
     path('google-auth/', views.google_auth, name='google-auth'),
+    path('profile/', views.user_profile, name='user-profile'),
+    path('profile/update/', views.update_profile, name='user-update'),
 ] 

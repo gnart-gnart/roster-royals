@@ -12,6 +12,15 @@ class User(AbstractUser):
         blank=True,
         through='Friendship'
     )
+    bio = models.TextField(blank=True, null=True)  # Bio information
+    profile_image = models.ImageField(upload_to='profile_images/', default='profile_images/default_profile.png', blank=True)
+
+    @property
+    def profile_image_url(self):
+        """Return the URL of the profile image."""
+        if self.profile_image and hasattr(self.profile_image, 'url'):
+            return self.profile_image.url
+        return '/media/profile_images/default_profile.png'
 
 class Friendship(models.Model):
     """Model to handle friendships and prevent self-friendship"""
