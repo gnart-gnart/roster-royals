@@ -135,7 +135,7 @@ jobs:
             # ADD Build step to run on the droplet itself
             echo "Rebuilding Docker images on the droplet..."
             # This build command uses the .env file present on the droplet
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml build # --no-cache
 
             echo "Starting ALL Docker containers..."
             # Use 'up -d' which will use the images just built on the droplet

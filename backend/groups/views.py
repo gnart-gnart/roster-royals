@@ -906,3 +906,74 @@ class GetCircuitDetailView(generics.RetrieveAPIView):
         except Exception as e:
             logger.error(f"Error retrieving circuit detail: {str(e)}")
             return Response({"error": "An unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def join_circuit(request, circuit_id):
+    user = request.user
+    circuit = get_object_or_404(Circuit, id=circuit_id)
+
+    # Check if the circuit is joinable
+    if circuit.status != 'upcoming':
+        return Response({'error': 'Cannot join a circuit that has already started or completed.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if user already joined
+    if CircuitParticipant.objects.filter(circuit=circuit, user=user).exists():
+        return Response({'error': 'You have already joined this circuit.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if user has sufficient funds
+    if user.money < circuit.entry_fee:
+        return Response({'error': 'Insufficient funds to join this circuit.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Deduct entry fee
+    user.money -= Decimal(str(circuit.entry_fee))
+    user.save()
+
+    # Create CircuitParticipant entry
+    CircuitParticipant.objects.create(
+        circuit=circuit,
+        user=user,
+        paid_entry=True
+    )
+
+    return Response({'message': 'Successfully joined the circuit!'}, status=status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def complete_circuit(request, circuit_id):
+    user = request.user
+    circuit = get_object_or_404(Circuit, id=circuit_id)
+
+    # Ensure only the captain can complete the circuit
+    if circuit.captain != user:
+        return Response({'error': 'Only the league captain can complete the circuit.'}, status=status.HTTP_403_FORBIDDEN)
+
+    # Ensure circuit is active or calculating
+    if circuit.status not in ['active', 'calculating']:
+        return Response({'error': 'Circuit cannot be completed in its current state.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Calculate final scores (assuming points are already updated after each event)
+    participants = circuit.participants.all().order_by('-score')
+
+    if not participants.exists():
+        return Response({'error': 'No participants in this circuit.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    top_score = participants.first().score
+    winners = participants.filter(score=top_score)
+
+    if winners.count() > 1:
+        circuit.status = 'calculating'
+        circuit.save()
+        return Response({'message': 'Circuit has a tie. Please resolve manually.'}, status=status.HTTP_200_OK)
+
+    winner = winners.first().user
+    circuit.winner = winner
+    circuit.status = 'completed'
+    circuit.save()
+
+    # Transfer total entry fees to winner
+    total_prize = circuit.entry_fee * participants.count()
+    winner.money += Decimal(str(total_prize))
+    winner.save()
+
+    return Response({'message': f'Circuit completed successfully! Winner: {winner.username}', 'prize': str(total_prize)}, status=status.HTTP_200_OK)
