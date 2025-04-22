@@ -349,10 +349,11 @@ function ProfilePage() {
                   src={user.embeddedImageData || (user.id ? sessionStorage.getItem(`profileImageDataUrl_${user.id}`) : null)}
                   sx={{ 
                     bgcolor: '#8B5CF6', 
-                    width: 80, 
-                    height: 80, 
-                    fontSize: '36px', 
-                    mb: 2
+                    width: 140, 
+                    height: 140, 
+                    fontSize: '56px', 
+                    mb: 3,
+                    border: '4px solid rgba(139, 92, 246, 0.2)'
                   }}
                   imgProps={{
                     style: { objectFit: 'cover' },
@@ -369,18 +370,18 @@ function ProfilePage() {
                   component="label"
                   sx={{ 
                     position: 'absolute',
-                    bottom: 10,
+                    bottom: 20,
                     right: -10,
                     bgcolor: 'rgba(139, 92, 246, 0.8)',
                     color: 'white',
-                    width: 30,
-                    height: 30,
+                    width: 40,
+                    height: 40,
                     '&:hover': {
                       bgcolor: 'rgba(139, 92, 246, 1)',
                     }
                   }}
                 >
-                  <EditIcon sx={{ fontSize: 16 }} />
+                  <EditIcon sx={{ fontSize: 20 }} />
                   <input
                     type="file"
                     hidden
