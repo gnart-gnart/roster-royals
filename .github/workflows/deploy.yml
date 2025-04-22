@@ -56,22 +56,40 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting sequence privileges..."
 
             echo "Re-assigning ownership of all tables and sequences in ${POSTGRES_DB}…"
-            # Run the ALTER OWNER loop as the real postgres superuser, in one go:
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T -u postgres pgdb \
-              psql -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 \
-              -c "DO \$\$ 
-                DECLARE rec RECORD; 
-                BEGIN 
-                  -- Tables
-                  FOR rec IN (SELECT schemaname, tablename FROM pg_tables WHERE schemaname = 'public') LOOP 
-                    EXECUTE format('ALTER TABLE %I.%I OWNER TO %I;', rec.schemaname, rec.tablename, '${POSTGRES_USER}'); 
-                  END LOOP; 
-                  -- Sequences
-                  FOR rec IN (SELECT sequence_schema, sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public') LOOP 
-                    EXECUTE format('ALTER SEQUENCE %I.%I OWNER TO %I;', rec.sequence_schema, rec.sequence_name, '${POSTGRES_USER}'); 
-                  END LOOP; 
-                END 
-              \$\$;"
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb \
+              env PGPASSWORD="${POSTGRES_PASSWORD}" \
+              psql \
+                -U "${POSTGRES_USER}" \
+                -h 127.0.0.1 \
+                -d "${POSTGRES_DB}" \
+                -v ON_ERROR_STOP=1 \
+                -c "DO \$\$
+                  DECLARE rec RECORD;
+                  BEGIN
+                    -- Tables
+                    FOR rec IN
+                      SELECT schemaname, tablename 
+                        FROM pg_tables 
+                       WHERE schemaname = 'public'
+                    LOOP
+                      EXECUTE format(
+                        'ALTER TABLE %I.%I OWNER TO %I;',
+                        rec.schemaname, rec.tablename, '${POSTGRES_USER}'
+                      );
+                    END LOOP;
+                    -- Sequences
+                    FOR rec IN
+                      SELECT sequence_schema, sequence_name
+                        FROM information_schema.sequences
+                       WHERE sequence_schema = 'public'
+                    LOOP
+                      EXECUTE format(
+                        'ALTER SEQUENCE %I.%I OWNER TO %I;',
+                        rec.sequence_schema, rec.sequence_name, '${POSTGRES_USER}'
+                      );
+                    END LOOP;
+                  END
+                \$\$;"
 
             echo "Running database migrations…"
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec django-web \
