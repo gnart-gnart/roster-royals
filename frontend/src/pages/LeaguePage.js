@@ -42,6 +42,7 @@ import {
   ListItemSecondaryAction,
   Tabs,
   Tab,
+  CircularProgress,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -147,43 +148,73 @@ function InviteDialog({ open, onClose, friends, onInvite, loading }) {
             },
           }}
         />
-        <List sx={{ maxHeight: 300, overflow: 'auto' }}>
-          {filteredFriends.map((friend) => (
-            <ListItem key={friend.id} sx={{ px: 0 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={selectedFriends.includes(friend.id)}
-                    onChange={() => handleToggleFriend(friend.id)}
-                    sx={{
-                      color: '#8B5CF6',
-                      '&.Mui-checked': {
-                        color: '#8B5CF6',
-                      },
-                    }}
-                  />
-                }
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        mr: 1,
-                        bgcolor: '#3B82F6',
-                      }}
-                    >
-                      {friend.username[0].toUpperCase()}
-                    </Avatar>
-                    <Typography sx={{ color: '#f8fafc' }}>
-                      {friend.username}
-                    </Typography>
-                  </Box>
-                }
-              />
-            </ListItem>
-          ))}
-        </List>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+            <CircularProgress size={24} sx={{ color: '#8B5CF6' }} />
+          </Box>
+        ) : (
+          <>
+            {friends.length === 0 ? (
+              <Box sx={{ textAlign: 'center', color: '#94A3B8', p: 2 }}>
+                <Typography variant="body1">You don't have any friends yet.</Typography>
+                <Typography variant="body2">Add friends to invite them to your league.</Typography>
+                <Button 
+                  variant="outlined" 
+                  sx={{ mt: 2, color: '#8B5CF6', borderColor: '#8B5CF6' }}
+                  onClick={() => {
+                    onClose();
+                    // Navigate to add friends page
+                    window.location.href = '/add-friend';
+                  }}
+                >
+                  Add Friends
+                </Button>
+              </Box>
+            ) : filteredFriends.length === 0 ? (
+              <Box sx={{ textAlign: 'center', color: '#94A3B8', p: 2 }}>
+                <Typography variant="body1">No friends match your search.</Typography>
+              </Box>
+            ) : (
+              <List sx={{ maxHeight: 300, overflow: 'auto' }}>
+                {filteredFriends.map((friend) => (
+                  <ListItem key={friend.id} sx={{ px: 0 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={selectedFriends.includes(friend.id)}
+                          onChange={() => handleToggleFriend(friend.id)}
+                          sx={{
+                            color: '#8B5CF6',
+                            '&.Mui-checked': {
+                              color: '#8B5CF6',
+                            },
+                          }}
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              mr: 1,
+                              bgcolor: '#3B82F6',
+                            }}
+                          >
+                            {friend.username[0].toUpperCase()}
+                          </Avatar>
+                          <Typography sx={{ color: '#f8fafc' }}>
+                            {friend.username}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </>
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button
@@ -334,18 +365,16 @@ function LeaguePage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log(`Loading league data for ID: ${id}`);
+        setLoading(true);
+        
+        // Load league data
         const leagueData = await getLeague(id);
-        console.log("League data received:", leagueData);
-        
-        // Log the member data to inspect structure
-        if (leagueData.members) {
-          console.log("League members data:", leagueData.members);
-          console.log("First member profile data sample:", leagueData.members[0]);
-        }
-        
         setLeague(leagueData);
         setMembers(leagueData.members || []);
+        
+        // Load friends data - ensure this is included
+        const friendsData = await getFriends();
+        setFriends(friendsData);
         
         // Set the edit form data
         setEditFormData({
@@ -368,7 +397,7 @@ function LeaguePage() {
           console.error('Error loading league circuits:', circuitErr);
         }
       } catch (err) {
-        console.error(err);
+        console.error('Error loading initial data:', err);
         setError('Failed to load league data');
       } finally {
         setLoading(false);
@@ -716,6 +745,18 @@ function LeaguePage() {
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+  };
+
+  const handleOpenInviteDialog = async () => {
+    try {
+      // Get fresh friends data when opening the dialog
+      const friendsData = await getFriends();
+      setFriends(friendsData);
+      setInviteDialogOpen(true);
+    } catch (err) {
+      console.error('Failed to load friends:', err);
+      setError('Failed to load friends list');
+    }
   };
 
   return (
@@ -1219,7 +1260,7 @@ function LeaguePage() {
                         variant="outlined"
                         size="small"
                         startIcon={<AddIcon />}
-                        onClick={() => setInviteDialogOpen(true)}
+                        onClick={handleOpenInviteDialog}
                         sx={{
                           borderColor: '#8B5CF6',
                           color: '#8B5CF6',
