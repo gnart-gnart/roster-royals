@@ -644,6 +644,27 @@ function LeaguePage() {
     return getImageUrl(image);
   };
 
+  // Function to get member profile image source
+  const getMemberImageSource = (member) => {
+    // If this is the current user, check for embedded image data
+    if (member.id === user.id) {
+      // Try embedded image from user object first
+      if (user.embeddedImageData) {
+        return user.embeddedImageData;
+      }
+      
+      // Then try session storage with user-specific key
+      const userSpecificKey = `profileImageDataUrl_${member.id}`;
+      const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+      if (profileImageDataUrl) {
+        return profileImageDataUrl;
+      }
+    }
+    
+    // Return null to use the default fallback (initials)
+    return null;
+  };
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
@@ -1182,7 +1203,10 @@ function LeaguePage() {
                         }
                       >
                         <ListItemAvatar>
-                          <Avatar sx={{ bgcolor: member.id === league?.captain?.id ? '#8B5CF6' : '#3B82F6' }}>
+                          <Avatar 
+                            src={getMemberImageSource(member)}
+                            sx={{ bgcolor: member.id === league?.captain?.id ? '#8B5CF6' : '#3B82F6' }}
+                          >
                             {member.username[0].toUpperCase()}
                           </Avatar>
                         </ListItemAvatar>
@@ -1266,6 +1290,7 @@ function LeaguePage() {
                         </Typography>
                         
                         <Avatar
+                          src={getMemberImageSource(member)}
                           sx={{
                             width: 32,
                             height: 32,

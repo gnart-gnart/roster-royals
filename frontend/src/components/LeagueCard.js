@@ -46,6 +46,27 @@ function LeagueCard({ league }) {
     return `${process.env.REACT_APP_API_URL}/media/${imageUrl.replace('media/', '')}`;
   };
 
+  // Function to get member profile image source
+  const getMemberImageSource = (member) => {
+    // If this is the current user, check for embedded image data
+    if (member.id === currentUser.id) {
+      // Try embedded image from user object first
+      if (currentUser.embeddedImageData) {
+        return currentUser.embeddedImageData;
+      }
+      
+      // Then try session storage with user-specific key
+      const userSpecificKey = `profileImageDataUrl_${member.id}`;
+      const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+      if (profileImageDataUrl) {
+        return profileImageDataUrl;
+      }
+    }
+    
+    // Fallback to the API-based avatar
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(member.username)}&background=random`;
+  };
+
   return (
     <Card 
       className="league-card" 
@@ -155,7 +176,7 @@ function LeagueCard({ league }) {
               <Avatar
                 key={member.id}
                 alt={member.username}
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(member.username)}&background=random`}
+                src={getMemberImageSource(member)}
                 sx={{ width: 28, height: 28 }}
               />
             ))}

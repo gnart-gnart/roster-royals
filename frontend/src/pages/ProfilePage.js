@@ -172,10 +172,6 @@ function ProfilePage() {
     const formData = new FormData();
     formData.append('profile_image', croppedImage);
     
-    // Log the local image URL for debugging
-    const localImageUrl = URL.createObjectURL(croppedImage);
-    console.log("Local image URL (before upload):", localImageUrl);
-    
     // Read the file as a data URL to store directly
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -191,8 +187,10 @@ function ProfilePage() {
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
-      // Also store in session storage as backup
-      sessionStorage.setItem('profileImageDataUrl', imageDataUrl);
+      // Store in session storage with user-specific key
+      const userSpecificKey = `profileImageDataUrl_${user.id}`;
+      sessionStorage.setItem(userSpecificKey, imageDataUrl);
+      console.log(`Stored image in session storage with key: ${userSpecificKey}`);
       
       // Close the cropper
       setShowCropper(false);
@@ -348,7 +346,7 @@ function ProfilePage() {
                 
                 {/* Use direct image data if available */}
                 <Avatar 
-                  src={user.embeddedImageData || sessionStorage.getItem('profileImageDataUrl')}
+                  src={user.embeddedImageData || (user.id ? sessionStorage.getItem(`profileImageDataUrl_${user.id}`) : null)}
                   sx={{ 
                     bgcolor: '#8B5CF6', 
                     width: 80, 
