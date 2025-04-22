@@ -34,11 +34,22 @@ jobs:
             echo "Ensuring correct database ownership and permissions..."
             # Wait a brief moment for PostgreSQL to initialize fully
             sleep 5
+            # Explicitly source the .env file to load DB credentials into the shell environment
+            # Assuming .env is in the current directory (/root/roster-royals)
+            if [ -f .env ]; then
+              echo "Sourcing .env file..."
+              set -a # Automatically export all variables defined in .env
+              source .env
+              set +a # Stop automatically exporting
+            else
+              echo "Warning: .env file not found in $(pwd). Relying on existing environment variables."
+            fi
+            # Debug: Print the variables to see if they were loaded correctly
+            echo "Using POSTGRES_USER='${POSTGRES_USER:-'(unset)'}' POSTGRES_DB='${POSTGRES_DB:-'(unset)'}'"
+
             # Execute commands as the POSTGRES_USER inside the 'pgdb' container
-            # This user should own the POSTGRES_DB database or have superuser privileges
-            # Ensure the user defined by POSTGRES_USER owns the database defined by POSTGRES_DB
+            # These should now use the values sourced from .env
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -c "ALTER DATABASE \"${POSTGRES_DB:-postgres}\" OWNER TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error changing DB owner..."
-            # Grant necessary privileges on the public schema to the Django user
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting schema privileges..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting table privileges..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting sequence privileges..."
