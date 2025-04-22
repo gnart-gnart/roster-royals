@@ -33,7 +33,8 @@ jobs:
 
             echo "Ensuring correct database ownership and permissions..."
             # Wait a brief moment for PostgreSQL to initialize fully
-            sleep 5
+            sleep 10  # Increased wait time to ensure PostgreSQL is fully ready
+            
             # Explicitly source the .env file to load DB credentials into the shell environment
             # Assuming .env is in the current directory (/root/roster-royals)
             if [ -f .env ]; then
@@ -47,49 +48,81 @@ jobs:
             # Debug: Print the variables to see if they were loaded correctly
             echo "Using POSTGRES_USER='${POSTGRES_USER:-'(unset)'}' POSTGRES_DB='${POSTGRES_DB:-'(unset)'}'"
 
-            # Execute commands as the POSTGRES_USER inside the 'pgdb' container
-            # Connect to the 'postgres' db for the ALTER DATABASE command
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d postgres -c "ALTER DATABASE \"${POSTGRES_DB:-postgres}\" OWNER TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error changing DB owner..."
-            # Connect to the specific application DB for GRANT commands
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting schema privileges..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting table privileges..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";" || echo "Continuing after potential harmless error granting sequence privileges..."
+            # First, connect as postgres superuser to ensure we have proper permissions for ownership changes
+            echo "Setting up database permissions as postgres superuser..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U postgres -d postgres -c "
+              DO \$\$
+              BEGIN
+                -- Create role if it doesn't exist
+                IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${POSTGRES_USER:-postgres}') THEN
+                  CREATE ROLE \"${POSTGRES_USER:-postgres}\" WITH LOGIN SUPERUSER PASSWORD '${POSTGRES_PASSWORD:-postgres}';
+                ELSE
+                  ALTER ROLE \"${POSTGRES_USER:-postgres}\" WITH SUPERUSER;
+                END IF;
+                
+                -- Grant ownership of the database
+                ALTER DATABASE \"${POSTGRES_DB:-postgres}\" OWNER TO \"${POSTGRES_USER:-postgres}\";
+              END
+              \$\$;
+            " || echo "Continuing after attempting to set up database permissions..."
+            
+            # Connect to the application database with the postgres superuser to grant privileges
+            echo "Granting privileges on application database to ${POSTGRES_USER}..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U postgres -d "${POSTGRES_DB:-postgres}" -c "
+              -- Grant schema privileges
+              GRANT ALL PRIVILEGES ON SCHEMA public TO \"${POSTGRES_USER:-postgres}\";
+              
+              -- Grant table privileges
+              GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";
+              
+              -- Grant sequence privileges
+              GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"${POSTGRES_USER:-postgres}\";
+              
+              -- Set default privileges for future tables and sequences
+              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO \"${POSTGRES_USER:-postgres}\";
+              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO \"${POSTGRES_USER:-postgres}\";
+            " || echo "Continuing after attempting to grant privileges..."
 
-            echo "Re-assigning ownership of all tables and sequences in ${POSTGRES_DB}…"
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb \
-              env PGPASSWORD="${POSTGRES_PASSWORD}" \
-              psql \
-                -U "${POSTGRES_USER}" \
-                -h 127.0.0.1 \
-                -d "${POSTGRES_DB}" \
-                -v ON_ERROR_STOP=1 \
-                -c "DO \$\$
-                  DECLARE rec RECORD;
-                  BEGIN
-                    -- Tables
-                    FOR rec IN
-                      SELECT schemaname, tablename 
-                        FROM pg_tables 
-                       WHERE schemaname = 'public'
-                    LOOP
-                      EXECUTE format(
-                        'ALTER TABLE %I.%I OWNER TO %I;',
-                        rec.schemaname, rec.tablename, '${POSTGRES_USER}'
-                      );
-                    END LOOP;
-                    -- Sequences
-                    FOR rec IN
-                      SELECT sequence_schema, sequence_name
-                        FROM information_schema.sequences
-                       WHERE sequence_schema = 'public'
-                    LOOP
-                      EXECUTE format(
-                        'ALTER SEQUENCE %I.%I OWNER TO %I;',
-                        rec.sequence_schema, rec.sequence_name, '${POSTGRES_USER}'
-                      );
-                    END LOOP;
-                  END
-                \$\$;"
+            # Transfer ownership of all objects to the application user
+            echo "Transferring ownership of database objects to ${POSTGRES_USER}..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T pgdb psql -U postgres -d "${POSTGRES_DB:-postgres}" -c "
+              DO \$\$
+              DECLARE 
+                rec RECORD;
+                cmd TEXT;
+              BEGIN
+                -- Tables
+                FOR rec IN 
+                  SELECT schemaname, tablename 
+                  FROM pg_tables 
+                  WHERE schemaname = 'public'
+                LOOP
+                  cmd := format('ALTER TABLE %I.%I OWNER TO %I;', 
+                          rec.schemaname, rec.tablename, '${POSTGRES_USER}');
+                  EXECUTE cmd;
+                  RAISE NOTICE 'Executed: %', cmd;
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    RAISE NOTICE 'Error changing ownership of table %: %', rec.tablename, SQLERRM;
+                END LOOP;
+                
+                -- Sequences
+                FOR rec IN 
+                  SELECT sequence_schema, sequence_name 
+                  FROM information_schema.sequences 
+                  WHERE sequence_schema = 'public'
+                LOOP
+                  cmd := format('ALTER SEQUENCE %I.%I OWNER TO %I;', 
+                          rec.sequence_schema, rec.sequence_name, '${POSTGRES_USER}');
+                  EXECUTE cmd;
+                  RAISE NOTICE 'Executed: %', cmd;
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    RAISE NOTICE 'Error changing ownership of sequence %: %', rec.sequence_name, SQLERRM;
+                END LOOP;
+              END
+              \$\$;
+            " || echo "Continuing after attempting to transfer ownership..."
 
             echo "Running database migrations…"
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec django-web \
@@ -97,10 +130,7 @@ jobs:
             echo "Cleaning up Docker build cache on runner..."
             # Build cache pruning on runner is less relevant now, but harmless to keep
             docker builder prune -af || true
-            # REMOVE Build step from runner environment
-            # echo "Rebuilding Docker images without cache..."
-            # REACT_APP_API_URL="${{ secrets.REACT_APP_API_URL_SECRET }}" docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
-
+            
             # ADD Build step to run on the droplet itself
             echo "Rebuilding Docker images on the droplet..."
             # This build command uses the .env file present on the droplet
