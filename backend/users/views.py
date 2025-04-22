@@ -379,6 +379,7 @@ def get_user_betting_stats(request):
         total_bets = 0
         won_bets = 0
         current_streak = 0
+        lifetime_winnings = 0
         
         # Get all league events with user bets
         league_events = LeagueEvent.objects.filter(market_data__has_key='user_bets')
@@ -399,6 +400,9 @@ def get_user_betting_stats(request):
                         result = bet.get('result', '').lower()
                         if result == 'won':
                             won_bets += 1
+                            # Add payout to lifetime winnings
+                            payout = float(bet.get('payout', 0))
+                            lifetime_winnings += payout
                         
                         # Add to chronological list for streak calculation
                         all_bets_results.append({
@@ -412,6 +416,9 @@ def get_user_betting_stats(request):
             total_bets += 1
             if bet.result == 'won':
                 won_bets += 1
+                # Need to calculate payout based on points_wagered and the odds if available
+                payout = bet.points_wagered * 2  # Default multiplier if we don't have odds
+                lifetime_winnings += payout
             
             # Add to chronological list for streak calculation
             all_bets_results.append({
@@ -439,10 +446,40 @@ def get_user_betting_stats(request):
         if total_bets > 0:
             win_rate = (won_bets / total_bets) * 100
         
+        # Calculate user level based on total bets and win rate
+        # Level 1: New user (0-5 bets)
+        # Level 2: Regular bettor (6-15 bets)
+        # Level 3: Advanced bettor (16-30 bets)
+        # Level 4: Expert bettor (31-50 bets)
+        # Level 5: Pro bettor (51+ bets)
+        # Add a bonus level for high win rates
+        base_level = 1
+        if total_bets > 50:
+            base_level = 5
+        elif total_bets > 30:
+            base_level = 4
+        elif total_bets > 15:
+            base_level = 3
+        elif total_bets > 5:
+            base_level = 2
+        
+        # Bonus for high win rate
+        win_rate_bonus = 0
+        if win_rate > 65:
+            win_rate_bonus = 1
+        
+        user_level = min(10, base_level + win_rate_bonus)  # Cap at level 10
+        
+        # Format the date joined
+        date_joined = user.date_joined.strftime('%b %Y') if user.date_joined else 'Unknown'
+        
         return Response({
             'total_bets': total_bets,
             'win_rate': round(win_rate, 1),
-            'current_streak': current_streak
+            'current_streak': current_streak,
+            'lifetime_winnings': round(lifetime_winnings, 2),
+            'user_level': user_level,
+            'date_joined': date_joined
         })
     
     except Exception as e:

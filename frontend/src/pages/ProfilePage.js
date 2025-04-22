@@ -61,7 +61,10 @@ function ProfilePage() {
   const [bettingStats, setBettingStats] = useState({
     total_bets: 0,
     win_rate: 0,
-    current_streak: 0
+    current_streak: 0,
+    lifetime_winnings: 0,
+    user_level: 1,
+    date_joined: ''
   });
   const [loadingStats, setLoadingStats] = useState(false);
   
@@ -422,8 +425,9 @@ function ProfilePage() {
                 </Typography>
               )}
               
+              {/* Use actual level from API */}
               <Chip 
-                label="Level 4" 
+                label={`Level ${loadingStats ? '...' : bettingStats.user_level}`}
                 sx={{ 
                   bgcolor: 'rgba(139, 92, 246, 0.2)', 
                   color: '#8B5CF6',
@@ -431,11 +435,12 @@ function ProfilePage() {
                 }} 
               />
               
+              {/* Use actual date joined from API */}
               <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 3 }}>
-                Member since Oct 2023
+                Member since {loadingStats ? '...' : bettingStats.date_joined}
               </Typography>
               
-              {/* Points Display */}
+              {/* Replace Points Display with Lifetime Winnings */}
               <Paper 
                 sx={{ 
                   bgcolor: 'rgba(22, 28, 36, 0.7)', 
@@ -446,10 +451,14 @@ function ProfilePage() {
                 }}
               >
                 <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#10B981', mb: 1 }}>
-                  {user.points || 0}
+                  {loadingStats ? (
+                    <CircularProgress size={30} sx={{ color: '#10B981' }} />
+                  ) : (
+                    `$${bettingStats.lifetime_winnings?.toFixed(2) || '0.00'}`
+                  )}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                  Available Points
+                  Lifetime Winnings
                 </Typography>
               </Paper>
 
