@@ -113,3 +113,9 @@ jobs:
             # echo "Pruning Docker system..."
             # docker system prune -af
             echo "Deployment successful!" 
+
+            echo "Starting React service..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d react-app
+            docker volume rm roster-royals_react_build || true
+            # then rebuild
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml build react-app 
