@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, 
   Typography, 
-  Avatar, 
   Container,
   Paper,
   Button,
@@ -11,23 +10,20 @@ import {
   Switch,
   Grid,
   Divider,
-  FormControl,
-  Select,
-  MenuItem,
-  RadioGroup,
-  Radio,
-  FormControlLabel,
-  InputLabel
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Alert,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings';
-import LanguageIcon from '@mui/icons-material/Language';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import DeleteIcon from '@mui/icons-material/Delete';
 import NavBar from '../components/NavBar';
+import { updatePassword, deleteAccount } from '../services/auth';
 
 function SettingsPage() {
   const navigate = useNavigate();
@@ -37,15 +33,23 @@ function SettingsPage() {
   const [settings, setSettings] = useState({
     showHistory: true,
     showWinRate: true,
-    emailNotifications: true,
-    pushNotifications: true,
-    friendRequests: true,
-    gameReminders: true,
-    specialOffers: false,
-    darkMode: true,
-    compactView: false
   });
   
+  // State for password change
+  const [passwordDialog, setPasswordDialog] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // State for delete confirmation
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
   // Handle switch changes
   const handleSwitchChange = (setting) => {
     setSettings(prev => ({
@@ -54,41 +58,92 @@ function SettingsPage() {
     }));
   };
   
+  // Handle password dialog open/close
+  const handleOpenPasswordDialog = () => {
+    setPasswordDialog(true);
+    setPasswordError('');
+    setPasswordSuccess('');
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+  
+  const handleClosePasswordDialog = () => {
+    setPasswordDialog(false);
+  };
+  
+  // Handle password change
+  const handlePasswordChange = async () => {
+    // Validate inputs
+    if (!currentPassword) {
+      setPasswordError('Current password is required');
+      return;
+    }
+    
+    if (!newPassword) {
+      setPasswordError('New password is required');
+      return;
+    }
+    
+    if (!confirmPassword) {
+      setPasswordError('Please confirm your new password');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+    
+    try {
+      console.log('Attempting to update password...');
+      await updatePassword(currentPassword, newPassword);
+      console.log('Password updated successfully');
+      setPasswordSuccess('Password updated successfully');
+      
+      // Reset fields
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordError('');
+      
+      // Close dialog after a delay to show success message
+      setTimeout(() => {
+        setPasswordDialog(false);
+        setPasswordSuccess('');
+      }, 1500);
+    } catch (error) {
+      console.error('Password change error:', error);
+      setPasswordError(error.message || 'Failed to update password');
+    }
+  };
+  
+  // Handle delete account dialog
+  const handleOpenDeleteDialog = () => {
+    setDeleteDialog(true);
+    setDeleteError('');
+  };
+  
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialog(false);
+  };
+  
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    try {
+      await deleteAccount();
+      // Redirect to login page
+      navigate('/');
+    } catch (error) {
+      console.error('Account deletion error:', error);
+      setDeleteError(error.message);
+    }
+  };
+  
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh' }}>
-      {/* Top Navigation Bar */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        p: 2, 
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        bgcolor: '#161821'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/home')}>
-          <EmojiEventsOutlinedIcon sx={{ color: '#FFD700', mr: 1 }} />
-          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-            ROSTER ROYALS
-          </Typography>
-        </Box>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton sx={{ color: '#f8fafc' }}>
-            <NotificationsIcon />
-          </IconButton>
-          <Avatar 
-            sx={{ 
-              bgcolor: '#8B5CF6', 
-              width: 32, 
-              height: 32, 
-              fontSize: '14px', 
-              fontWeight: 'bold' 
-            }}
-          >
-            {user.username[0].toUpperCase()}
-          </Avatar>
-        </Box>
-      </Box>
+      {/* Use NavBar component */}
+      <NavBar />
       
       {/* Main Content */}
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -140,6 +195,7 @@ function SettingsPage() {
                     borderColor: 'rgba(255, 255, 255, 0.2)',
                   }
                 }}
+                onClick={handleOpenPasswordDialog}
               >
                 Change Password
               </Button>
@@ -159,6 +215,7 @@ function SettingsPage() {
                     borderColor: 'rgba(239, 68, 68, 0.8)',
                   }
                 }}
+                onClick={handleOpenDeleteDialog}
               >
                 Delete Account
               </Button>
@@ -179,34 +236,6 @@ function SettingsPage() {
                 <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
                   Privacy
                 </Typography>
-              </Box>
-              
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle1" sx={{ color: '#f8fafc', mb: 1 }}>
-                  Profile Visibility
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 2 }}>
-                  Who can see your profile information
-                </Typography>
-                <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                  <Select
-                    value="friends"
-                    sx={{ 
-                      bgcolor: 'rgba(22, 28, 36, 0.7)',
-                      color: '#f8fafc',
-                      '.MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.1)',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
-                      },
-                    }}
-                  >
-                    <MenuItem value="public">Everyone</MenuItem>
-                    <MenuItem value="friends">Friends Only</MenuItem>
-                    <MenuItem value="private">Private</MenuItem>
-                  </Select>
-                </FormControl>
               </Box>
               
               <Box sx={{ mb: 2 }}>
@@ -262,349 +291,210 @@ function SettingsPage() {
               </Box>
             </Paper>
           </Grid>
-          
-          {/* Notifications */}
-          <Grid item xs={12} md={6}>
-            <Paper 
-              sx={{ 
-                p: 3, 
-                bgcolor: 'rgba(30, 41, 59, 0.7)', 
-                borderRadius: 2
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <NotificationsIcon sx={{ color: '#F59E0B', mr: 1 }} />
-                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                  Notifications
-                </Typography>
-              </Box>
-              
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ color: '#f8fafc' }}>
-                      Email Notifications
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      Receive updates via email
-                    </Typography>
-                  </Box>
-                  <Switch 
-                    checked={settings.emailNotifications}
-                    onChange={() => handleSwitchChange('emailNotifications')}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#8B5CF6',
-                      },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#8B5CF6',
-                      },
-                    }}
-                  />
-                </Box>
-              </Box>
-              
-              <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.05)', my: 2 }} />
-              
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ color: '#f8fafc' }}>
-                      Push Notifications
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      Receive alerts on your device
-                    </Typography>
-                  </Box>
-                  <Switch 
-                    checked={settings.pushNotifications}
-                    onChange={() => handleSwitchChange('pushNotifications')}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#8B5CF6',
-                      },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#8B5CF6',
-                      },
-                    }}
-                  />
-                </Box>
-              </Box>
-              
-              <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.05)', my: 2 }} />
-              
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ color: '#f8fafc' }}>
-                      Friend Requests
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      Get notified about new friend requests
-                    </Typography>
-                  </Box>
-                  <Switch 
-                    checked={settings.friendRequests}
-                    onChange={() => handleSwitchChange('friendRequests')}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#8B5CF6',
-                      },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#8B5CF6',
-                      },
-                    }}
-                  />
-                </Box>
-              </Box>
-              
-              <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.05)', my: 2 }} />
-              
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ color: '#f8fafc' }}>
-                      Game Reminders
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      Get reminded about upcoming games you've bet on
-                    </Typography>
-                  </Box>
-                  <Switch 
-                    checked={settings.gameReminders}
-                    onChange={() => handleSwitchChange('gameReminders')}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#8B5CF6',
-                      },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#8B5CF6',
-                      },
-                    }}
-                  />
-                </Box>
-              </Box>
-              
-              <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.05)', my: 2 }} />
-              
-              <Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ color: '#f8fafc' }}>
-                      Special Offers
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      Receive updates about bonuses and promotions
-                    </Typography>
-                  </Box>
-                  <Switch 
-                    checked={settings.specialOffers}
-                    onChange={() => handleSwitchChange('specialOffers')}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#8B5CF6',
-                      },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#8B5CF6',
-                      },
-                    }}
-                  />
-                </Box>
-              </Box>
-            </Paper>
-          </Grid>
-          
-          {/* Display Settings */}
-          <Grid item xs={12} md={6}>
-            <Paper 
-              sx={{ 
-                p: 3, 
-                bgcolor: 'rgba(30, 41, 59, 0.7)', 
-                borderRadius: 2
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <DisplaySettingsIcon sx={{ color: '#10B981', mr: 1 }} />
-                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                  Display
-                </Typography>
-              </Box>
-              
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ color: '#f8fafc' }}>
-                      Dark Mode
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      Use dark theme throughout the app
-                    </Typography>
-                  </Box>
-                  <Switch 
-                    checked={settings.darkMode}
-                    onChange={() => handleSwitchChange('darkMode')}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#8B5CF6',
-                      },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#8B5CF6',
-                      },
-                    }}
-                  />
-                </Box>
-              </Box>
-              
-              <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.05)', my: 2 }} />
-              
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ color: '#f8fafc' }}>
-                      Compact View
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      Display more content with less spacing
-                    </Typography>
-                  </Box>
-                  <Switch 
-                    checked={settings.compactView}
-                    onChange={() => handleSwitchChange('compactView')}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#8B5CF6',
-                      },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#8B5CF6',
-                      },
-                    }}
-                  />
-                </Box>
-              </Box>
-              
-              <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.05)', my: 2 }} />
-              
-              <Box>
-                <Typography variant="subtitle1" sx={{ color: '#f8fafc', mb: 2 }}>
-                  Theme Color
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 2 }}>
-                  Choose your preferred accent color
-                </Typography>
-                
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  {/* Purple (default) */}
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      bgcolor: '#8B5CF6',
-                      cursor: 'pointer',
-                      border: '2px solid white',
-                    }}
-                  />
-                  
-                  {/* Blue */}
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      bgcolor: '#60A5FA',
-                      cursor: 'pointer',
-                    }}
-                  />
-                  
-                  {/* Green */}
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      bgcolor: '#10B981',
-                      cursor: 'pointer',
-                    }}
-                  />
-                </Box>
-              </Box>
-            </Paper>
-          </Grid>
-          
-          {/* Regional Settings */}
-          <Grid item xs={12} md={6}>
-            <Paper 
-              sx={{ 
-                p: 3, 
-                bgcolor: 'rgba(30, 41, 59, 0.7)', 
-                borderRadius: 2
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <LanguageIcon sx={{ color: '#F59E0B', mr: 1 }} />
-                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                  Regional Settings
-                </Typography>
-              </Box>
-              
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle1" sx={{ color: '#f8fafc', mb: 1 }}>
-                  Language
-                </Typography>
-                <FormControl fullWidth variant="outlined">
-                  <Select
-                    value="en-US"
-                    sx={{ 
-                      bgcolor: 'rgba(22, 28, 36, 0.7)',
-                      color: '#f8fafc',
-                      '.MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.1)',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
-                      },
-                    }}
-                  >
-                    <MenuItem value="en-US">English (United States)</MenuItem>
-                    <MenuItem value="en-GB">English (United Kingdom)</MenuItem>
-                    <MenuItem value="es-ES">Español (España)</MenuItem>
-                    <MenuItem value="fr-FR">Français (France)</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-              
-              <Box>
-                <Typography variant="subtitle1" sx={{ color: '#f8fafc', mb: 1 }}>
-                  Time Zone
-                </Typography>
-                <FormControl fullWidth variant="outlined">
-                  <Select
-                    value="America/New_York"
-                    sx={{ 
-                      bgcolor: 'rgba(22, 28, 36, 0.7)',
-                      color: '#f8fafc',
-                      '.MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.1)',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
-                      },
-                    }}
-                  >
-                    <MenuItem value="America/New_York">Eastern Time (US & Canada)</MenuItem>
-                    <MenuItem value="America/Chicago">Central Time (US & Canada)</MenuItem>
-                    <MenuItem value="America/Denver">Mountain Time (US & Canada)</MenuItem>
-                    <MenuItem value="America/Los_Angeles">Pacific Time (US & Canada)</MenuItem>
-                    <MenuItem value="Europe/London">London</MenuItem>
-                    <MenuItem value="Europe/Paris">Paris</MenuItem>
-                    <MenuItem value="Asia/Tokyo">Tokyo</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-            </Paper>
-          </Grid>
         </Grid>
       </Container>
+      
+      {/* Password Change Dialog */}
+      <Dialog 
+        open={passwordDialog} 
+        onClose={handleClosePasswordDialog}
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(30, 41, 59, 0.95)',
+            borderRadius: 2,
+            width: '100%',
+            maxWidth: '400px'
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+          Change Password
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          {passwordError && (
+            <Alert severity="error" sx={{ mb: 2, bgcolor: 'rgba(239, 68, 68, 0.1)' }}>
+              {passwordError}
+            </Alert>
+          )}
+          {passwordSuccess && (
+            <Alert severity="success" sx={{ mb: 2, bgcolor: 'rgba(16, 185, 129, 0.1)' }}>
+              {passwordSuccess}
+            </Alert>
+          )}
+          <TextField
+            margin="dense"
+            label="Current Password"
+            type={showCurrentPassword ? "text" : "password"}
+            fullWidth
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <IconButton 
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  edge="end"
+                  sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                >
+                  {showCurrentPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                </IconButton>
+              )
+            }}
+            variant="outlined"
+            sx={{
+              mb: 2,
+              '& .MuiInputLabel-root': { color: '#9CA3AF' },
+              '& .MuiOutlinedInput-root': {
+                color: '#f8fafc',
+                '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
+                '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
+                '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
+              }
+            }}
+          />
+          <TextField
+            margin="dense"
+            label="New Password"
+            type={showNewPassword ? "text" : "password"}
+            fullWidth
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <IconButton 
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  edge="end"
+                  sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                >
+                  {showNewPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                </IconButton>
+              )
+            }}
+            variant="outlined"
+            sx={{
+              mb: 2,
+              '& .MuiInputLabel-root': { color: '#9CA3AF' },
+              '& .MuiOutlinedInput-root': {
+                color: '#f8fafc',
+                '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
+                '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
+                '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
+              }
+            }}
+          />
+          <TextField
+            margin="dense"
+            label="Confirm New Password"
+            type={showConfirmPassword ? "text" : "password"}
+            fullWidth
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <IconButton 
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  edge="end"
+                  sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                >
+                  {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                </IconButton>
+              )
+            }}
+            variant="outlined"
+            sx={{
+              mb: 1,
+              '& .MuiInputLabel-root': { color: '#9CA3AF' },
+              '& .MuiOutlinedInput-root': {
+                color: '#f8fafc',
+                '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
+                '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
+                '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', p: 2 }}>
+          <Button 
+            onClick={handleClosePasswordDialog}
+            sx={{ 
+              color: '#9CA3AF',
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handlePasswordChange}
+            variant="contained"
+            sx={{ 
+              bgcolor: '#8B5CF6',
+              '&:hover': { bgcolor: '#7C3AED' }
+            }}
+          >
+            Change Password
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog 
+        open={deleteDialog} 
+        onClose={handleCloseDeleteDialog}
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(30, 41, 59, 0.95)',
+            borderRadius: 2,
+            width: '100%',
+            maxWidth: '400px'
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+          Delete Account
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          {deleteError && (
+            <Alert severity="error" sx={{ mb: 2, bgcolor: 'rgba(239, 68, 68, 0.1)' }}>
+              {deleteError}
+            </Alert>
+          )}
+          <Typography sx={{ color: '#f8fafc' }}>
+            Are you sure you want to delete your account? This action cannot be undone.
+          </Typography>
+          <Typography sx={{ color: '#f8fafc', mt: 2, fontWeight: 'bold' }}>
+            All your data, including:
+          </Typography>
+          <Box component="ul" sx={{ color: '#9CA3AF', mt: 1, pl: 2 }}>
+            <li>Betting history</li>
+            <li>League participation</li>
+            <li>Friend connections</li>
+            <li>All other personal data</li>
+          </Box>
+          <Typography sx={{ color: '#f8fafc', mt: 2 }}>
+            will be permanently deleted from our systems.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', p: 2 }}>
+          <Button 
+            onClick={handleCloseDeleteDialog}
+            sx={{ 
+              color: '#9CA3AF',
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDeleteAccount}
+            variant="contained"
+            sx={{ 
+              bgcolor: '#EF4444',
+              '&:hover': { bgcolor: '#DC2626' }
+            }}
+          >
+            Confirm Deletion
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

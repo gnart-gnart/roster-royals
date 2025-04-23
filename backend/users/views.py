@@ -483,4 +483,58 @@ def get_user_betting_stats(request):
         })
     
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_password(request):
+    """
+    Update user password
+    Requires current_password and new_password in request data
+    """
+    user = request.user
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+    
+    if not current_password or not new_password:
+        return Response({'detail': 'Both current and new password are required'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    
+    # Verify current password
+    if not user.check_password(current_password):
+        return Response({'detail': 'Current password is incorrect'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    
+    # Set new password
+    user.set_password(new_password)
+    user.save()
+    
+    # Update token to force re-login with new password
+    Token.objects.filter(user=user).delete()
+    token, _ = Token.objects.get_or_create(user=user)
+    
+    return Response({
+        'detail': 'Password updated successfully',
+        'token': token.key
+    })
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+    """
+    Delete user account
+    """
+    user = request.user
+    
+    try:
+        # Delete user tokens
+        Token.objects.filter(user=user).delete()
+        
+        # Delete the user (this will cascade to related models if set up properly)
+        user.delete()
+        
+        return Response({'detail': 'Account deleted successfully'}, 
+                        status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'detail': f'Failed to delete account: {str(e)}'}, 
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
