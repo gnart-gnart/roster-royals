@@ -475,8 +475,22 @@ export const getUserProfile = async () => {
   return handleResponse(response);
 };
 
+export const getOtherUserProfile = async (userId) => {
+  const response = await fetch(`${API_URL}/api/profile/${userId}/`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
 export const getUserBettingStats = async () => {
   const response = await fetch(`${API_URL}/api/profile/betting-stats/`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
+export const getOtherUserBettingStats = async (userId) => {
+  const response = await fetch(`${API_URL}/api/profile/${userId}/betting-stats/`, {
     headers: getHeaders(),
   });
   return handleResponse(response);

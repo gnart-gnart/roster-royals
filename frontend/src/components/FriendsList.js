@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   List,
   ListItem,
@@ -8,11 +9,16 @@ import {
   Menu,
   MenuItem,
   Button,
+  ListItemAvatar,
+  Avatar,
+  Box,
+  Tooltip,
 } from '@mui/material';
-import { MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { MoreVert as MoreVertIcon, Person as PersonIcon, AccountCircle as AccountCircleIcon } from '@mui/icons-material';
 import { inviteToLeague, removeFriend } from '../services/api';
 
 function FriendsList({ friends, leagues, onFriendRemoved }) {
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [inviteMenuAnchor, setInviteMenuAnchor] = useState(null);
@@ -60,16 +66,50 @@ function FriendsList({ friends, leagues, onFriendRemoved }) {
     }
   };
 
+  const handleViewProfile = () => {
+    navigate(`/profile/${selectedFriend.id}`);
+    handleMenuClose();
+  };
+
   return (
     <List>
       {friends.map((friend) => (
-        <ListItem key={friend.id}>
+        <ListItem 
+          key={friend.id} 
+          button 
+          onClick={() => navigate(`/profile/${friend.id}`)}
+        >
+          <ListItemAvatar>
+            <Avatar sx={{ bgcolor: '#8B5CF6' }}>
+              {friend.username?.[0]?.toUpperCase() || 'U'}
+            </Avatar>
+          </ListItemAvatar>
           <ListItemText 
-            primary={friend.username}
+            primary={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                {friend.username}
+                <Tooltip title="View Profile">
+                  <AccountCircleIcon 
+                    fontSize="small" 
+                    sx={{ 
+                      ml: 1, 
+                      color: '#8B5CF6',
+                      opacity: 0.8,
+                      '&:hover': {
+                        opacity: 1
+                      }
+                    }} 
+                  />
+                </Tooltip>
+              </Box>
+            }
             secondary={`Points: ${friend.points}`}
           />
           <ListItemSecondaryAction>
-            <IconButton onClick={(e) => handleMenuOpen(e, friend)}>
+            <IconButton onClick={(e) => {
+              e.stopPropagation(); // Prevent triggering the ListItem onClick
+              handleMenuOpen(e, friend);
+            }}>
               <MoreVertIcon />
             </IconButton>
           </ListItemSecondaryAction>
@@ -81,6 +121,9 @@ function FriendsList({ friends, leagues, onFriendRemoved }) {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
+        <MenuItem onClick={handleViewProfile}>
+          View Profile
+        </MenuItem>
         {ownedLeagues.length > 0 && (
           <MenuItem onClick={handleInviteClick}>
             Invite to League

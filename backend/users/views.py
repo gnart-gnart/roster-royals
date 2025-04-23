@@ -537,4 +537,191 @@ def delete_account(request):
                         status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'detail': f'Failed to delete account: {str(e)}'}, 
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def view_user_profile(request, user_id):
+    """View another user's profile with privacy settings respected"""
+    try:
+        # Get the requested user
+        viewed_user = User.objects.get(id=user_id)
+        
+        # Get friendship status to determine what to show
+        is_friend = request.user.friends.filter(id=user_id).exists()
+        
+        # Basic serialization for the user
+        user_data = {
+            'id': viewed_user.id,
+            'username': viewed_user.username,
+            'points': viewed_user.points,
+            'date_joined': viewed_user.date_joined,
+            'bio': viewed_user.bio,
+            # Include profile image if available
+            'profile_image': viewed_user.profile_image.url if viewed_user.profile_image else None
+        }
+        
+        # Add friend status
+        user_data['is_friend'] = is_friend
+        
+        # If user has privacy settings, honor them
+        # Check if user has settings for visibility
+        if hasattr(viewed_user, 'settings'):
+            settings = viewed_user.settings
+            # Example of respecting settings (would need to match your settings model)
+            if not is_friend and not settings.get('show_profile_to_non_friends', True):
+                return Response({'error': 'Profile is private'}, status=403)
+        
+        return Response(user_data)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_other_user_betting_stats(request, user_id):
+    """Get another user's betting statistics with privacy settings respected"""
+    try:
+        # Get the requested user
+        viewed_user = User.objects.get(id=user_id)
+        
+        # Check if the viewer is a friend of the user
+        is_friend = request.user.friends.filter(id=user_id).exists()
+        
+        # Default values if user has hidden their stats
+        hidden_stats = {
+            'total_bets': 0,
+            'win_rate': 0,
+            'current_streak': 0,
+            'lifetime_winnings': 0,
+            'user_level': 1,
+            'date_joined': viewed_user.date_joined.strftime('%b %Y') if viewed_user.date_joined else 'Unknown',
+            'stats_visible': False
+        }
+        
+        # Check if viewing user is allowed to see betting stats
+        show_betting_history = True
+        show_win_rate = True
+        
+        # If the viewed user has set privacy settings, respect them
+        if hasattr(viewed_user, 'settings'):
+            if isinstance(viewed_user.settings, dict):
+                show_betting_history = viewed_user.settings.get('showHistory', True)
+                show_win_rate = viewed_user.settings.get('showWinRate', True)
+        
+        # If user is not a friend and settings are private, return hidden stats
+        if not is_friend and (not show_betting_history or not show_win_rate):
+            return Response(hidden_stats)
+        
+        # Otherwise, calculate and return the actual stats
+        try:
+            # Find all of the user's bets across all leagues
+            total_bets = 0
+            won_bets = 0
+            current_streak = 0
+            lifetime_winnings = 0
+            
+            # Get all league events with user bets
+            league_events = LeagueEvent.objects.filter(market_data__has_key='user_bets')
+            
+            # Track all bets chronologically for streak calculation
+            all_bets_results = []
+            
+            # Process bets from LeagueEvent market_data
+            for event in league_events:
+                if event.market_data and 'user_bets' in event.market_data:
+                    user_bets = [bet for bet in event.market_data.get('user_bets', []) 
+                                if bet.get('user_id') == viewed_user.id]
+                    
+                    for bet in user_bets:
+                        total_bets += 1
+                        # Check if the event is completed and has a result
+                        if event.completed and 'result' in bet:
+                            result = bet.get('result', '').lower()
+                            if result == 'won':
+                                won_bets += 1
+                                # Add payout to lifetime winnings
+                                payout = float(bet.get('payout', 0))
+                                lifetime_winnings += payout
+                            
+                            # Add to chronological list for streak calculation
+                            all_bets_results.append({
+                                'date': bet.get('bet_time', event.created_at),
+                                'result': result
+                            })
+            
+            # Process UserBet model if it's used in the system
+            user_bet_objects = UserBet.objects.filter(user=viewed_user)
+            for bet in user_bet_objects:
+                total_bets += 1
+                if bet.result == 'won':
+                    won_bets += 1
+                    # Need to calculate payout based on points_wagered and the odds if available
+                    payout = bet.points_wagered * 2  # Default multiplier if we don't have odds
+                    lifetime_winnings += payout
+                
+                # Add to chronological list for streak calculation
+                all_bets_results.append({
+                    'date': bet.created_at,
+                    'result': bet.result
+                })
+            
+            # Sort all bets by date
+            all_bets_results = sorted(all_bets_results, key=lambda x: x['date'], reverse=True)
+            
+            # Calculate current streak
+            if all_bets_results:
+                current_result = all_bets_results[0]['result']
+                for bet in all_bets_results:
+                    if bet['result'] == current_result:
+                        if current_result == 'won':
+                            current_streak += 1
+                        elif current_result == 'lost':
+                            current_streak -= 1
+                    else:
+                        break
+            
+            # Calculate win rate
+            win_rate = 0
+            if total_bets > 0:
+                win_rate = (won_bets / total_bets) * 100
+            
+            # Calculate user level
+            base_level = 1
+            if total_bets > 50:
+                base_level = 5
+            elif total_bets > 30:
+                base_level = 4
+            elif total_bets > 15:
+                base_level = 3
+            elif total_bets > 5:
+                base_level = 2
+            
+            # Bonus for high win rate
+            win_rate_bonus = 0
+            if win_rate > 65:
+                win_rate_bonus = 1
+            
+            user_level = min(10, base_level + win_rate_bonus)  # Cap at level 10
+            
+            # Format the date joined
+            date_joined = viewed_user.date_joined.strftime('%b %Y') if viewed_user.date_joined else 'Unknown'
+            
+            return Response({
+                'total_bets': total_bets if show_betting_history else 0,
+                'win_rate': round(win_rate, 1) if show_win_rate else 0,
+                'current_streak': current_streak if show_betting_history else 0,
+                'lifetime_winnings': round(lifetime_winnings, 2) if show_betting_history else 0,
+                'user_level': user_level,
+                'date_joined': date_joined,
+                'stats_visible': {
+                    'betting_history': show_betting_history,
+                    'win_rate': show_win_rate
+                }
+            })
+            
+        except Exception as e:
+            print(f"Error getting betting stats: {str(e)}")
+            return Response(hidden_stats)
+            
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404) 

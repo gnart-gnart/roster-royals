@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import { getLeagues, getFriends, removeFriend, getFriendRequests, getNotifications, handleFriendRequest, handleLeagueInvite, markNotificationsRead } from '../services/api';
 import LeagueCard from '../components/LeagueCard';
+import FriendsList from '../components/FriendsList';
 import NavBar from '../components/NavBar';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
@@ -452,23 +453,23 @@ function HomePage() {
                 borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
               }}>
                 <Typography variant="h6" sx={{ color: '#f8fafc', fontWeight: 'bold' }}>
-                Friends
-              </Typography>
-              <Button
-                size="small"
-                onClick={() => navigate('/add-friend')}
-                sx={{
+                  Friends
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => navigate('/add-friend')}
+                  sx={{
                     color: '#8B5CF6',
                     textTransform: 'none',
                     fontWeight: 'bold',
-                  '&:hover': {
+                    '&:hover': {
                       backgroundColor: 'rgba(139, 92, 246, 0.08)',
-                  },
-                }}
-              >
-                Add Friend
-              </Button>
-            </Box>
+                    },
+                  }}
+                >
+                  Add Friend
+                </Button>
+              </Box>
               
               {loading ? (
                 <Box sx={{ p: 2, textAlign: 'center', color: '#CBD5E1' }}>Loading friends...</Box>
@@ -478,54 +479,13 @@ function HomePage() {
                 <Box sx={{ p: 2, textAlign: 'center', color: '#CBD5E1' }}>No friends yet. Add some!</Box>
               ) : (
                 <Box sx={{ maxHeight: 'calc(100vh - 400px)', overflowY: 'auto' }}>
-                  {friends.map((friend) => (
-                    <Box 
-                      key={friend.id}
-                              sx={{
-                        p: 2, 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                        '&:last-child': {
-                          borderBottom: 'none',
-                        }
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar 
-                          sx={{ 
-                            bgcolor: '#8B5CF6', 
-                            width: 36, 
-                            height: 36, 
-                            fontSize: '16px',
-                            mr: 2,
-                          }}
-                        >
-                          {friend.username ? friend.username[0].toUpperCase() : 'U'}
-                        </Avatar>
-                        <Box>
-                          <Typography sx={{ color: '#f8fafc', fontWeight: 'medium' }}>
-                            {friend.username}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: '#CBD5E1' }}>
-                            {friend.points || 1200} points
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Chip 
-                        label="Online" 
-                        size="small"
-                        sx={{
-                          bgcolor: 'rgba(16, 185, 129, 0.1)', 
-                          color: '#10B981',
-                          fontSize: '12px',
-                          height: '24px',
-                          borderRadius: '12px',
-                        }} 
-                      />
-                    </Box>
-                  ))}
+                  <FriendsList 
+                    friends={friends} 
+                    leagues={leagues}
+                    onFriendRemoved={(friendId) => {
+                      setFriends(prev => prev.filter(f => f.id !== friendId));
+                    }}
+                  />
                 </Box>
               )}
             </Box>
