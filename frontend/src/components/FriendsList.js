@@ -28,6 +28,50 @@ function FriendsList({ friends, leagues, onFriendRemoved }) {
     league.captain.id === JSON.parse(localStorage.getItem('user')).id
   );
 
+  // Function to get the proper image URL
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    
+    // If the URL is already absolute (starts with http or https), return it as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    // If the URL starts with /media/, prepend the API URL
+    if (imageUrl.startsWith('/media/')) {
+      return `${process.env.REACT_APP_API_URL}${imageUrl}`;
+    }
+    // Otherwise, assume it's a relative media path and construct the full URL
+    return `${process.env.REACT_APP_API_URL}/media/${imageUrl.replace('media/', '')}`;
+  };
+
+  // Function to get friend profile image source
+  const getFriendImageSource = (friend) => {
+    const currentUser = JSON.parse(localStorage.getItem('user')) || {};
+    
+    // If this is the current user, check for embedded image data
+    if (friend.id === currentUser.id) {
+      // Try embedded image from user object first
+      if (currentUser.embeddedImageData) {
+        return currentUser.embeddedImageData;
+      }
+      
+      // Then try session storage with user-specific key
+      const userSpecificKey = `profileImageDataUrl_${friend.id}`;
+      const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+      if (profileImageDataUrl) {
+        return profileImageDataUrl;
+      }
+    }
+    
+    // Add fallback to use API-based avatar for other users
+    if (friend.profile_image_url) {
+      return getImageUrl(friend.profile_image_url);
+    }
+    
+    // Return avatar API URL as fallback
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(friend.username)}&background=random`;
+  };
+
   const handleMenuOpen = (event, friend) => {
     setAnchorEl(event.currentTarget);
     setSelectedFriend(friend);
@@ -80,7 +124,10 @@ function FriendsList({ friends, leagues, onFriendRemoved }) {
           onClick={() => navigate(`/profile/${friend.id}`)}
         >
           <ListItemAvatar>
-            <Avatar sx={{ bgcolor: '#8B5CF6' }}>
+            <Avatar 
+              sx={{ bgcolor: '#8B5CF6' }}
+              src={getFriendImageSource(friend)}
+            >
               {friend.username?.[0]?.toUpperCase() || 'U'}
             </Avatar>
           </ListItemAvatar>
