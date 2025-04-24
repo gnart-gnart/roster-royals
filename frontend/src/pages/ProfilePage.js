@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, 
@@ -38,6 +38,14 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import NavBar from '../components/NavBar';
 import CircularImageCropper from '../components/CircularImageCropper';
 import { getUserProfile, updateUserProfile, getUserBettingStats, getUserBetHistory } from '../services/api';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
+  ResponsiveContainer, Legend
+} from 'recharts';
+import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
 
 function ProfilePage() {
   const navigate = useNavigate();
@@ -343,6 +351,307 @@ function ProfilePage() {
       setBetDetailsOpen(false);
     }
   };
+
+  // Generate historical performance data
+  const generatePerformanceData = useCallback(() => {
+    // Create mock performance data based on betting history and stats
+    if (!betHistory || betHistory.length === 0) {
+      // Generate some placeholder data with stable values (no randomness)
+      const baseWinRate = 48; // Starting win rate
+      const baseProfit = 120;  // Starting profit
+      
+      // Create a stable pattern of data points
+      return Array.from({ length: 7 }, (_, i) => {
+        // Use a stable pattern: slight increase, then plateau for win rate
+        // Consistent growth pattern for profit
+        const winRatePattern = [0, 3, 5, 6, 8, 7, 9]; // predetermined pattern
+        const profitPattern = [0, 35, 65, 85, 130, 165, 210]; // predetermined pattern
+        
+        return {
+          date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          winRate: baseWinRate + winRatePattern[i],
+          profit: baseProfit + profitPattern[i]
+        };
+      });
+    }
+
+    // Sort history by date (oldest first)
+    const sortedHistory = [...betHistory].sort(
+      (a, b) => new Date(a.date) - new Date(b.date)
+    );
+
+    // Calculate cumulative win rate and profit over time
+    let wins = 0;
+    let totalBets = 0;
+    let cumulativeProfit = 0;
+
+    return sortedHistory.map((bet) => {
+      // Update counters
+      totalBets++;
+      if (bet.result.toLowerCase() === 'won') {
+        wins++;
+        // Add profit (payout minus amount wagered)
+        // Safely parse payout value, handling different data types
+        const payout = parseFloat(typeof bet.payout === 'string' ? bet.payout.replace(/[^0-9.-]+/g, '') : bet.payout || 0);
+        const amount = parseFloat(typeof bet.amount === 'string' ? bet.amount.replace(/[^0-9.-]+/g, '') : bet.amount || 0);
+        cumulativeProfit += (payout - amount);
+      } else if (bet.result.toLowerCase() === 'lost') {
+        // Subtract amount wagered
+        const amount = parseFloat(typeof bet.amount === 'string' ? bet.amount.replace(/[^0-9.-]+/g, '') : bet.amount || 0);
+        cumulativeProfit -= amount;
+      }
+
+      return {
+        date: formatDate(bet.date),
+        winRate: totalBets > 0 ? Math.round((wins / totalBets) * 100) : 0,
+        profit: Math.round(cumulativeProfit)
+      };
+    });
+  }, [betHistory, formatDate]);
+
+  // Get performance data
+  const [performanceData, setPerformanceData] = useState([]);
+  
+  // Only update performance data when betting history changes
+  useEffect(() => {
+    if (betHistory.length > 0 || performanceData.length === 0) {
+      setPerformanceData(generatePerformanceData());
+    }
+  }, [betHistory, generatePerformanceData, performanceData.length]);
+
+  // Create a memoized PerformanceChart component to prevent unnecessary re-renders
+  const PerformanceChart = memo(({ data, loading }) => {
+    if (loading) {
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+          <CircularProgress size={30} sx={{ color: '#8B5CF6' }} />
+        </Box>
+      );
+    }
+    
+    if (!data || data.length === 0) {
+      return (
+        <Typography variant="body1" sx={{ color: '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+          No performance data available
+        </Typography>
+      );
+    }
+    
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={data}
+          margin={{
+            top: 10,
+            right: 30,
+            left: 0,
+            bottom: 10,
+          }}
+        >
+          <defs>
+            <linearGradient id="colorWinRate" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
+              <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1}/>
+            </linearGradient>
+            <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
+              <stop offset="95%" stopColor="#10B981" stopOpacity={0.1}/>
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+          <XAxis 
+            dataKey="date" 
+            tick={{ fill: '#9CA3AF' }}
+            tickLine={{ stroke: '#9CA3AF' }}
+            axisLine={{ stroke: '#9CA3AF' }}
+          />
+          <YAxis 
+            yAxisId="left" 
+            tick={{ fill: '#9CA3AF' }}
+            tickLine={{ stroke: '#9CA3AF' }}
+            axisLine={{ stroke: '#9CA3AF' }}
+            label={{ value: 'Win Rate (%)', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
+          />
+          <YAxis 
+            yAxisId="right" 
+            orientation="right" 
+            tick={{ fill: '#9CA3AF' }}
+            tickLine={{ stroke: '#9CA3AF' }}
+            axisLine={{ stroke: '#9CA3AF' }}
+            label={{ value: 'Profit', angle: 90, position: 'insideRight', fill: '#9CA3AF' }}
+          />
+          <RechartsTooltip 
+            contentStyle={{ backgroundColor: 'rgba(30, 41, 59, 0.9)', border: 'none', borderRadius: '4px', color: '#f8fafc' }}
+            itemStyle={{ color: '#f8fafc' }}
+            labelStyle={{ color: '#f8fafc', fontWeight: 'bold' }}
+            formatter={(value, name) => [value, name === 'winRate' ? 'Win Rate (%)' : 'Profit']}
+          />
+          <Legend 
+            wrapperStyle={{ color: '#9CA3AF' }}
+            formatter={(value) => (value === 'winRate' ? 'Win Rate (%)' : 'Profit')}
+          />
+          <Area
+            type="monotone"
+            dataKey="winRate"
+            stroke="#8B5CF6"
+            fillOpacity={1}
+            fill="url(#colorWinRate)"
+            yAxisId="left"
+          />
+          <Area
+            type="monotone"
+            dataKey="profit"
+            stroke="#10B981"
+            fillOpacity={1}
+            fill="url(#colorProfit)"
+            yAxisId="right"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    );
+  });
+
+  // Create a memoized PerformanceMetrics component
+  const PerformanceMetrics = memo(({ betHistory, performanceData }) => {
+    // Calculate metrics once
+    const { avgWinAmount, bestWin, favoriteSport, trend } = useMemo(() => {
+      // Calculate average win amount
+      const wonBets = betHistory.filter(bet => bet.result.toLowerCase() === 'won');
+      let avgWinAmount = '$0';
+      if (wonBets.length > 0) {
+        const totalPayout = wonBets.reduce((sum, bet) => {
+          // Safely parse payout value, handling different data types
+          const payout = parseFloat(typeof bet.payout === 'string' ? bet.payout.replace(/[^0-9.-]+/g, '') : bet.payout || 0);
+          const amount = parseFloat(typeof bet.amount === 'string' ? bet.amount.replace(/[^0-9.-]+/g, '') : bet.amount || 0);
+          return sum + (payout - amount);
+        }, 0);
+        
+        avgWinAmount = `$${Math.round(totalPayout / wonBets.length)}`;
+      }
+      
+      // Calculate best win
+      let bestWin = '$0';
+      if (wonBets.length > 0) {
+        const bestBet = wonBets.reduce((best, bet) => {
+          // Safely parse payout value, handling different data types
+          const payout = parseFloat(typeof bet.payout === 'string' ? bet.payout.replace(/[^0-9.-]+/g, '') : bet.payout || 0);
+          const amount = parseFloat(typeof bet.amount === 'string' ? bet.amount.replace(/[^0-9.-]+/g, '') : bet.amount || 0);
+          const profit = payout - amount;
+          return profit > best.profit ? { profit, bet } : best;
+        }, { profit: 0, bet: null });
+        bestWin = `$${Math.round(bestBet.profit)}`;
+      }
+      
+      // Calculate favorite sport
+      let favoriteSport = 'N/A';
+      const sportCounts = betHistory.reduce((counts, bet) => {
+        const sportMatch = bet.event.match(/\(([^)]+)\)/);
+        const sport = sportMatch ? sportMatch[1] : 'Unknown';
+        counts[sport] = (counts[sport] || 0) + 1;
+        return counts;
+      }, {});
+      
+      const entries = Object.entries(sportCounts);
+      if (entries.length > 0) {
+        const [sport] = entries.reduce((max, current) => current[1] > max[1] ? current : max);
+        favoriteSport = sport === 'Unknown' ? 'Mixed' : sport;
+      }
+      
+      // Calculate trend
+      let trend = { icon: <TrendingFlatIcon sx={{ color: '#9CA3AF', mr: 0.5 }} />, text: 'Neutral' };
+      if (performanceData.length >= 2) {
+        const firstWinRate = performanceData[0].winRate;
+        const lastWinRate = performanceData[performanceData.length - 1].winRate;
+        const difference = lastWinRate - firstWinRate;
+        
+        if (difference > 5) {
+          trend = {
+            icon: <TrendingUpIcon sx={{ color: '#10B981', mr: 0.5 }} />,
+            text: 'Improving'
+          };
+        } else if (difference < -5) {
+          trend = {
+            icon: <TrendingDownIcon sx={{ color: '#EF4444', mr: 0.5 }} />,
+            text: 'Declining'
+          };
+        } else {
+          trend = {
+            icon: <TrendingFlatIcon sx={{ color: '#9CA3AF', mr: 0.5 }} />,
+            text: 'Steady'
+          };
+        }
+      }
+      
+      return { avgWinAmount, bestWin, favoriteSport, trend };
+    }, [betHistory, performanceData]);
+    
+    return (
+      <Box sx={{ mt: 3 }}>
+        <Grid container spacing={2}>
+          {/* Average Win */}
+          <Grid item xs={6} sm={3}>
+            <Box sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2, height: '100%' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <TrendingUpIcon sx={{ color: '#10B981', fontSize: '1rem', mr: 1 }} />
+                <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 'medium' }}>
+                  Avg Win Amount
+                </Typography>
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                {avgWinAmount}
+              </Typography>
+            </Box>
+          </Grid>
+          
+          {/* Most Profitable Bet */}
+          <Grid item xs={6} sm={3}>
+            <Box sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2, height: '100%' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <EmojiEventsIcon sx={{ color: '#F59E0B', fontSize: '1rem', mr: 1 }} />
+                <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 'medium' }}>
+                  Best Win
+                </Typography>
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                {bestWin}
+              </Typography>
+            </Box>
+          </Grid>
+          
+          {/* Favorite Sport */}
+          <Grid item xs={6} sm={3}>
+            <Box sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2, height: '100%' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <SportsSoccerIcon sx={{ color: '#60A5FA', fontSize: '1rem', mr: 1 }} />
+                <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 'medium' }}>
+                  Favorite Sport
+                </Typography>
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                {favoriteSport}
+              </Typography>
+            </Box>
+          </Grid>
+          
+          {/* Performance Trend */}
+          <Grid item xs={6} sm={3}>
+            <Box sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2, height: '100%' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <ShowChartIcon sx={{ color: '#8B5CF6', fontSize: '1rem', mr: 1 }} />
+                <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 'medium' }}>
+                  Trend
+                </Typography>
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc', display: 'flex', alignItems: 'center' }}>
+                {trend.icon}
+                {trend.text}
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  });
 
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh' }}>
@@ -680,19 +989,29 @@ function ProfilePage() {
               <Box 
                 sx={{ 
                   width: '100%', 
-                  height: 200, 
+                  height: 250, 
                   bgcolor: 'rgba(22, 28, 36, 0.7)',
                   borderRadius: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                   p: 2
                 }}
               >
-                <Typography variant="body1" sx={{ color: '#6B7280' }}>
-                  Performance chart would go here
-                </Typography>
+                {loadingStats || loadingHistory ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <CircularProgress size={30} sx={{ color: '#8B5CF6' }} />
+                  </Box>
+                ) : performanceData.length > 0 ? (
+                  <PerformanceChart data={performanceData} loading={loadingStats || loadingHistory} />
+                ) : (
+                  <Typography variant="body1" sx={{ color: '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    No performance data available
+                  </Typography>
+                )}
               </Box>
+              
+              {/* Performance Metrics */}
+              {!loadingStats && !loadingHistory && betHistory.length > 0 && (
+                <PerformanceMetrics betHistory={betHistory} performanceData={performanceData} />
+              )}
             </Paper>
             
             {/* Recent Betting Activity */}
