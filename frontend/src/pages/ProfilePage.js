@@ -38,14 +38,34 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import NavBar from '../components/NavBar';
 import CircularImageCropper from '../components/CircularImageCropper';
 import { getUserProfile, updateUserProfile, getUserBettingStats, getUserBetHistory } from '../services/api';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
-  ResponsiveContainer, Legend
-} from 'recharts';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 function ProfilePage() {
   const navigate = useNavigate();
@@ -352,29 +372,23 @@ function ProfilePage() {
     }
   };
 
-  // Generate historical performance data
+  // Generate historical performance data - Make this more stable
   const generatePerformanceData = useCallback(() => {
     // Create mock performance data based on betting history and stats
     if (!betHistory || betHistory.length === 0) {
-      // Generate some placeholder data with stable values (no randomness)
-      const baseWinRate = 48; // Starting win rate
-      const baseProfit = 120;  // Starting profit
-      
-      // Create a stable pattern of data points
-      return Array.from({ length: 7 }, (_, i) => {
-        // Use a stable pattern: slight increase, then plateau for win rate
-        // Consistent growth pattern for profit
-        const winRatePattern = [0, 3, 5, 6, 8, 7, 9]; // predetermined pattern
-        const profitPattern = [0, 35, 65, 85, 130, 165, 210]; // predetermined pattern
-        
-        return {
-          date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          winRate: baseWinRate + winRatePattern[i],
-          profit: baseProfit + profitPattern[i]
-        };
-      });
+      // Generate fixed placeholder data - completely static, no randomness
+      return [
+        { date: '2024-04-18', winRate: 48, profit: 120 },
+        { date: '2024-04-19', winRate: 51, profit: 155 },
+        { date: '2024-04-20', winRate: 53, profit: 185 },
+        { date: '2024-04-21', winRate: 54, profit: 205 },
+        { date: '2024-04-22', winRate: 56, profit: 250 },
+        { date: '2024-04-23', winRate: 55, profit: 285 },
+        { date: '2024-04-24', winRate: 57, profit: 330 }
+      ];
     }
 
+    // For real data, only sort and calculate once
     // Sort history by date (oldest first)
     const sortedHistory = [...betHistory].sort(
       (a, b) => new Date(a.date) - new Date(b.date)
@@ -409,18 +423,30 @@ function ProfilePage() {
     });
   }, [betHistory, formatDate]);
 
-  // Get performance data
+  // Get performance data - only update when necessary
   const [performanceData, setPerformanceData] = useState([]);
-  
-  // Only update performance data when betting history changes
-  useEffect(() => {
-    if (betHistory.length > 0 || performanceData.length === 0) {
-      setPerformanceData(generatePerformanceData());
-    }
-  }, [betHistory, generatePerformanceData, performanceData.length]);
 
-  // Create a memoized PerformanceChart component to prevent unnecessary re-renders
+  // Only update performance data when betting history changes - with strict checks
+  useEffect(() => {
+    // Only update if there's a meaningful change in bet history
+    if (betHistory.length > 0 || performanceData.length === 0) {
+      const newData = generatePerformanceData();
+      
+      // Only update state if data actually changed
+      const dataChanged = 
+        performanceData.length !== newData.length || 
+        JSON.stringify(performanceData) !== JSON.stringify(newData);
+      
+      if (dataChanged) {
+        setPerformanceData(newData);
+      }
+    }
+  }, [betHistory, generatePerformanceData, performanceData]);
+
+  // Now, replace the PerformanceChart component with a more stable version
   const PerformanceChart = memo(({ data, loading }) => {
+    // Remove console.log to reduce noise and prevent unnecessary work
+    
     if (loading) {
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
@@ -436,79 +462,120 @@ function ProfilePage() {
         </Typography>
       );
     }
-    
+
+    // Memoize chart data and options to prevent unnecessary recalculations
+    const chartData = useMemo(() => ({
+      labels: data.map(item => item.date),
+      datasets: [
+        {
+          label: 'Win Rate (%)',
+          data: data.map(item => item.winRate),
+          borderColor: '#8B5CF6',
+          backgroundColor: 'rgba(139, 92, 246, 0.2)',
+          fill: true,
+          tension: 0.4,
+          yAxisID: 'y',
+        },
+        {
+          label: 'Profit',
+          data: data.map(item => item.profit),
+          borderColor: '#10B981',
+          backgroundColor: 'rgba(16, 185, 129, 0.2)',
+          fill: true,
+          tension: 0.4,
+          yAxisID: 'y1',
+        },
+      ],
+    }), [data]);
+
+    const options = useMemo(() => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 0 // Disable animations to prevent flickering
+      },
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      stacked: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            color: '#9CA3AF',
+            font: {
+              family: 'Arial',
+            }
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(30, 41, 59, 0.9)',
+          titleColor: '#f8fafc',
+          bodyColor: '#f8fafc',
+          borderColor: 'rgba(30, 41, 59, 0.9)',
+          borderWidth: 1,
+        }
+      },
+      scales: {
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          grid: {
+            color: 'rgba(255, 255, 255, 0.1)',
+          },
+          ticks: {
+            color: '#9CA3AF',
+          },
+          title: {
+            display: true,
+            text: 'Win Rate (%)',
+            color: '#9CA3AF',
+          }
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          grid: {
+            drawOnChartArea: false,
+            color: 'rgba(255, 255, 255, 0.1)',
+          },
+          ticks: {
+            color: '#9CA3AF',
+          },
+          title: {
+            display: true,
+            text: 'Profit',
+            color: '#9CA3AF',
+          }
+        },
+        x: {
+          grid: {
+            color: 'rgba(255, 255, 255, 0.1)',
+          },
+          ticks: {
+            color: '#9CA3AF',
+          },
+        }
+      },
+    }), []); // Empty dependency array since nothing inside options needs to change
+
     return (
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={data}
-          margin={{
-            top: 10,
-            right: 30,
-            left: 0,
-            bottom: 10,
-          }}
-        >
-          <defs>
-            <linearGradient id="colorWinRate" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1}/>
-            </linearGradient>
-            <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="#10B981" stopOpacity={0.1}/>
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-          <XAxis 
-            dataKey="date" 
-            tick={{ fill: '#9CA3AF' }}
-            tickLine={{ stroke: '#9CA3AF' }}
-            axisLine={{ stroke: '#9CA3AF' }}
-          />
-          <YAxis 
-            yAxisId="left" 
-            tick={{ fill: '#9CA3AF' }}
-            tickLine={{ stroke: '#9CA3AF' }}
-            axisLine={{ stroke: '#9CA3AF' }}
-            label={{ value: 'Win Rate (%)', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
-          />
-          <YAxis 
-            yAxisId="right" 
-            orientation="right" 
-            tick={{ fill: '#9CA3AF' }}
-            tickLine={{ stroke: '#9CA3AF' }}
-            axisLine={{ stroke: '#9CA3AF' }}
-            label={{ value: 'Profit', angle: 90, position: 'insideRight', fill: '#9CA3AF' }}
-          />
-          <RechartsTooltip 
-            contentStyle={{ backgroundColor: 'rgba(30, 41, 59, 0.9)', border: 'none', borderRadius: '4px', color: '#f8fafc' }}
-            itemStyle={{ color: '#f8fafc' }}
-            labelStyle={{ color: '#f8fafc', fontWeight: 'bold' }}
-            formatter={(value, name) => [value, name === 'winRate' ? 'Win Rate (%)' : 'Profit']}
-          />
-          <Legend 
-            wrapperStyle={{ color: '#9CA3AF' }}
-            formatter={(value) => (value === 'winRate' ? 'Win Rate (%)' : 'Profit')}
-          />
-          <Area
-            type="monotone"
-            dataKey="winRate"
-            stroke="#8B5CF6"
-            fillOpacity={1}
-            fill="url(#colorWinRate)"
-            yAxisId="left"
-          />
-          <Area
-            type="monotone"
-            dataKey="profit"
-            stroke="#10B981"
-            fillOpacity={1}
-            fill="url(#colorProfit)"
-            yAxisId="right"
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      <Box sx={{ width: '100%', height: '100%', p: 1 }}>
+        <Line options={options} data={chartData} />
+      </Box>
     );
+  }, (prevProps, nextProps) => {
+    // Custom comparison for memo to only re-render when necessary
+    if (prevProps.loading !== nextProps.loading) return false;
+    if (!prevProps.data && !nextProps.data) return true;
+    if (!prevProps.data || !nextProps.data) return false;
+    if (prevProps.data.length !== nextProps.data.length) return false;
+    
+    // Deep compare data arrays to prevent unnecessary re-renders
+    return JSON.stringify(prevProps.data) === JSON.stringify(nextProps.data);
   });
 
   // Create a memoized PerformanceMetrics component
@@ -986,26 +1053,28 @@ function ProfilePage() {
                 </Typography>
               </Box>
               
-              <Box 
+              {/* Container for the chart - made more stable */}
+              <Box
                 sx={{ 
                   width: '100%', 
-                  height: 250, 
+                  height: 300,
                   bgcolor: 'rgba(22, 28, 36, 0.7)',
                   borderRadius: 2,
-                  p: 2
+                  overflow: 'hidden',
+                  position: 'relative',
+                  mb: 3,
+                  display: 'flex', // Use flex to make sure chart fills the container
+                  alignItems: 'stretch',
+                  justifyContent: 'center'
                 }}
               >
-                {loadingStats || loadingHistory ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                    <CircularProgress size={30} sx={{ color: '#8B5CF6' }} />
-                  </Box>
-                ) : performanceData.length > 0 ? (
-                  <PerformanceChart data={performanceData} loading={loadingStats || loadingHistory} />
-                ) : (
-                  <Typography variant="body1" sx={{ color: '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                    No performance data available
-                  </Typography>
-                )}
+                {/* Add a stable key to force proper mounting */}
+                <Box sx={{ width: '100%', flex: 1, position: 'relative' }} key="chart-container">
+                  <PerformanceChart 
+                    data={performanceData} 
+                    loading={loadingStats || loadingHistory} 
+                  />
+                </Box>
               </Box>
               
               {/* Performance Metrics */}
