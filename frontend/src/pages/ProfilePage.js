@@ -169,6 +169,10 @@ function ProfilePage() {
     try {
       setLoadingHistory(true);
       const history = await getUserBetHistory();
+      // Log the first bet object to see its structure
+      if (history && history.length > 0) {
+        console.log("Sample bet object structure:", history[0]);
+      }
       setBetHistory(history);
     } catch (error) {
       console.error('Failed to fetch bet history:', error);
@@ -612,16 +616,69 @@ function ProfilePage() {
       // Calculate favorite sport
       let favoriteSport = 'N/A';
       const sportCounts = betHistory.reduce((counts, bet) => {
-        const sportMatch = bet.event.match(/\(([^)]+)\)/);
-        const sport = sportMatch ? sportMatch[1] : 'Unknown';
+        // Improve sport extraction logic
+        
+        // Check if the bet has a direct sport property
+        let sport = 'Unknown';
+        
+        if (bet.sport) {
+          // If we have a direct sport property, use it
+          sport = bet.sport;
+        } else {
+          // Extract from the event name based on team or event name
+          // FC Barcelona Bàsquet @ AS Monaco -> Basketball
+          // Kevin Johnson @ Eric Tudor -> Boxing
+          // Cincinnati Bearcats @ Nebraska Cornhuskers -> Football
+          // Kansas State Wildcats @ Iowa State Cyclones -> Football
+          
+          if (bet.event.includes('Barcelona Bàsquet') || bet.event.includes('basketball') || 
+              bet.event.includes('euroleague') || bet.event.includes('NBA')) {
+            sport = 'Basketball';
+          } else if (bet.event.includes('boxing') || bet.event.includes('Johnson @ Eric Tudor')) {
+            sport = 'Boxing';
+          } else if (bet.event.includes('Bearcats') || bet.event.includes('Cornhuskers') || 
+                    bet.event.includes('Wildcats') || bet.event.includes('Cyclones') || 
+                    bet.event.includes('football') || bet.event.includes('ncaaf')) {
+            sport = 'Football';
+          } else if (bet.event.includes('soccer') || bet.event.includes('FC') || 
+                    /barcelona(?!\sbàsquet)/i.test(bet.event)) { // Barcelona but not Bàsquet
+            sport = 'Soccer';
+          }
+        }
+
+        // Clean up sport names for better display
+        if (sport.includes('basketball')) {
+          sport = 'Basketball';
+        } else if (sport.includes('boxing')) {
+          sport = 'Boxing';
+        } else if (sport.includes('football')) {
+          sport = 'Football';
+        }
+        
+        // Convert to proper case for display
+        sport = sport.charAt(0).toUpperCase() + sport.slice(1).toLowerCase();
+        
+        // Log what we found to help debug
+        console.log(`Detected sport for bet "${bet.event}": ${sport}`);
+        
         counts[sport] = (counts[sport] || 0) + 1;
         return counts;
       }, {});
-      
+
+      console.log("Sport counts:", sportCounts);
+
       const entries = Object.entries(sportCounts);
       if (entries.length > 0) {
-        const [sport] = entries.reduce((max, current) => current[1] > max[1] ? current : max);
-        favoriteSport = sport === 'Unknown' ? 'Mixed' : sport;
+        // Sort entries by count (highest first)
+        entries.sort((a, b) => b[1] - a[1]);
+        const [topSport, count] = entries[0];
+        
+        // Only set a favorite sport if we have at least 1 bet on it
+        if (count >= 1) {
+          favoriteSport = topSport === 'Unknown' ? 'Mixed' : topSport;
+        } else {
+          favoriteSport = 'Mixed'; // Not enough data for a clear favorite
+        }
       }
       
       // Calculate trend
