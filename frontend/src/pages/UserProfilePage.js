@@ -18,6 +18,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import LockIcon from '@mui/icons-material/Lock';
+import ScoreboardIcon from '@mui/icons-material/Scoreboard';
 import NavBar from '../components/NavBar';
 import { getOtherUserProfile, getOtherUserBettingStats } from '../services/api';
 
@@ -302,6 +303,7 @@ function UserProfilePage() {
                     >
                       {bettingStats.stats_visible?.betting_history ? (
                         <>
+                          <ScoreboardIcon sx={{ fontSize: 40, color: '#8B5CF6', mb: 1 }} />
                           <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
                             {bettingStats.total_bets}
                           </Typography>
