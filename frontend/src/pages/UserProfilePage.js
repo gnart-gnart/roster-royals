@@ -46,12 +46,69 @@ function UserProfilePage() {
   });
   const [loadingStats, setLoadingStats] = useState(true);
   
+  // Function to get the proper image URL
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    
+    // If the URL is already absolute (starts with http or https), return it as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    // If the URL starts with /media/, prepend the API URL
+    if (imageUrl.startsWith('/media/')) {
+      return `${process.env.REACT_APP_API_URL}${imageUrl}`;
+    }
+    // Otherwise, assume it's a relative media path and construct the full URL
+    return `${process.env.REACT_APP_API_URL}/media/${imageUrl.replace('media/', '')}`;
+  };
+
+  // Function to get user profile image source
+  const getUserImageSource = (user) => {
+    if (!user) return null;
+
+    // Debug: Log the user object to see all available image-related properties
+    console.log("User profile data:", user);
+    if (user.profile_image_url) console.log("Profile image URL:", user.profile_image_url);
+    if (user.profile_image) console.log("Profile image:", user.profile_image);
+    
+    const currentUser = JSON.parse(localStorage.getItem('user')) || {};
+    
+    // If this is the current user, check for embedded image data
+    if (user.id === currentUser.id) {
+      // Try embedded image from user object first
+      if (currentUser.embeddedImageData) {
+        return currentUser.embeddedImageData;
+      }
+      
+      // Then try session storage with user-specific key
+      const userSpecificKey = `profileImageDataUrl_${user.id}`;
+      const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+      if (profileImageDataUrl) {
+        return profileImageDataUrl;
+      }
+    }
+    
+    // Check for profile_image_url (serialized property)
+    if (user.profile_image_url) {
+      return getImageUrl(user.profile_image_url);
+    }
+    
+    // Check for profile_image (direct field from the view)
+    if (user.profile_image) {
+      return getImageUrl(user.profile_image);
+    }
+    
+    // Return avatar API URL as fallback
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=random`;
+  };
+  
   // Fetch user profile and betting stats
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
         const userData = await getOtherUserProfile(userId);
+        console.log('Fetched user profile data:', userData);
         setUser(userData);
       } catch (err) {
         console.error('Failed to load user profile:', err);
@@ -133,6 +190,10 @@ function UserProfilePage() {
     );
   }
   
+  // Get the image source for the user
+  const userImageSource = getUserImageSource(user);
+  console.log("Final user image source:", userImageSource);
+  
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh' }}>
       <NavBar />
@@ -173,7 +234,7 @@ function UserProfilePage() {
             >
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <Avatar 
-                  src={user.profile_image || null}
+                  src={userImageSource}
                   sx={{ 
                     bgcolor: '#8B5CF6', 
                     width: 140, 
