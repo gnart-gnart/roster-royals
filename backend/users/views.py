@@ -725,3 +725,62 @@ def get_other_user_betting_stats(request, user_id):
             
     except User.DoesNotExist:
         return Response({'error': 'User not found'}, status=404) 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_bet_history(request):
+    """Get the current user's betting history"""
+    user = request.user
+    
+    try:
+        bet_history = []
+        
+        # Get all league events with user bets
+        league_events = LeagueEvent.objects.filter(market_data__has_key='user_bets').order_by('-commence_time')
+        
+        # Process bets from LeagueEvent market_data
+        for event in league_events:
+            if event.market_data and 'user_bets' in event.market_data:
+                user_bets = [bet for bet in event.market_data.get('user_bets', []) 
+                            if bet.get('user_id') == user.id]
+                
+                for bet in user_bets:
+                    # Only add to history if the event is completed or the bet has a result
+                    if event.completed or 'result' in bet:
+                        bet_entry = {
+                            'id': f"{event.id}_{bet.get('user_id')}",
+                            'date': bet.get('bet_time', event.created_at),
+                            'event': event.event_name or f"{event.home_team} vs {event.away_team}",
+                            'pick': bet.get('outcomeKey', 'Unknown'),
+                            'amount': bet.get('amount', 0),
+                            'result': bet.get('result', 'Pending') if event.completed else 'Pending',
+                            'payout': bet.get('payout', 0) if event.completed and bet.get('result', '').lower() == 'won' else 0,
+                            'league_id': event.league.id if event.league else None,
+                            'event_id': event.id
+                        }
+                        bet_history.append(bet_entry)
+        
+        # Process UserBet model if it's used in the system
+        user_bet_objects = UserBet.objects.filter(user=user).order_by('-created_at')
+        for bet in user_bet_objects:
+            bet_entry = {
+                'id': f"userbet_{bet.id}",
+                'date': bet.created_at.strftime('%Y-%m-%d'),
+                'event': bet.bet.name if bet.bet else 'Unknown Event',
+                'pick': bet.choice,
+                'amount': bet.points_wagered,
+                'result': bet.result.capitalize() if bet.result else 'Pending',
+                'payout': bet.points_earned if bet.result == 'won' else 0,
+                'league_id': bet.bet.league.id if bet.bet and bet.bet.league else None,
+                'event_id': bet.league_event.id if bet.league_event else None
+            }
+            bet_history.append(bet_entry)
+        
+        # Sort the combined history by date, most recent first
+        bet_history.sort(key=lambda x: x['date'], reverse=True)
+        
+        return Response(bet_history)
+    
+    except Exception as e:
+        print(f"Error getting bet history: {str(e)}")
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 

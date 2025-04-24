@@ -489,6 +489,13 @@ export const getUserBettingStats = async () => {
   return handleResponse(response);
 };
 
+export const getUserBetHistory = async () => {
+  const response = await fetch(`${API_URL}/api/profile/bet-history/`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
 export const getOtherUserBettingStats = async (userId) => {
   const response = await fetch(`${API_URL}/api/profile/${userId}/betting-stats/`, {
     headers: getHeaders(),

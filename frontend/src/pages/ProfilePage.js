@@ -37,7 +37,7 @@ import WhatshotIcon from '@mui/icons-material/Whatshot';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import NavBar from '../components/NavBar';
 import CircularImageCropper from '../components/CircularImageCropper';
-import { getUserProfile, updateUserProfile, getUserBettingStats } from '../services/api';
+import { getUserProfile, updateUserProfile, getUserBettingStats, getUserBetHistory } from '../services/api';
 
 function ProfilePage() {
   const navigate = useNavigate();
@@ -68,13 +68,12 @@ function ProfilePage() {
   });
   const [loadingStats, setLoadingStats] = useState(false);
   
-  // Mock data for the betting history
-  const recentBets = [
-    { id: 1, date: '2023-11-20', event: 'Lakers vs Warriors', pick: 'Lakers', amount: 100, result: 'Won', payout: 180 },
-    { id: 2, date: '2023-11-18', event: 'Chiefs vs Eagles', pick: 'Chiefs', amount: 150, result: 'Won', payout: 270 },
-    { id: 3, date: '2023-11-15', event: 'Yankees vs Red Sox', pick: 'Yankees', amount: 75, result: 'Lost', payout: 0 },
-    { id: 4, date: '2023-11-10', event: 'Celtics vs Bucks', pick: 'Celtics', amount: 120, result: 'Won', payout: 216 },
-  ];
+  // Replace mock data with real betting history state
+  const [betHistory, setBetHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
+  const [selectedBet, setSelectedBet] = useState(null);
+  const [betDetailsOpen, setBetDetailsOpen] = useState(false);
   
   // Mock data for achievements
   const achievements = [
@@ -137,7 +136,21 @@ function ProfilePage() {
     }
   }, []);
 
-  // Update useEffect to also fetch betting stats
+  // Add a function to fetch bet history
+  const fetchBetHistory = useCallback(async () => {
+    try {
+      setLoadingHistory(true);
+      const history = await getUserBetHistory();
+      setBetHistory(history);
+    } catch (error) {
+      console.error('Failed to fetch bet history:', error);
+      setError('Failed to load betting history. Please try again later.');
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, []);
+
+  // Update useEffect to also fetch betting history
   useEffect(() => {
     // Attempt to load user data if not already present
     const fetchUserData = async () => {
@@ -165,7 +178,29 @@ function ProfilePage() {
     // Execute fetch operations
     fetchUserData();
     fetchBettingStats();
-  }, [fetchBettingStats]);
+    fetchBetHistory();
+  }, [fetchBettingStats, fetchBetHistory]);
+
+  // Function to toggle showing all bet history
+  const handleToggleHistory = () => {
+    setShowAllHistory(!showAllHistory);
+  };
+
+  // Format date from ISO to readable format
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+  };
+
+  // Get the bets to display based on showAllHistory state
+  const getDisplayedBets = () => {
+    if (showAllHistory) {
+      return betHistory;
+    } else {
+      return betHistory.slice(0, 4); // Show only the first 4 bets
+    }
+  };
 
   const handleEditProfile = () => {
     setEditDialogOpen(true);
@@ -289,7 +324,26 @@ function ProfilePage() {
       open: false
     });
   };
+
+  // Function to handle clicking on a bet
+  const handleBetClick = (bet) => {
+    setSelectedBet(bet);
+    setBetDetailsOpen(true);
+  };
   
+  // Function to close bet details dialog
+  const handleCloseBetDetails = () => {
+    setBetDetailsOpen(false);
+  };
+
+  // Function to navigate to event details
+  const handleViewEvent = () => {
+    if (selectedBet && selectedBet.event_id && selectedBet.league_id) {
+      navigate(`/league/${selectedBet.league_id}/event/${selectedBet.event_id}`);
+      setBetDetailsOpen(false);
+    }
+  };
+
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh' }}>
       {/* Replace the custom navigation with the NavBar component */}
@@ -656,57 +710,94 @@ function ProfilePage() {
                 </Typography>
               </Box>
               
-              <TableContainer sx={{ bgcolor: 'transparent' }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Date</TableCell>
-                      <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Event</TableCell>
-                      <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Pick</TableCell>
-                      <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Amount</TableCell>
-                      <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Result</TableCell>
-                      <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Payout</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {recentBets.map((bet) => (
-                      <TableRow key={bet.id}>
-                        <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>{bet.date}</TableCell>
-                        <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>{bet.event}</TableCell>
-                        <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>{bet.pick}</TableCell>
-                        <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>{bet.amount}</TableCell>
-                        <TableCell sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                          <Chip
-                            label={bet.result}
-                            size="small"
-                            sx={{
-                              bgcolor: bet.result === 'Won' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                              color: bet.result === 'Won' ? '#10B981' : '#EF4444',
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>{bet.payout}</TableCell>
+              {loadingHistory ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                  <CircularProgress size={24} sx={{ color: '#8B5CF6' }} />
+                </Box>
+              ) : betHistory.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography variant="body1" sx={{ color: '#9CA3AF' }}>
+                    No betting history found. Place your first bet to see it here!
+                  </Typography>
+                </Box>
+              ) : (
+                <TableContainer sx={{ bgcolor: 'transparent' }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Date</TableCell>
+                        <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Event</TableCell>
+                        <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Pick</TableCell>
+                        <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Amount</TableCell>
+                        <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Result</TableCell>
+                        <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Payout</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {getDisplayedBets().map((bet) => (
+                        <TableRow key={bet.id} 
+                          onClick={() => handleBetClick(bet)}
+                          sx={{ 
+                            cursor: 'pointer',
+                            '&:hover': {
+                              bgcolor: 'rgba(255, 255, 255, 0.03)'
+                            }
+                          }}
+                        >
+                          <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            {formatDate(bet.date)}
+                          </TableCell>
+                          <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            {bet.event}
+                          </TableCell>
+                          <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            {bet.pick}
+                          </TableCell>
+                          <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            {bet.amount}
+                          </TableCell>
+                          <TableCell sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            <Chip
+                              label={bet.result}
+                              size="small"
+                              sx={{
+                                bgcolor: bet.result.toLowerCase() === 'won' ? 'rgba(16, 185, 129, 0.1)' : 
+                                        bet.result.toLowerCase() === 'lost' ? 'rgba(239, 68, 68, 0.1)' : 
+                                        'rgba(107, 114, 128, 0.1)',
+                                color: bet.result.toLowerCase() === 'won' ? '#10B981' : 
+                                      bet.result.toLowerCase() === 'lost' ? '#EF4444' : 
+                                      '#6B7280',
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            {bet.payout}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
               
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                <Button
-                  variant="outlined"
-                  sx={{
-                    borderColor: 'rgba(255, 255, 255, 0.1)',
-                    color: '#f8fafc',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                      borderColor: 'rgba(255, 255, 255, 0.2)',
-                    }
-                  }}
-                >
-                  View Full History
-                </Button>
-              </Box>
+              {betHistory.length > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={handleToggleHistory}
+                    sx={{
+                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                      color: '#f8fafc',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                      }
+                    }}
+                  >
+                    {showAllHistory ? 'Show Less' : 'View Full History'}
+                  </Button>
+                </Box>
+              )}
             </Paper>
           </Grid>
         </Grid>
@@ -796,6 +887,88 @@ function ProfilePage() {
           onCancel={handleCropCancel}
         />
       )}
+      
+      {/* Bet Details Dialog */}
+      <Dialog 
+        open={betDetailsOpen} 
+        onClose={handleCloseBetDetails}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(30, 41, 59, 0.95)',
+            color: '#f8fafc',
+            backdropFilter: 'blur(8px)'
+          }
+        }}
+      >
+        {selectedBet && (
+          <>
+            <DialogTitle sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              Bet Details
+            </DialogTitle>
+            <DialogContent sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2" sx={{ color: '#9CA3AF' }}>Event</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>{selectedBet.event}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2" sx={{ color: '#9CA3AF' }}>Date</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>{formatDate(selectedBet.date)}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2" sx={{ color: '#9CA3AF' }}>Pick</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>{selectedBet.pick}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2" sx={{ color: '#9CA3AF' }}>Amount Wagered</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>{selectedBet.amount}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2" sx={{ color: '#9CA3AF' }}>Result</Typography>
+                  <Chip
+                    label={selectedBet.result}
+                    size="small"
+                    sx={{
+                      mb: 2,
+                      bgcolor: selectedBet.result.toLowerCase() === 'won' ? 'rgba(16, 185, 129, 0.1)' : 
+                              selectedBet.result.toLowerCase() === 'lost' ? 'rgba(239, 68, 68, 0.1)' : 
+                              'rgba(107, 114, 128, 0.1)',
+                      color: selectedBet.result.toLowerCase() === 'won' ? '#10B981' : 
+                            selectedBet.result.toLowerCase() === 'lost' ? '#EF4444' : 
+                            '#6B7280',
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2" sx={{ color: '#9CA3AF' }}>Payout</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>{selectedBet.payout}</Typography>
+                </Grid>
+              </Grid>
+            </DialogContent>
+            <DialogActions sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', p: 2 }}>
+              <Button onClick={handleCloseBetDetails} sx={{ color: '#9CA3AF' }}>
+                Close
+              </Button>
+              {selectedBet.event_id && selectedBet.league_id && (
+                <Button 
+                  onClick={handleViewEvent} 
+                  variant="contained"
+                  sx={{ 
+                    bgcolor: '#8B5CF6',
+                    '&:hover': {
+                      bgcolor: '#7C3AED'
+                    }
+                  }}
+                >
+                  View Event
+                </Button>
+              )}
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
       
       {/* Snackbar for notifications */}
       <Snackbar 
