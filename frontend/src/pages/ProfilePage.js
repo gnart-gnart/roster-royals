@@ -631,19 +631,37 @@ function ProfilePage() {
           label: 'Win Rate (%)',
           data: data.map(item => item.winRate),
           borderColor: '#8B5CF6',
-          backgroundColor: 'rgba(139, 92, 246, 0.2)',
+          borderWidth: 3,
+          backgroundColor: 'rgba(139, 92, 246, 0.1)', // Reduced opacity
           fill: true,
           tension: 0.4,
           yAxisID: 'y',
+          pointRadius: 4,
+          pointBackgroundColor: '#8B5CF6',
+          pointBorderColor: '#121a29',
+          pointBorderWidth: 2,
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: '#8B5CF6',
+          pointHoverBorderColor: '#fff',
+          pointHoverBorderWidth: 2,
         },
         {
           label: 'Profit',
           data: data.map(item => item.profit),
           borderColor: '#10B981',
-          backgroundColor: 'rgba(16, 185, 129, 0.2)',
+          borderWidth: 3,
+          backgroundColor: 'rgba(16, 185, 129, 0.1)', // Reduced opacity
           fill: true,
           tension: 0.4,
           yAxisID: 'y1',
+          pointRadius: 4,
+          pointBackgroundColor: '#10B981',
+          pointBorderColor: '#121a29',
+          pointBorderWidth: 2,
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: '#10B981',
+          pointHoverBorderColor: '#fff',
+          pointHoverBorderWidth: 2,
         },
       ],
     }), [data]);
@@ -662,19 +680,48 @@ function ProfilePage() {
       plugins: {
         legend: {
           position: 'top',
+          align: 'center',
           labels: {
-            color: '#9CA3AF',
+            usePointStyle: true, // Use rounded points instead of rectangles for legend
+            padding: 15,
+            color: '#f8fafc',
             font: {
               family: 'Arial',
-            }
+              size: 12,
+              weight: 'bold'
+            },
+            boxWidth: 8,
+            boxHeight: 8,
           }
         },
         tooltip: {
-          backgroundColor: 'rgba(30, 41, 59, 0.9)',
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
           titleColor: '#f8fafc',
           bodyColor: '#f8fafc',
-          borderColor: 'rgba(30, 41, 59, 0.9)',
+          borderColor: 'rgba(139, 92, 246, 0.3)',
           borderWidth: 1,
+          cornerRadius: 8,
+          padding: 12,
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.2)',
+          usePointStyle: true,
+          titleFont: {
+            family: 'Arial',
+            size: 14,
+            weight: 'bold'
+          },
+          bodyFont: {
+            family: 'Arial',
+            size: 12
+          },
+          callbacks: {
+            label: function(context) {
+              const label = context.dataset.label || '';
+              const value = context.parsed.y;
+              return context.datasetIndex === 0 
+                ? `${label}: ${value}%` 
+                : `${label}: $${value}`;
+            }
+          }
         }
       },
       scales: {
@@ -682,48 +729,114 @@ function ProfilePage() {
           type: 'linear',
           display: true,
           position: 'left',
-          grid: {
-            color: 'rgba(255, 255, 255, 0.1)',
-          },
-          ticks: {
-            color: '#9CA3AF',
-          },
           title: {
             display: true,
             text: 'Win Rate (%)',
+            color: '#a78bfa',
+            font: {
+              family: 'Arial',
+              size: 12,
+              weight: 'bold'
+            },
+            padding: {top: 0, bottom: 10}
+          },
+          min: 0, // Start from 0 to avoid confusion
+          grid: {
+            color: 'rgba(255, 255, 255, 0.05)',
+            drawTicks: false,
+            drawBorder: false,
+          },
+          ticks: {
             color: '#9CA3AF',
+            padding: 10,
+            font: {
+              size: 11
+            },
+            stepSize: 25 // More readable step size
+          },
+          border: {
+            display: false
           }
         },
         y1: {
           type: 'linear',
           display: true,
           position: 'right',
+          title: {
+            display: true,
+            text: 'Profit ($)',
+            color: '#10B981',
+            font: {
+              family: 'Arial',
+              size: 12,
+              weight: 'bold'
+            },
+            padding: {top: 0, bottom: 10}
+          },
           grid: {
             drawOnChartArea: false,
-            color: 'rgba(255, 255, 255, 0.1)',
+            drawTicks: false,
+            drawBorder: false
           },
           ticks: {
             color: '#9CA3AF',
+            padding: 10,
+            font: {
+              size: 11
+            },
+            callback: function(value) {
+              return '$' + value;
+            }
           },
-          title: {
-            display: true,
-            text: 'Profit',
-            color: '#9CA3AF',
+          border: {
+            display: false
           }
         },
         x: {
           grid: {
-            color: 'rgba(255, 255, 255, 0.1)',
+            color: 'rgba(255, 255, 255, 0.05)',
+            drawTicks: false,
+            drawBorder: false,
+            lineWidth: 1,
           },
           ticks: {
             color: '#9CA3AF',
+            padding: 10,
+            font: {
+              size: 11
+            },
+            maxRotation: 0 // Horizontal labels
           },
+          border: {
+            display: false
+          }
         }
       },
+      layout: {
+        padding: 10
+      },
+      elements: {
+        line: {
+          borderWidth: 3,
+          tension: 0.4 // Smooth curve
+        },
+        point: {
+          hitRadius: 10, // Easier to hover
+        }
+      }
     }), []); // Empty dependency array since nothing inside options needs to change
 
     return (
-      <Box sx={{ width: '100%', height: '100%', p: 1 }}>
+      <Box 
+        sx={{ 
+          width: '100%', 
+          height: '100%', 
+          p: 1,
+          background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.1) 0%, rgba(15, 23, 42, 0.2) 100%)',
+          borderRadius: '12px',
+          backdropFilter: 'blur(2px)',
+        }}
+      >
         <Line options={options} data={chartData} />
       </Box>
     );
@@ -1187,64 +1300,190 @@ function ProfilePage() {
               </Grid>
             </Paper>
             
-            {/* Achievements */}
+            {/* Achievements - Enhanced visual design */}
             <Paper 
               sx={{ 
                 p: 3, 
                 bgcolor: 'rgba(30, 41, 59, 0.7)', 
                 borderRadius: 2,
-                mt: 3
+                mt: 3,
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                overflow: 'hidden',
+                position: 'relative'
               }}
             >
+              {/* Add a decorative gradient top border */}
+              <Box 
+                sx={{ 
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '4px',
+                  background: 'linear-gradient(90deg, #FFD700, #8B5CF6, #10B981)'
+                }}
+              />
+              
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <EmojiEventsIcon sx={{ color: '#FFD700', mr: 1 }} />
+                <EmojiEventsIcon sx={{ color: '#FFD700', mr: 1.5, fontSize: '1.75rem' }} />
                 <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
                   Achievements
                 </Typography>
               </Box>
               
-              {achievements.map(achievement => (
-                <Box 
-                  key={achievement.id} 
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    mb: 2,
-                    p: 2,
-                    borderRadius: 1,
-                    bgcolor: 'rgba(22, 28, 36, 0.7)'
-                  }}
-                >
-                  <Box 
+              {/* Achievement Items with improved styling */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {achievements.map(achievement => (
+                  <Paper 
+                    key={achievement.id} 
+                    elevation={0}
                     sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '20px',
-                      mr: 2,
-                      background: achievement.unlocked ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' : 'rgba(100, 100, 100, 0.2)',
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: 'rgba(22, 28, 36, 0.7)',
+                      transition: 'all 0.3s ease',
+                      border: '1px solid',
+                      borderColor: achievement.unlocked ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 255, 255, 0.03)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: achievement.unlocked ? '0 8px 16px rgba(255, 215, 0, 0.15)' : '0 4px 8px rgba(0, 0, 0, 0.1)',
+                        bgcolor: achievement.unlocked ? 'rgba(25, 32, 45, 0.9)' : 'rgba(22, 28, 36, 0.8)',
+                      }
                     }}
                   >
-                    {achievement.icon}
-                  </Box>
-                  <Box>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                      {achievement.name}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      {achievement.description}
-                    </Typography>
                     {achievement.unlocked && (
-                      <Typography variant="caption" sx={{ color: '#6B7280', display: 'block' }}>
-                        Unlocked: {achievement.unlockedDate}
-                      </Typography>
+                      <Box 
+                        sx={{ 
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          background: 'radial-gradient(circle at top right, rgba(255, 215, 0, 0.1), transparent 70%)',
+                          opacity: 0.6,
+                          zIndex: 0
+                        }}
+                      />
                     )}
-                  </Box>
-                </Box>
-              ))}
+                    
+                    {/* Achievement icon with animated background for unlocked achievements */}
+                    <Box 
+                      sx={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '22px',
+                        mr: 2,
+                        position: 'relative',
+                        background: achievement.unlocked 
+                          ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' 
+                          : 'rgba(100, 100, 100, 0.2)',
+                        boxShadow: achievement.unlocked 
+                          ? '0 0 15px rgba(255, 215, 0, 0.5)' 
+                          : 'none',
+                        zIndex: 1
+                      }}
+                    >
+                      {achievement.unlocked && (
+                        <Box 
+                          sx={{
+                            position: 'absolute',
+                            inset: '-4px',
+                            borderRadius: '50%',
+                            background: 'conic-gradient(#FFD700, transparent, #FFD700, transparent, #FFD700)',
+                            animation: 'spin 4s linear infinite',
+                            opacity: 0.7,
+                            '@keyframes spin': {
+                              '0%': {
+                                transform: 'rotate(0deg)',
+                              },
+                              '100%': {
+                                transform: 'rotate(360deg)',
+                              },
+                            },
+                            zIndex: -1
+                          }}
+                        />
+                      )}
+                      {achievement.icon}
+                    </Box>
+                    
+                    <Box sx={{ zIndex: 1, flex: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5, justifyContent: 'space-between' }}>
+                        <Typography 
+                          variant="body1" 
+                          sx={{ 
+                            fontWeight: 'bold', 
+                            color: achievement.unlocked ? '#FFD700' : '#f8fafc',
+                            textShadow: achievement.unlocked ? '0 0 10px rgba(255, 215, 0, 0.3)' : 'none'
+                          }}
+                        >
+                          {achievement.name}
+                        </Typography>
+                        
+                        {achievement.unlocked && (
+                          <Chip
+                            label="Unlocked"
+                            size="small"
+                            sx={{
+                              ml: 1,
+                              bgcolor: 'rgba(255, 215, 0, 0.15)',
+                              color: '#FFD700',
+                              fontWeight: 'bold',
+                              fontSize: '0.65rem',
+                              height: 20
+                            }}
+                          />
+                        )}
+                      </Box>
+                      
+                      <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 0.5 }}>
+                        {achievement.description}
+                      </Typography>
+                      
+                      {achievement.unlocked ? (
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: 'rgba(255, 215, 0, 0.7)', 
+                            display: 'block',
+                            fontSize: '0.7rem'
+                          }}
+                        >
+                          Unlocked: {achievement.unlockedDate}
+                        </Typography>
+                      ) : (
+                        <Box 
+                          sx={{
+                            mt: 1,
+                            width: '100%',
+                            height: 4,
+                            bgcolor: 'rgba(255, 255, 255, 0.1)',
+                            borderRadius: 5,
+                            overflow: 'hidden'
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: '30%', // This could be dynamic based on progress toward achievement
+                              height: '100%',
+                              bgcolor: 'rgba(255, 255, 255, 0.3)',
+                              borderRadius: 5
+                            }}
+                          />
+                        </Box>
+                      )}
+                    </Box>
+                  </Paper>
+                ))}
+              </Box>
             </Paper>
           </Grid>
           
