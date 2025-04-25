@@ -103,33 +103,15 @@ function ProfilePage() {
   const [selectedBet, setSelectedBet] = useState(null);
   const [betDetailsOpen, setBetDetailsOpen] = useState(false);
   
-  // Mock data for achievements
-  const achievements = [
-    { 
-      id: 1, 
-      name: 'First Win', 
-      description: 'Win your first bet', 
-      icon: '🏆', 
-      unlocked: true, 
-      unlockedDate: '2023-10-15' 
-    },
-    { 
-      id: 2, 
-      name: 'Hot Streak', 
-      description: 'Win 5 bets in a row', 
-      icon: '🔥', 
-      unlocked: true, 
-      unlockedDate: '2023-11-18'
-    },
-    { 
-      id: 3, 
-      name: 'Big Spender', 
-      description: 'Place a bet of 500 points or more', 
-      icon: '💰', 
-      unlocked: false
-    },
-  ];
+  // Format date from ISO to readable format - Move this function to the top
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+  };
 
+  // Now that formatDate is defined, we can use it in subsequent functions
+  
   // Function to debug the profile image URL
   const validateProfileImageUrl = (url) => {
     if (!url) {
@@ -218,12 +200,186 @@ function ProfilePage() {
     setShowAllHistory(!showAllHistory);
   };
 
-  // Format date from ISO to readable format
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
-  };
+  // Calculate achievements based on bet history and user stats
+  const calculateAchievements = useCallback(() => {
+    // Helper function to safely format dates within this function
+    const safeFormatDate = (dateString) => {
+      if (!dateString) return '';
+      try {
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+      } catch (e) {
+        console.error('Error formatting date:', e);
+        return '';
+      }
+    };
+
+    // Default achievements with unlocked state
+    const achievementsList = [
+      { 
+        id: 1, 
+        name: 'First Win', 
+        description: 'Win your first bet', 
+        icon: '🏆', 
+        unlocked: false,
+        unlockedDate: null
+      },
+      { 
+        id: 2, 
+        name: 'Hot Streak', 
+        description: 'Win 5 bets in a row', 
+        icon: '🔥', 
+        unlocked: false,
+        unlockedDate: null
+      },
+      { 
+        id: 3, 
+        name: 'Big Spender', 
+        description: 'Place a bet of 500 points or more', 
+        icon: '💰', 
+        unlocked: false,
+        unlockedDate: null
+      },
+      {
+        id: 4,
+        name: 'Diverse Bettor',
+        description: 'Place bets on 3 different sports',
+        icon: '🌐',
+        unlocked: false,
+        unlockedDate: null
+      },
+      {
+        id: 5,
+        name: 'High Roller',
+        description: 'Win a bet with payout over 1000',
+        icon: '💎',
+        unlocked: false,
+        unlockedDate: null
+      }
+    ];
+
+    if (!betHistory || betHistory.length === 0) {
+      return achievementsList;
+    }
+
+    // 1. First Win achievement
+    const hasWin = betHistory.some(bet => bet.result.toLowerCase() === 'won');
+    if (hasWin) {
+      const firstWin = betHistory
+        .filter(bet => bet.result.toLowerCase() === 'won')
+        .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+      
+      achievementsList[0].unlocked = true;
+      achievementsList[0].unlockedDate = safeFormatDate(firstWin.date);
+    }
+
+    // 2. Hot Streak achievement
+    // Find consecutive wins
+    let maxStreak = 0;
+    let currentStreak = 0;
+    let streakEndDate = null;
+
+    // Sort bets by date
+    const sortedBets = [...betHistory].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    sortedBets.forEach(bet => {
+      if (bet.result.toLowerCase() === 'won') {
+        currentStreak++;
+        if (currentStreak > maxStreak) {
+          maxStreak = currentStreak;
+          streakEndDate = bet.date;
+        }
+      } else {
+        currentStreak = 0;
+      }
+    });
+
+    if (maxStreak >= 5) {
+      achievementsList[1].unlocked = true;
+      achievementsList[1].unlockedDate = safeFormatDate(streakEndDate);
+    }
+
+    // 3. Big Spender achievement
+    const bigBet = betHistory.some(bet => {
+      const amount = parseFloat(typeof bet.amount === 'string' ? bet.amount.replace(/[^0-9.-]+/g, '') : bet.amount || 0);
+      return amount >= 500;
+    });
+
+    if (bigBet) {
+      const firstBigBet = betHistory
+        .filter(bet => {
+          const amount = parseFloat(typeof bet.amount === 'string' ? bet.amount.replace(/[^0-9.-]+/g, '') : bet.amount || 0);
+          return amount >= 500;
+        })
+        .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+      
+      achievementsList[2].unlocked = true;
+      achievementsList[2].unlockedDate = safeFormatDate(firstBigBet.date);
+    }
+
+    // 4. Diverse Bettor achievement
+    // Count unique sports
+    const sportSet = new Set();
+    betHistory.forEach(bet => {
+      let sport = 'Unknown';
+      
+      if (bet.sport) {
+        sport = bet.sport;
+      } else if (bet.event.includes('Barcelona Bàsquet') || bet.event.includes('basketball') || 
+          bet.event.includes('euroleague') || bet.event.includes('NBA')) {
+        sport = 'Basketball';
+      } else if (bet.event.includes('boxing') || bet.event.includes('Johnson @ Eric Tudor')) {
+        sport = 'Boxing';
+      } else if (bet.event.includes('Bearcats') || bet.event.includes('Cornhuskers') || 
+                bet.event.includes('Wildcats') || bet.event.includes('Cyclones') || 
+                bet.event.includes('football') || bet.event.includes('ncaaf')) {
+        sport = 'Football';
+      } else if (bet.event.includes('soccer') || bet.event.includes('FC') || 
+                /barcelona(?!\sbàsquet)/i.test(bet.event)) {
+        sport = 'Soccer';
+      }
+      
+      if (sport !== 'Unknown') {
+        sportSet.add(sport);
+      }
+    });
+
+    if (sportSet.size >= 3) {
+      const latestBet = betHistory.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+      achievementsList[3].unlocked = true;
+      achievementsList[3].unlockedDate = safeFormatDate(latestBet.date);
+    }
+
+    // 5. High Roller achievement
+    const highPayoutBet = betHistory.some(bet => {
+      if (bet.result.toLowerCase() !== 'won') return false;
+      const payout = parseFloat(typeof bet.payout === 'string' ? bet.payout.replace(/[^0-9.-]+/g, '') : bet.payout || 0);
+      return payout >= 1000;
+    });
+
+    if (highPayoutBet) {
+      const firstHighPayout = betHistory
+        .filter(bet => {
+          if (bet.result.toLowerCase() !== 'won') return false;
+          const payout = parseFloat(typeof bet.payout === 'string' ? bet.payout.replace(/[^0-9.-]+/g, '') : bet.payout || 0);
+          return payout >= 1000;
+        })
+        .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+      
+      achievementsList[4].unlocked = true;
+      achievementsList[4].unlockedDate = safeFormatDate(firstHighPayout.date);
+    }
+
+    return achievementsList;
+  }, [betHistory]); // Remove formatDate from dependencies
+
+  // State for achievements
+  const [achievements, setAchievements] = useState([]);
+
+  // Update achievements when bet history changes
+  useEffect(() => {
+    setAchievements(calculateAchievements());
+  }, [betHistory, calculateAchievements]);
 
   // Get the bets to display based on showAllHistory state
   const getDisplayedBets = () => {
