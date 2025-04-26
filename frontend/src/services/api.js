@@ -178,6 +178,10 @@ export const inviteToLeague = async (leagueId, userId) => {
   const data = await response.json();
   if (!response.ok) {
     console.error('Invite failed:', data);
+    // Check for specific error that might indicate a duplicate invite
+    if (data.error && data.error.includes('already exists')) {
+      throw new Error('This person has already been invited to this league');
+    }
     throw new Error(data.error || 'Failed to send invite');
   }
 

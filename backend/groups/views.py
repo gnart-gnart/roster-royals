@@ -78,6 +78,17 @@ def invite_to_league(request, league_id, user_id):
             print(f"ERROR: {request.user.username} is not captain of this league")
             return Response({'error': 'Only league captain can invite members'}, status=403)
         
+        # Check if user is already a member
+        if to_user in league.members.all():
+            print(f"ERROR: {to_user.username} is already a member of this league")
+            return Response({'error': f'{to_user.username} is already a member of this league'}, status=400)
+        
+        # Check if there's already a pending invite
+        existing_invite = LeagueInvite.objects.filter(league=league, to_user=to_user, status='pending').first()
+        if existing_invite:
+            print(f"ERROR: {to_user.username} already has a pending invite to this league")
+            return Response({'error': f'An invitation for {to_user.username} already exists'}, status=400)
+        
         # Create invite
         invite = LeagueInvite.objects.create(
             league=league,

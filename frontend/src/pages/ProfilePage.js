@@ -35,6 +35,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import ScoreboardIcon from '@mui/icons-material/Scoreboard';
 import NavBar from '../components/NavBar';
 import CircularImageCropper from '../components/CircularImageCropper';
 import { getUserProfile, updateUserProfile, getUserBettingStats, getUserBetHistory } from '../services/api';
@@ -623,10 +624,11 @@ function ProfilePage() {
 
     const options = useMemo(() => ({
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: false, // Set back to false to let the chart fill its container
       animation: {
         duration: 0 // Disable animations to prevent flickering
       },
+      devicePixelRatio: 2, // Increase resolution for sharper charts
       interaction: {
         mode: 'index',
         intersect: false,
@@ -803,13 +805,17 @@ function ProfilePage() {
         sx={{ 
           width: '100%', 
           height: '100%', 
-          p: 1,
+          p: 2, // Increase padding
           background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.1) 0%, rgba(15, 23, 42, 0.2) 100%)',
           borderRadius: '12px',
           backdropFilter: 'blur(2px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          overflow: 'hidden' // Prevent overflow
         }}
       >
-        <Line options={options} data={chartData} />
+        <Line options={options} data={chartData} height={null} width={null} /> {/* Set height and width to null */}
       </Box>
     );
   }, (prevProps, nextProps) => {
@@ -944,28 +950,36 @@ function ProfilePage() {
 
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh' }}>
-      {/* Replace the custom navigation with the NavBar component */}
       <NavBar />
       
-      {/* Main Content */}
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        {/* Page Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          mb: 4, 
+          alignItems: 'center',
+          px: 1
+        }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Button 
               startIcon={<ArrowBackIcon />} 
               sx={{ 
                 color: '#f8fafc',
                 mr: 2,
+                borderRadius: 2,
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                  backgroundColor: 'rgba(139, 92, 246, 0.1)'
                 }
               }}
               onClick={() => navigate(-1)}
             >
               Back
             </Button>
-            <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+            <Typography variant="h5" sx={{ 
+              fontWeight: 'bold', 
+              color: '#f8fafc',
+              textShadow: '0 2px 10px rgba(139, 92, 246, 0.3)'
+            }}>
               My Profile
             </Typography>
           </Box>
@@ -975,11 +989,12 @@ function ProfilePage() {
             startIcon={<SettingsIcon />}
             onClick={() => navigate('/settings')}
             sx={{
-              borderColor: 'rgba(255, 255, 255, 0.1)',
+              borderColor: 'rgba(139, 92, 246, 0.3)',
               color: '#f8fafc',
+              borderRadius: 2,
               '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderColor: 'rgba(255, 255, 255, 0.2)',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                borderColor: 'rgba(139, 92, 246, 0.5)',
               }
             }}
           >
@@ -987,60 +1002,104 @@ function ProfilePage() {
           </Button>
         </Box>
         
-        {/* Profile Content */}
         <Grid container spacing={3}>
-          {/* Left Column - Profile Information */}
           <Grid item xs={12} md={4}>
             <Paper 
               sx={{ 
                 p: 3, 
-                bgcolor: 'rgba(30, 41, 59, 0.7)', 
-                borderRadius: 2,
+                bgcolor: 'rgba(30, 41, 59, 0.8)', 
+                borderRadius: 3,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 textAlign: 'center',
-                position: 'relative'
+                position: 'relative',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(139, 92, 246, 0.1)',
+                boxShadow: '0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23)',
+                overflow: 'hidden'
               }}
             >
-              {/* Edit button for profile */}
+              <Box sx={{
+                position: 'absolute',
+                top: -100,
+                right: -100,
+                width: 200,
+                height: 200,
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(30, 41, 59, 0) 70%)',
+                filter: 'blur(30px)',
+              }} />
+              
               <IconButton 
                 sx={{ 
                   position: 'absolute', 
                   top: 10, 
                   right: 10,
-                  color: '#f8fafc'
+                  color: '#f8fafc',
+                  backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                  }
                 }}
                 onClick={handleEditProfile}
               >
                 <EditIcon />
               </IconButton>
               
-              <Box sx={{ position: 'relative' }}>
-                {/* Add direct image debugging info */}
-                {console.log('Current user data:', user)}
-                
-                {/* Use direct image data if available */}
-                <Avatar 
-                  src={user.embeddedImageData || (user.id ? sessionStorage.getItem(`profileImageDataUrl_${user.id}`) : null)}
-                  sx={{ 
-                    bgcolor: '#8B5CF6', 
-                    width: 140, 
-                    height: 140, 
-                    fontSize: '56px', 
-                    mb: 3,
-                    border: '4px solid rgba(139, 92, 246, 0.2)'
-                  }}
-                  imgProps={{
-                    style: { objectFit: 'cover' },
-                    onError: (e) => {
-                      console.error('Error loading profile image:', e);
-                      e.target.src = ''; // Clear src to show fallback
+              <Box sx={{ position: 'relative', mb: 1 }}>
+                <Box sx={{
+                  position: 'relative',
+                  width: 140,
+                  height: 140,
+                  mb: 3
+                }}>
+                  <Avatar 
+                    src={user.embeddedImageData || (user.id ? sessionStorage.getItem(`profileImageDataUrl_${user.id}`) : null)}
+                    sx={{ 
+                      bgcolor: '#8B5CF6', 
+                      width: 140, 
+                      height: 140, 
+                      fontSize: '56px',
+                      border: '4px solid rgba(139, 92, 246, 0.2)',
+                      boxShadow: '0 0 20px rgba(139, 92, 246, 0.3)'
+                    }}
+                    imgProps={{
+                      style: { objectFit: 'cover' },
+                      onError: (e) => {
+                        console.error('Error loading profile image:', e);
+                        e.target.src = ''; // Clear src to show fallback
+                      }
+                    }}
+                  >
+                    {user.username?.[0]?.toUpperCase()}
+                  </Avatar>
+                  
+                  <Box sx={{
+                    position: 'absolute',
+                    top: -6,
+                    left: -6,
+                    right: -6,
+                    bottom: -6,
+                    borderRadius: '50%',
+                    border: '1px solid rgba(139, 92, 246, 0.4)',
+                    animation: 'pulse 3s infinite',
+                    '@keyframes pulse': {
+                      '0%': {
+                        opacity: 0.6,
+                        transform: 'scale(1)'
+                      },
+                      '50%': {
+                        opacity: 0.3,
+                        transform: 'scale(1.05)'
+                      },
+                      '100%': {
+                        opacity: 0.6,
+                        transform: 'scale(1)'
+                      }
                     }
-                  }}
-                >
-                  {user.username?.[0]?.toUpperCase()}
-                </Avatar>
+                  }} />
+                </Box>
                 
                 <IconButton 
                   component="label"
@@ -1048,13 +1107,16 @@ function ProfilePage() {
                     position: 'absolute',
                     bottom: 20,
                     right: -10,
-                    bgcolor: 'rgba(139, 92, 246, 0.8)',
+                    bgcolor: 'rgba(139, 92, 246, 0.9)',
                     color: 'white',
                     width: 40,
                     height: 40,
+                    boxShadow: '0 2px 10px rgba(139, 92, 246, 0.5)',
                     '&:hover': {
                       bgcolor: 'rgba(139, 92, 246, 1)',
-                    }
+                      transform: 'scale(1.1)'
+                    },
+                    transition: 'all 0.2s ease'
                   }}
                 >
                   <EditIcon sx={{ fontSize: 20 }} />
@@ -1067,479 +1129,654 @@ function ProfilePage() {
                 </IconButton>
               </Box>
               
-              <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#f8fafc', mb: 1 }}>
+              <Typography variant="h5" sx={{ 
+                fontWeight: 'bold', 
+                color: '#f8fafc', 
+                mb: 1,
+                background: 'linear-gradient(45deg, #f8fafc, #8B5CF6)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>
                 {user.username}
               </Typography>
               
               {user.bio && (
-                <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 2 }}>
+                <Typography variant="body2" sx={{ 
+                  color: '#9CA3AF', 
+                  mb: 2,
+                  maxWidth: '90%',
+                  mx: 'auto',
+                  lineHeight: 1.5
+                }}>
                   {user.bio}
                 </Typography>
               )}
               
-              {/* Use actual level from API */}
               <Chip 
                 label={`Level ${loadingStats ? '...' : bettingStats.user_level}`}
                 sx={{ 
-                  bgcolor: 'rgba(139, 92, 246, 0.2)', 
+                  bgcolor: 'rgba(139, 92, 246, 0.15)', 
                   color: '#8B5CF6',
-                  mb: 2
+                  mb: 2,
+                  fontWeight: 'bold',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  backdropFilter: 'blur(8px)',
+                  '& .MuiChip-label': {
+                    px: 2
+                  }
                 }} 
               />
               
-              {/* Use actual date joined from API */}
-              <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 3 }}>
+              <Typography variant="body2" sx={{ 
+                color: '#9CA3AF', 
+                mb: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                '&::before, &::after': {
+                  content: '""',
+                  height: '1px',
+                  width: '20px',
+                  backgroundColor: 'rgba(156, 163, 175, 0.3)',
+                  display: 'inline-block',
+                  mx: 1
+                }
+              }}>
                 Member since {loadingStats ? '...' : bettingStats.date_joined}
               </Typography>
               
-              {/* Replace Points Display with Lifetime Winnings */}
               <Paper 
                 sx={{ 
-                  bgcolor: 'rgba(22, 28, 36, 0.7)', 
-                  p: 2, 
+                  bgcolor: 'rgba(22, 28, 36, 0.8)', 
+                  p: 3, 
                   width: '100%',
                   borderRadius: 2,
-                  mb: 2
+                  mb: 2,
+                  border: '1px solid rgba(16, 185, 129, 0.2)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center'
                 }}
               >
-                <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#10B981', mb: 1 }}>
+                <Box sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  background: 'radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.2), transparent 70%)',
+                  opacity: 0.7
+                }} />
+                
+                <AttachMoneyIcon sx={{ 
+                  fontSize: 36, 
+                  color: '#10B981', 
+                  mb: 1,
+                  position: 'relative',
+                  zIndex: 1
+                }} />
+                
+                <Typography variant="h3" sx={{ 
+                  fontWeight: 'bold', 
+                  color: '#10B981', 
+                  mb: 1,
+                  position: 'relative',
+                  zIndex: 1
+                }}>
                   {loadingStats ? (
                     <CircularProgress size={30} sx={{ color: '#10B981' }} />
                   ) : (
                     `$${bettingStats.lifetime_winnings?.toFixed(2) || '0.00'}`
                   )}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
+                
+                <Typography variant="body2" sx={{ 
+                  color: '#9CA3AF',
+                  position: 'relative',
+                  zIndex: 1
+                }}>
                   Lifetime Winnings
                 </Typography>
               </Paper>
 
-              {/* Money Display */}
               <Paper 
                 sx={{ 
-                  bgcolor: 'rgba(22, 28, 36, 0.7)', 
-                  p: 2, 
+                  bgcolor: 'rgba(22, 28, 36, 0.8)', 
+                  p: 3, 
                   width: '100%',
                   borderRadius: 2,
                   mb: 3,
+                  border: '1px solid rgba(255, 215, 0, 0.2)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center'
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <AttachMoneyIcon sx={{ color: '#FFD700', fontSize: '2rem', mr: 1 }} />
-                  <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#FFD700', mb: 1 }}>
-                    {typeof user.money === 'number' ? user.money.toFixed(2) : (user.money || '0.00')}
-                  </Typography>
-                </Box>
-                <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
+                <Box sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  background: 'radial-gradient(circle at bottom right, rgba(255, 215, 0, 0.2), transparent 70%)',
+                  opacity: 0.7
+                }} />
+                
+                <AttachMoneyIcon sx={{ 
+                  fontSize: 36, 
+                  color: '#FFD700', 
+                  mb: 1,
+                  position: 'relative',
+                  zIndex: 1
+                }} />
+                
+                <Typography variant="h3" sx={{ 
+                  fontWeight: 'bold', 
+                  color: '#FFD700', 
+                  mb: 1,
+                  position: 'relative',
+                  zIndex: 1
+                }}>
+                  {typeof user.money === 'number' ? user.money.toFixed(2) : (user.money || '0.00')}
+                </Typography>
+                
+                <Typography variant="body2" sx={{ 
+                  color: '#9CA3AF',
+                  position: 'relative',
+                  zIndex: 1
+                }}>
                   Betting Balance
                 </Typography>
               </Paper>
               
-              {/* Stats Grid */}
               <Grid container spacing={2}>
                 <Grid item xs={4}>
-                  <Paper sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                      {loadingStats ? (
-                        <CircularProgress size={20} sx={{ color: '#f8fafc' }} />
-                      ) : (
-                        bettingStats.total_bets
-                      )}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      Bets
-                    </Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={4}>
-                  <Paper sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                      {loadingStats ? (
-                        <CircularProgress size={20} sx={{ color: '#f8fafc' }} />
-                      ) : (
-                        `${bettingStats.win_rate}%`
-                      )}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      Win Rate
-                    </Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={4}>
-                  <Paper sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2 }}>
-                    <Typography variant="h6" sx={{ 
-                      fontWeight: 'bold', 
-                      color: loadingStats 
-                        ? '#f8fafc' 
-                        : bettingStats.current_streak > 0 
-                          ? '#10B981' // green for positive streak
-                          : bettingStats.current_streak < 0 
-                            ? '#EF4444' // red for negative streak
-                            : '#f8fafc' // default color for zero
+                  <Paper sx={{ 
+                    bgcolor: 'rgba(22, 28, 36, 0.8)', 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid rgba(139, 92, 246, 0.1)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-5px)',
+                      boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
+                      bgcolor: 'rgba(25, 32, 45, 0.8)',
+                    },
+                  }}>
+                    <Box sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
                     }}>
-                      {loadingStats ? (
-                        <CircularProgress size={20} sx={{ color: '#f8fafc' }} />
-                      ) : (
-                        bettingStats.current_streak > 0 
-                          ? `+${bettingStats.current_streak}` // add plus sign for positive streak
-                          : bettingStats.current_streak
-                      )}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      Streak
-                    </Typography>
+                      <ScoreboardIcon sx={{ color: '#8B5CF6', mb: 1 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                        {loadingStats ? (
+                          <CircularProgress size={20} sx={{ color: '#f8fafc' }} />
+                        ) : (
+                          bettingStats.total_bets
+                        )}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
+                        Bets
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+                <Grid item xs={4}>
+                  <Paper sx={{ 
+                    bgcolor: 'rgba(22, 28, 36, 0.8)', 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid rgba(16, 185, 129, 0.1)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-5px)',
+                      boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
+                      bgcolor: 'rgba(25, 32, 45, 0.8)',
+                    },
+                  }}>
+                    <Box sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                    }}>
+                      <TrendingUpIcon sx={{ color: '#10B981', mb: 1 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                        {loadingStats ? (
+                          <CircularProgress size={20} sx={{ color: '#f8fafc' }} />
+                        ) : (
+                          `${bettingStats.win_rate}%`
+                        )}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
+                        Win Rate
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+                <Grid item xs={4}>
+                  <Paper sx={{ 
+                    bgcolor: 'rgba(22, 28, 36, 0.8)', 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid rgba(245, 158, 11, 0.1)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-5px)',
+                      boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
+                      bgcolor: 'rgba(25, 32, 45, 0.8)',
+                    },
+                  }}>
+                    <Box sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                    }}>
+                      <WhatshotIcon sx={{ 
+                        color: loadingStats 
+                          ? '#F59E0B' 
+                          : bettingStats.current_streak > 0 
+                            ? '#10B981' // green for positive streak
+                            : bettingStats.current_streak < 0 
+                              ? '#EF4444' // red for negative streak
+                              : '#F59E0B', // default orange
+                        mb: 1
+                      }} />
+                      <Typography variant="h6" sx={{ 
+                        fontWeight: 'bold', 
+                        color: loadingStats 
+                          ? '#f8fafc' 
+                          : bettingStats.current_streak > 0 
+                            ? '#10B981' // green for positive streak
+                            : bettingStats.current_streak < 0 
+                              ? '#EF4444' // red for negative streak
+                              : '#f8fafc' // default color for zero
+                      }}>
+                        {loadingStats ? (
+                          <CircularProgress size={20} sx={{ color: '#f8fafc' }} />
+                        ) : (
+                          bettingStats.current_streak > 0 
+                            ? `+${bettingStats.current_streak}` // add plus sign for positive streak
+                            : bettingStats.current_streak
+                        )}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
+                        Streak
+                      </Typography>
+                    </Box>
                   </Paper>
                 </Grid>
               </Grid>
             </Paper>
             
-            {/* Achievements - Enhanced visual design */}
             <Paper 
               sx={{ 
+                mt: 3, 
                 p: 3, 
-                bgcolor: 'rgba(30, 41, 59, 0.7)', 
-                borderRadius: 2,
-                mt: 3,
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-                overflow: 'hidden',
-                position: 'relative'
+                bgcolor: 'rgba(30, 41, 59, 0.8)',
+                borderRadius: 3,
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(139, 92, 246, 0.1)',
+                boxShadow: '0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23)'
               }}
             >
-              {/* Add a decorative gradient top border */}
-              <Box 
-                sx={{ 
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '4px',
-                  background: 'linear-gradient(90deg, #FFD700, #8B5CF6, #10B981)'
-                }}
-              />
-              
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <EmojiEventsIcon sx={{ color: '#FFD700', mr: 1.5, fontSize: '1.75rem' }} />
+                <EmojiEventsIcon sx={{ color: '#FFD700', mr: 2 }} />
                 <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
                   Achievements
                 </Typography>
               </Box>
               
-              {/* Achievement Items with improved styling */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {achievements.map(achievement => (
-                  <Paper 
-                    key={achievement.id} 
-                    elevation={0}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      p: 2,
-                      borderRadius: 2,
-                      bgcolor: 'rgba(22, 28, 36, 0.7)',
-                      transition: 'all 0.3s ease',
-                      border: '1px solid',
-                      borderColor: achievement.unlocked ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 255, 255, 0.03)',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: achievement.unlocked ? '0 8px 16px rgba(255, 215, 0, 0.15)' : '0 4px 8px rgba(0, 0, 0, 0.1)',
-                        bgcolor: achievement.unlocked ? 'rgba(25, 32, 45, 0.9)' : 'rgba(22, 28, 36, 0.8)',
-                      }
-                    }}
-                  >
-                    {achievement.unlocked && (
-                      <Box 
-                        sx={{ 
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          background: 'radial-gradient(circle at top right, rgba(255, 215, 0, 0.1), transparent 70%)',
-                          opacity: 0.6,
-                          zIndex: 0
-                        }}
-                      />
-                    )}
-                    
-                    {/* Achievement icon with animated background for unlocked achievements */}
-                    <Box 
+              {loadingHistory ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                  <CircularProgress sx={{ color: '#8B5CF6' }} />
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {achievements.map(achievement => (
+                    <Paper 
+                      key={achievement.id} 
+                      elevation={0}
                       sx={{
-                        width: 50,
-                        height: 50,
-                        borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '22px',
-                        mr: 2,
+                        p: 2,
+                        borderRadius: 2,
+                        bgcolor: 'rgba(22, 28, 36, 0.7)',
+                        transition: 'all 0.3s ease',
+                        border: '1px solid',
+                        borderColor: achievement.unlocked ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 255, 255, 0.03)',
                         position: 'relative',
-                        background: achievement.unlocked 
-                          ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' 
-                          : 'rgba(100, 100, 100, 0.2)',
-                        boxShadow: achievement.unlocked 
-                          ? '0 0 15px rgba(255, 215, 0, 0.5)' 
-                          : 'none',
-                        zIndex: 1
+                        overflow: 'hidden',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: achievement.unlocked ? '0 8px 16px rgba(255, 215, 0, 0.15)' : '0 4px 8px rgba(0, 0, 0, 0.1)',
+                          bgcolor: achievement.unlocked ? 'rgba(25, 32, 45, 0.9)' : 'rgba(22, 28, 36, 0.8)',
+                        }
                       }}
                     >
                       {achievement.unlocked && (
                         <Box 
-                          sx={{
+                          sx={{ 
                             position: 'absolute',
-                            inset: '-4px',
-                            borderRadius: '50%',
-                            background: 'conic-gradient(#FFD700, transparent, #FFD700, transparent, #FFD700)',
-                            animation: 'spin 4s linear infinite',
-                            opacity: 0.7,
-                            '@keyframes spin': {
-                              '0%': {
-                                transform: 'rotate(0deg)',
-                              },
-                              '100%': {
-                                transform: 'rotate(360deg)',
-                              },
-                            },
-                            zIndex: -1
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            background: 'radial-gradient(circle at top right, rgba(255, 215, 0, 0.1), transparent 70%)',
+                            opacity: 0.6,
+                            zIndex: 0
                           }}
                         />
                       )}
-                      {achievement.icon}
-                    </Box>
-                    
-                    <Box sx={{ zIndex: 1, flex: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5, justifyContent: 'space-between' }}>
-                        <Typography 
-                          variant="body1" 
-                          sx={{ 
-                            fontWeight: 'bold', 
-                            color: achievement.unlocked ? '#FFD700' : '#f8fafc',
-                            textShadow: achievement.unlocked ? '0 0 10px rgba(255, 215, 0, 0.3)' : 'none'
-                          }}
-                        >
-                          {achievement.name}
-                        </Typography>
-                        
+                      
+                      <Box 
+                        sx={{
+                          width: 50,
+                          height: 50,
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '22px',
+                          mr: 2,
+                          position: 'relative',
+                          background: achievement.unlocked 
+                            ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' 
+                            : 'rgba(100, 100, 100, 0.2)',
+                          boxShadow: achievement.unlocked 
+                            ? '0 0 15px rgba(255, 215, 0, 0.5)' 
+                            : 'none',
+                          zIndex: 1
+                        }}
+                      >
                         {achievement.unlocked && (
-                          <Chip
-                            label="Unlocked"
-                            size="small"
+                          <Box 
                             sx={{
-                              ml: 1,
-                              bgcolor: 'rgba(255, 215, 0, 0.15)',
-                              color: '#FFD700',
-                              fontWeight: 'bold',
-                              fontSize: '0.65rem',
-                              height: 20
+                              position: 'absolute',
+                              inset: '-4px',
+                              borderRadius: '50%',
+                              background: 'conic-gradient(#FFD700, transparent, #FFD700, transparent, #FFD700)',
+                              animation: 'spin 4s linear infinite',
+                              opacity: 0.7,
+                              '@keyframes spin': {
+                                '0%': {
+                                  transform: 'rotate(0deg)',
+                                },
+                                '100%': {
+                                  transform: 'rotate(360deg)',
+                                },
+                              },
+                              zIndex: -1
                             }}
                           />
                         )}
+                        {achievement.icon}
                       </Box>
                       
-                      <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 0.5 }}>
-                        {achievement.description}
-                      </Typography>
-                      
-                      {achievement.unlocked ? (
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
-                            color: 'rgba(255, 215, 0, 0.7)', 
-                            display: 'block',
-                            fontSize: '0.7rem'
-                          }}
-                        >
-                          Unlocked: {achievement.unlockedDate}
-                        </Typography>
-                      ) : (
-                        <Box 
-                          sx={{
-                            mt: 1,
-                            width: '100%',
-                            height: 4,
-                            bgcolor: 'rgba(255, 255, 255, 0.1)',
-                            borderRadius: 5,
-                            overflow: 'hidden'
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: '30%', // This could be dynamic based on progress toward achievement
-                              height: '100%',
-                              bgcolor: 'rgba(255, 255, 255, 0.3)',
-                              borderRadius: 5
+                      <Box sx={{ zIndex: 1, flex: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5, justifyContent: 'space-between' }}>
+                          <Typography 
+                            variant="body1" 
+                            sx={{ 
+                              fontWeight: 'bold', 
+                              color: achievement.unlocked ? '#FFD700' : '#f8fafc',
+                              textShadow: achievement.unlocked ? '0 0 10px rgba(255, 215, 0, 0.3)' : 'none'
                             }}
-                          />
+                          >
+                            {achievement.name}
+                          </Typography>
+                          
+                          {achievement.unlocked && (
+                            <Chip
+                              label="Unlocked"
+                              size="small"
+                              sx={{
+                                ml: 1,
+                                bgcolor: 'rgba(255, 215, 0, 0.15)',
+                                color: '#FFD700',
+                                fontWeight: 'bold',
+                                fontSize: '0.65rem',
+                                height: 20
+                              }}
+                            />
+                          )}
                         </Box>
-                      )}
-                    </Box>
-                  </Paper>
-                ))}
-              </Box>
+                        
+                        <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 0.5 }}>
+                          {achievement.description}
+                        </Typography>
+                        
+                        {achievement.unlocked ? (
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: 'rgba(255, 215, 0, 0.7)', 
+                              display: 'block',
+                              fontSize: '0.7rem'
+                            }}
+                          >
+                            Unlocked: {achievement.unlockedDate}
+                          </Typography>
+                        ) : (
+                          <Box 
+                            sx={{
+                              mt: 1,
+                              width: '100%',
+                              height: 4,
+                              bgcolor: 'rgba(255, 255, 255, 0.1)',
+                              borderRadius: 5,
+                              overflow: 'hidden'
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: '30%', // This could be dynamic based on progress toward achievement
+                                height: '100%',
+                                bgcolor: 'rgba(255, 255, 255, 0.3)',
+                                borderRadius: 5
+                              }}
+                            />
+                          </Box>
+                        )}
+                      </Box>
+                    </Paper>
+                  ))}
+                </Box>
+              )}
             </Paper>
           </Grid>
           
-          {/* Right Column - Performance and Betting History */}
           <Grid item xs={12} md={8}>
-            {/* Performance Overview */}
             <Paper 
               sx={{ 
                 p: 3, 
-                bgcolor: 'rgba(30, 41, 59, 0.7)', 
-                borderRadius: 2,
-                mb: 3
+                bgcolor: 'rgba(30, 41, 59, 0.8)', 
+                borderRadius: 3,
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(139, 92, 246, 0.1)',
+                boxShadow: '0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23)',
+                position: 'relative',
+                overflow: 'hidden'
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <TrendingUpIcon sx={{ color: '#10B981', mr: 1 }} />
-                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                  Performance Overview
-                </Typography>
-              </Box>
+              <Box sx={{
+                position: 'absolute',
+                top: -80,
+                left: -80,
+                width: 160,
+                height: 160,
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, rgba(30, 41, 59, 0) 70%)',
+                filter: 'blur(30px)',
+              }} />
               
-              {/* Container for the chart - made more stable */}
-              <Box
-                sx={{ 
-                  width: '100%', 
-                  height: 300,
-                  bgcolor: 'rgba(22, 28, 36, 0.7)',
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  position: 'relative',
-                  mb: 3,
-                  display: 'flex', // Use flex to make sure chart fills the container
-                  alignItems: 'stretch',
-                  justifyContent: 'center'
-                }}
-              >
-                {/* Add a stable key to force proper mounting */}
-                <Box sx={{ width: '100%', flex: 1, position: 'relative' }} key="chart-container">
-                  <PerformanceChart 
-                    data={performanceData} 
-                    loading={loadingStats || loadingHistory} 
-                  />
+              <Box sx={{ position: 'relative' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'space-between' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <ShowChartIcon sx={{ color: '#10B981', mr: 2 }} />
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                      Performance
+                    </Typography>
+                  </Box>
                 </Box>
+                
+                <Box
+                  sx={{ 
+                    width: '100%', 
+                    height: 400, // Increase height from 300 to 400 to give more vertical space
+                    position: 'relative',
+                    mb: 3 // Add margin bottom for spacing
+                  }}
+                >
+                  <Box sx={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    position: 'relative' 
+                  }} key="chart-container">
+                    <PerformanceChart 
+                      data={performanceData} 
+                      loading={loadingStats || loadingHistory} 
+                    />
+                  </Box>
+                </Box>
+                
+                {/* Performance Metrics */}
+                {!loadingStats && !loadingHistory && betHistory.length > 0 && (
+                  <PerformanceMetrics betHistory={betHistory} performanceData={performanceData} />
+                )}
               </Box>
-              
-              {/* Performance Metrics */}
-              {!loadingStats && !loadingHistory && betHistory.length > 0 && (
-                <PerformanceMetrics betHistory={betHistory} performanceData={performanceData} />
-              )}
             </Paper>
             
-            {/* Recent Betting Activity */}
             <Paper 
               sx={{ 
+                mt: 3, 
                 p: 3, 
-                bgcolor: 'rgba(30, 41, 59, 0.7)', 
-                borderRadius: 2
+                bgcolor: 'rgba(30, 41, 59, 0.8)', 
+                borderRadius: 3,
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(139, 92, 246, 0.1)', 
+                boxShadow: '0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23)',
+                position: 'relative',
+                overflow: 'hidden'
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <HistoryIcon sx={{ color: '#60A5FA', mr: 1 }} />
-                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                  Recent Betting Activity
-                </Typography>
-              </Box>
+              <Box sx={{
+                position: 'absolute',
+                bottom: -80,
+                right: -80,
+                width: 160,
+                height: 160,
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(30, 41, 59, 0) 70%)',
+                filter: 'blur(30px)',
+              }} />
               
-              {loadingHistory ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                  <CircularProgress size={24} sx={{ color: '#8B5CF6' }} />
-                </Box>
-              ) : betHistory.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography variant="body1" sx={{ color: '#9CA3AF' }}>
-                    No betting history found. Place your first bet to see it here!
-                  </Typography>
-                </Box>
-              ) : (
-                <TableContainer sx={{ bgcolor: 'transparent' }}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Date</TableCell>
-                        <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Event</TableCell>
-                        <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Pick</TableCell>
-                        <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Amount</TableCell>
-                        <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Result</TableCell>
-                        <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Payout</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {getDisplayedBets().map((bet) => (
-                        <TableRow key={bet.id} 
-                          onClick={() => handleBetClick(bet)}
-                          sx={{ 
-                            cursor: 'pointer',
-                            '&:hover': {
-                              bgcolor: 'rgba(255, 255, 255, 0.03)'
-                            }
-                          }}
-                        >
-                          <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                            {formatDate(bet.date)}
-                          </TableCell>
-                          <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                            {bet.event}
-                          </TableCell>
-                          <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                            {bet.pick}
-                          </TableCell>
-                          <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                            {bet.amount}
-                          </TableCell>
-                          <TableCell sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                            <Chip
-                              label={bet.result}
-                              size="small"
-                              sx={{
-                                bgcolor: bet.result.toLowerCase() === 'won' ? 'rgba(16, 185, 129, 0.1)' : 
-                                        bet.result.toLowerCase() === 'lost' ? 'rgba(239, 68, 68, 0.1)' : 
-                                        'rgba(107, 114, 128, 0.1)',
-                                color: bet.result.toLowerCase() === 'won' ? '#10B981' : 
-                                      bet.result.toLowerCase() === 'lost' ? '#EF4444' : 
-                                      '#6B7280',
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                            {bet.payout}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-              
-              {betHistory.length > 0 && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+              <Box sx={{ position: 'relative' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <HistoryIcon sx={{ color: '#8B5CF6', mr: 2 }} />
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                      Recent Bets
+                    </Typography>
+                  </Box>
+                  
                   <Button
-                    variant="outlined"
-                    onClick={handleToggleHistory}
-                    sx={{
-                      borderColor: 'rgba(255, 255, 255, 0.1)',
-                      color: '#f8fafc',
+                    variant="text"
+                    sx={{ 
+                      color: '#8B5CF6',
+                      textTransform: 'none',
                       '&:hover': {
-                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)'
                       }
                     }}
+                    onClick={handleToggleHistory}
                   >
-                    {showAllHistory ? 'Show Less' : 'View Full History'}
+                    {showAllHistory ? 'Show Less' : 'View All'}
                   </Button>
                 </Box>
-              )}
+                
+                {loadingHistory ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                    <CircularProgress sx={{ color: '#8B5CF6' }} />
+                  </Box>
+                ) : betHistory.length === 0 ? (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="body1" sx={{ color: '#9CA3AF' }}>
+                      No betting history found. Place your first bet to see it here!
+                    </Typography>
+                  </Box>
+                ) : (
+                  <TableContainer sx={{ bgcolor: 'transparent' }}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Date</TableCell>
+                          <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Event</TableCell>
+                          <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Pick</TableCell>
+                          <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Amount</TableCell>
+                          <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Result</TableCell>
+                          <TableCell sx={{ color: '#9CA3AF', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Payout</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {getDisplayedBets().map((bet) => (
+                          <TableRow key={bet.id} 
+                            onClick={() => handleBetClick(bet)}
+                            sx={{ 
+                              cursor: 'pointer',
+                              '&:hover': {
+                                bgcolor: 'rgba(255, 255, 255, 0.03)'
+                              }
+                            }}
+                          >
+                            <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              {formatDate(bet.date)}
+                            </TableCell>
+                            <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              {bet.event}
+                            </TableCell>
+                            <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              {bet.pick}
+                            </TableCell>
+                            <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              {bet.amount}
+                            </TableCell>
+                            <TableCell sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              <Chip
+                                label={bet.result}
+                                size="small"
+                                sx={{
+                                  bgcolor: bet.result.toLowerCase() === 'won' ? 'rgba(16, 185, 129, 0.1)' : 
+                                          bet.result.toLowerCase() === 'lost' ? 'rgba(239, 68, 68, 0.1)' : 
+                                          'rgba(107, 114, 128, 0.1)',
+                                  color: bet.result.toLowerCase() === 'won' ? '#10B981' : 
+                                        bet.result.toLowerCase() === 'lost' ? '#EF4444' : 
+                                        '#6B7280',
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              {bet.payout}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Box>
             </Paper>
           </Grid>
         </Grid>
       </Container>
       
-      {/* Edit Profile Dialog */}
       <Dialog 
         open={editDialogOpen} 
         onClose={handleCloseEditDialog}
@@ -1549,12 +1786,60 @@ function ProfilePage() {
           sx: {
             bgcolor: 'rgba(30, 41, 59, 0.95)',
             color: '#f8fafc',
-            backdropFilter: 'blur(8px)'
+            backdropFilter: 'blur(12px)',
+            borderRadius: 3,
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
+            border: '1px solid rgba(139, 92, 246, 0.1)',
+            overflow: 'hidden',
+            position: 'relative'
           }
         }}
       >
-        <DialogTitle>Edit Profile</DialogTitle>
-        <DialogContent>
+        {/* Decorative gradient elements */}
+        <Box sx={{
+          position: 'absolute',
+          top: -100,
+          right: -100,
+          width: 200,
+          height: 200,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, rgba(30, 41, 59, 0) 70%)',
+          filter: 'blur(40px)',
+          zIndex: 0
+        }} />
+        
+        <Box sx={{
+          position: 'absolute',
+          bottom: -80,
+          left: -80,
+          width: 160,
+          height: 160,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(30, 41, 59, 0) 70%)',
+          filter: 'blur(30px)',
+          zIndex: 0
+        }} />
+
+        <DialogTitle sx={{ 
+          borderBottom: '1px solid rgba(255, 255, 255, 0.05)', 
+          position: 'relative', 
+          zIndex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          pb: 2
+        }}>
+          <EditIcon sx={{ color: '#8B5CF6', mr: 1.5 }} />
+          <Typography variant="h6" sx={{ 
+            fontWeight: 'bold',
+            background: 'linear-gradient(45deg, #f8fafc, #8B5CF6)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            Edit Profile
+          </Typography>
+        </DialogTitle>
+        
+        <DialogContent sx={{ position: 'relative', zIndex: 1, pt: 3 }}>
           <form onSubmit={handleSubmitProfileUpdate}>
             <TextField
               margin="dense"
@@ -1567,9 +1852,26 @@ function ProfilePage() {
               required
               error={error.includes('Username')}
               helperText={error.includes('Username') ? error : ''}
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 3,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '& fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(139, 92, 246, 0.3)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'rgba(139, 92, 246, 0.5)',
+                  },
+                }
+              }}
               InputProps={{
-                sx: { color: '#f8fafc' }
+                sx: { 
+                  color: '#f8fafc',
+                  backgroundColor: 'rgba(15, 23, 42, 0.3)'
+                }
               }}
               InputLabelProps={{
                 sx: { color: '#9CA3AF' }
@@ -1587,8 +1889,26 @@ function ProfilePage() {
               multiline
               rows={4}
               placeholder="Tell us about yourself..."
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '& fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(139, 92, 246, 0.3)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'rgba(139, 92, 246, 0.5)',
+                  },
+                }
+              }}
               InputProps={{
-                sx: { color: '#f8fafc' }
+                sx: { 
+                  color: '#f8fafc',
+                  backgroundColor: 'rgba(15, 23, 42, 0.3)'
+                }
               }}
               InputLabelProps={{
                 sx: { color: '#9CA3AF' }
@@ -1596,26 +1916,54 @@ function ProfilePage() {
             />
           </form>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseEditDialog} sx={{ color: '#9CA3AF' }}>
+        
+        <DialogActions sx={{ 
+          p: 2.5, 
+          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+          position: 'relative',
+          zIndex: 1
+        }}>
+          <Button 
+            onClick={handleCloseEditDialog}
+            variant="text"
+            sx={{ 
+              color: '#9CA3AF',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                color: '#f8fafc'
+              },
+              textTransform: 'none',
+              fontWeight: 'medium'
+            }}
+          >
             Cancel
           </Button>
           <Button 
-            onClick={handleSubmitProfileUpdate} 
+            onClick={handleSubmitProfileUpdate}
             variant="contained"
-            sx={{ 
-              bgcolor: '#8B5CF6',
+            disabled={loading}
+            sx={{
+              bgcolor: 'rgba(139, 92, 246, 0.8)',
+              color: 'white',
               '&:hover': {
-                bgcolor: '#7C3AED'
-              }
+                bgcolor: 'rgba(139, 92, 246, 1)',
+              },
+              textTransform: 'none',
+              fontWeight: 'medium',
+              borderRadius: 2,
+              px: 3,
+              boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)'
             }}
           >
-            Save Changes
+            {loading ? (
+              <CircularProgress size={24} sx={{ color: 'white' }} />
+            ) : (
+              'Save Changes'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
       
-      {/* Image Cropper Dialog */}
       {showCropper && selectedImage && (
         <CircularImageCropper
           image={selectedImage}
@@ -1624,7 +1972,6 @@ function ProfilePage() {
         />
       )}
       
-      {/* Bet Details Dialog */}
       <Dialog 
         open={betDetailsOpen} 
         onClose={handleCloseBetDetails}
@@ -1634,79 +1981,216 @@ function ProfilePage() {
           sx: {
             bgcolor: 'rgba(30, 41, 59, 0.95)',
             color: '#f8fafc',
-            backdropFilter: 'blur(8px)'
+            backdropFilter: 'blur(12px)',
+            borderRadius: 3,
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
+            border: '1px solid rgba(139, 92, 246, 0.1)',
+            overflow: 'hidden',
+            position: 'relative'
           }
         }}
       >
-        {selectedBet && (
-          <>
-            <DialogTitle sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-              Bet Details
-            </DialogTitle>
-            <DialogContent sx={{ mt: 2 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" sx={{ color: '#9CA3AF' }}>Event</Typography>
-                  <Typography variant="body1" sx={{ mb: 2 }}>{selectedBet.event}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" sx={{ color: '#9CA3AF' }}>Date</Typography>
-                  <Typography variant="body1" sx={{ mb: 2 }}>{formatDate(selectedBet.date)}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" sx={{ color: '#9CA3AF' }}>Pick</Typography>
-                  <Typography variant="body1" sx={{ mb: 2 }}>{selectedBet.pick}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" sx={{ color: '#9CA3AF' }}>Amount Wagered</Typography>
-                  <Typography variant="body1" sx={{ mb: 2 }}>{selectedBet.amount}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" sx={{ color: '#9CA3AF' }}>Result</Typography>
-                  <Chip
-                    label={selectedBet.result}
-                    size="small"
-                    sx={{
-                      mb: 2,
-                      bgcolor: selectedBet.result.toLowerCase() === 'won' ? 'rgba(16, 185, 129, 0.1)' : 
-                              selectedBet.result.toLowerCase() === 'lost' ? 'rgba(239, 68, 68, 0.1)' : 
-                              'rgba(107, 114, 128, 0.1)',
-                      color: selectedBet.result.toLowerCase() === 'won' ? '#10B981' : 
-                            selectedBet.result.toLowerCase() === 'lost' ? '#EF4444' : 
-                            '#6B7280',
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" sx={{ color: '#9CA3AF' }}>Payout</Typography>
-                  <Typography variant="body1" sx={{ mb: 2 }}>{selectedBet.payout}</Typography>
-                </Grid>
+        {/* Decorative gradient elements */}
+        <Box sx={{
+          position: 'absolute',
+          top: -100,
+          left: -100,
+          width: 200,
+          height: 200,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(30, 41, 59, 0) 70%)',
+          filter: 'blur(40px)',
+          zIndex: 0
+        }} />
+        
+        <Box sx={{
+          position: 'absolute',
+          bottom: -80,
+          right: -80,
+          width: 160,
+          height: 160,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(30, 41, 59, 0) 70%)',
+          filter: 'blur(30px)',
+          zIndex: 0
+        }} />
+
+        <DialogTitle sx={{ 
+          borderBottom: '1px solid rgba(255, 255, 255, 0.05)', 
+          position: 'relative', 
+          zIndex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          pb: 2
+        }}>
+          <SportsSoccerIcon sx={{ color: '#8B5CF6', mr: 1.5 }} />
+          <Typography variant="h6" sx={{ 
+            fontWeight: 'bold',
+            background: 'linear-gradient(45deg, #f8fafc, #8B5CF6)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            Bet Details
+          </Typography>
+        </DialogTitle>
+        
+        <DialogContent sx={{ position: 'relative', zIndex: 1, pt: 3 }}>
+          {selectedBet && (
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Paper sx={{ 
+                  p: 2.5, 
+                  bgcolor: 'rgba(15, 23, 42, 0.3)', 
+                  borderRadius: 2,
+                  border: '1px solid rgba(255, 255, 255, 0.05)'
+                }}>
+                  <Typography variant="h6" sx={{ 
+                    mb: 2, 
+                    color: '#f8fafc',
+                    textAlign: 'center',
+                    fontWeight: 'bold' 
+                  }}>
+                    {selectedBet.event}
+                  </Typography>
+                  
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                    <Chip
+                      label={selectedBet.result}
+                      sx={{
+                        bgcolor: selectedBet.result.toLowerCase() === 'won' ? 'rgba(16, 185, 129, 0.15)' : 
+                                selectedBet.result.toLowerCase() === 'lost' ? 'rgba(239, 68, 68, 0.15)' : 
+                                'rgba(107, 114, 128, 0.15)',
+                        color: selectedBet.result.toLowerCase() === 'won' ? '#10B981' : 
+                              selectedBet.result.toLowerCase() === 'lost' ? '#EF4444' : 
+                              '#6B7280',
+                        fontWeight: 'bold',
+                        px: 2,
+                        py: 1,
+                        borderRadius: 2
+                      }}
+                    />
+                  </Box>
+                  
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
+                    <Paper sx={{ 
+                      p: 2, 
+                      flex: 1, 
+                      minWidth: '140px',
+                      bgcolor: 'rgba(22, 28, 36, 0.7)',
+                      borderRadius: 2,
+                      textAlign: 'center',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center'
+                    }}>
+                      <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 1 }}>
+                        Your Pick
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                        {selectedBet.pick}
+                      </Typography>
+                    </Paper>
+                    
+                    <Paper sx={{ 
+                      p: 2, 
+                      flex: 1, 
+                      minWidth: '140px',
+                      bgcolor: 'rgba(22, 28, 36, 0.7)',
+                      borderRadius: 2,
+                      textAlign: 'center',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center'
+                    }}>
+                      <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 1 }}>
+                        Stake Amount
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#FFD700' }}>
+                        {selectedBet.amount}
+                      </Typography>
+                    </Paper>
+                    
+                    <Paper sx={{ 
+                      p: 2, 
+                      flex: 1, 
+                      minWidth: '140px',
+                      bgcolor: 'rgba(22, 28, 36, 0.7)',
+                      borderRadius: 2,
+                      textAlign: 'center',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center'
+                    }}>
+                      <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 1 }}>
+                        Payout
+                      </Typography>
+                      <Typography variant="h6" sx={{ 
+                        fontWeight: 'bold', 
+                        color: selectedBet.result.toLowerCase() === 'won' ? '#10B981' : '#f8fafc'
+                      }}>
+                        {selectedBet.payout}
+                      </Typography>
+                    </Paper>
+                  </Box>
+                  
+                  <Box sx={{ mt: 3, textAlign: 'center' }}>
+                    <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 1 }}>
+                      Date Placed
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#f8fafc' }}>
+                      {formatDate(selectedBet.date)}
+                    </Typography>
+                  </Box>
+                </Paper>
               </Grid>
-            </DialogContent>
-            <DialogActions sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', p: 2 }}>
-              <Button onClick={handleCloseBetDetails} sx={{ color: '#9CA3AF' }}>
-                Close
-              </Button>
-              {selectedBet.event_id && selectedBet.league_id && (
-                <Button 
-                  onClick={handleViewEvent} 
-                  variant="contained"
-                  sx={{ 
-                    bgcolor: '#8B5CF6',
-                    '&:hover': {
-                      bgcolor: '#7C3AED'
-                    }
-                  }}
-                >
-                  View Event
-                </Button>
-              )}
-            </DialogActions>
-          </>
-        )}
+            </Grid>
+          )}
+        </DialogContent>
+        
+        <DialogActions sx={{ 
+          p: 2.5, 
+          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+          position: 'relative',
+          zIndex: 1,
+          justifyContent: 'space-between'
+        }}>
+          <Button 
+            onClick={handleCloseBetDetails}
+            variant="text"
+            sx={{ 
+              color: '#9CA3AF',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                color: '#f8fafc'
+              },
+              textTransform: 'none',
+              fontWeight: 'medium'
+            }}
+          >
+            Close
+          </Button>
+          
+          <Button 
+            onClick={handleViewEvent}
+            variant="contained"
+            sx={{
+              bgcolor: 'rgba(139, 92, 246, 0.8)',
+              color: 'white',
+              '&:hover': {
+                bgcolor: 'rgba(139, 92, 246, 1)',
+              },
+              textTransform: 'none',
+              fontWeight: 'medium',
+              borderRadius: 2,
+              px: 3,
+              boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)'
+            }}
+          >
+            View Event
+          </Button>
+        </DialogActions>
       </Dialog>
       
-      {/* Snackbar for notifications */}
       <Snackbar 
         open={snackbar.open} 
         autoHideDuration={6000} 
