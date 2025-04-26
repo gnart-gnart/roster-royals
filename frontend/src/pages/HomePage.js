@@ -212,7 +212,8 @@ function HomePage() {
         value: notifications.filter(n => !n.is_read).length, 
         icon: <NotificationsNoneIcon />, 
         color: '#F59E0B',
-        tooltip: "Unread notifications awaiting your attention" 
+        tooltip: "Unread notifications awaiting your attention",
+        onClick: handleNotificationsOpen,
       },
       { 
         label: "Win Rate", 
@@ -276,7 +277,7 @@ function HomePage() {
                     px: { xs: 1, sm: 2 },
                     height: '100%',
                     transition: 'transform 0.3s ease, filter 0.3s ease',
-                    cursor: 'pointer',
+                    cursor: feature.onClick ? 'pointer' : 'default',
                     '&:hover': {
                       transform: 'translateY(-5px)',
                       filter: 'brightness(1.1)',
@@ -287,6 +288,7 @@ function HomePage() {
                       '100%': { opacity: 1, transform: 'translateY(0)' },
                     },
                   }}
+                  onClick={feature.onClick}
                 >
                   <Box 
                     sx={{ 
