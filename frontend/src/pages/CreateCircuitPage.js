@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Typography,
@@ -39,7 +39,7 @@ import {
   Radio,
   FormControlLabel,
   CheckCircleIcon,
-  GavelIcon
+  SvgIcon
 } from '@mui/material';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -54,16 +54,57 @@ import SportsHockeyIcon from '@mui/icons-material/SportsHockey';
 import SportsTennisIcon from '@mui/icons-material/SportsTennis';
 import SportsGolfIcon from '@mui/icons-material/SportsGolf';
 import SportsMmaIcon from '@mui/icons-material/SportsMma';
+import SportsCricketIcon from '@mui/icons-material/SportsCricket';
 import SportsRugbyIcon from '@mui/icons-material/SportsRugby';
 import SportsKabaddiIcon from '@mui/icons-material/SportsKabaddi';
-import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import SportsIcon from '@mui/icons-material/Sports';
 import SearchIcon from '@mui/icons-material/Search';
-import { SvgIcon } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getLeague, getLeagueEvents, createCircuit, browseMarket, getAvailableSportEvents } from '../services/api';
 import NavBar from '../components/NavBar';
 import { format } from 'date-fns';
+import { getAllMarketEvents, getAvailableSports } from '../services/api';
+
+// Custom Cricket Icon
+const CricketIcon = (props) => (
+  <SvgIcon {...props}>
+    <path d="M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M5,8L7,8L7,16L5,16L5,8M9,8L11,8L11,16L9,16L9,8M13,8L17,8L17,16L13,16L13,8Z" />
+  </SvgIcon>
+);
+
+// Custom Boxing Icon
+const BoxingIcon = (props) => (
+  <SvgIcon {...props}>
+    <path d="M19,3H15V1H19M11,3H5V1H11M19,19H15V21H19M11,19H5V21H11M19,7H15V5H19M11,7H5V5H11M19,11H15V9H19M11,11H5V9H11M19,15H15V13H19M11,15H5V13H11M15,17H13V23H15M9,17H7V23H9M13,17H11V23H13M5,17H3V23H5M17,17H15V23H17" />
+  </SvgIcon>
+);
+
+// Custom GavelIcon (Politics) component
+const GavelIcon = (props) => (
+  <SvgIcon {...props}>
+    <path d="M5.2496 8.0688L2.5616 5.3808L5.2576 2.6848L13.5616 10.9888L10.8656 13.6848L8.1776 10.9968C7.6736 13.4688 8.3296 16.1168 10.1936 18.0128C10.9936 18.8128 11.9456 19.3688 12.9456 19.7328L10.0576 22.6208C8.9016 23.7768 7.0536 23.7768 5.8976 22.6208C4.7936 21.4848 4.7936 19.7648 5.8976 18.6608L7.8176 16.7408C6.8856 15.2368 6.4536 13.4488 6.6056 11.6248L3.9456 8.9248L2.4216 10.4688C2.0296 10.8608 1.3976 10.8608 1.0056 10.4688C0.6136 10.0768 0.6136 9.4448 1.0056 9.0528L5.2496 4.8088C5.6416 4.4168 6.2736 4.4168 6.6656 4.8088C7.0576 5.2008 7.0576 5.8328 6.6656 6.2248L5.2496 8.0688ZM15.7926 4.2448C17.1886 2.8488 19.4566 2.8488 20.8526 4.2448C22.2486 5.6408 22.2486 7.9088 20.8526 9.3048L19.4486 10.7088L17.0966 8.3568C16.7046 7.9648 16.0726 7.9648 15.6806 8.3568C15.2886 8.7488 15.2886 9.3808 15.6806 9.7728L18.0326 12.1248L13.9766 16.1808L10.0966 12.3008L15.7926 6.6048L14.3766 5.1888L15.7926 4.2448Z" />
+  </SvgIcon>
+);
+
+// Function to get the icon for a sport group
+const getSportIcon = (sportGroup) => {
+  const iconMapping = {
+    'Soccer': <SportsSoccerIcon fontSize="large" />,
+    'Basketball': <SportsBasketballIcon fontSize="large" />,
+    'American Football': <SportsFootballIcon fontSize="large" />,
+    'Baseball': <SportsBaseballIcon fontSize="large" />,
+    'Hockey': <SportsHockeyIcon fontSize="large" />,
+    'Tennis': <SportsTennisIcon fontSize="large" />,
+    'Golf': <SportsGolfIcon fontSize="large" />,
+    'MMA': <SportsMmaIcon fontSize="large" />,
+    'Boxing': <BoxingIcon fontSize="large" />,
+    'Rugby': <SportsRugbyIcon fontSize="large" />,
+    'Cricket': <CricketIcon fontSize="large" />,
+    'Politics': <GavelIcon fontSize="large" />
+  };
+  
+  return iconMapping[sportGroup] || <SportsIcon fontSize="large" />;
+};
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -85,66 +126,6 @@ function a11yProps(index) {
     id: `circuit-tab-${index}`,
     'aria-controls': `circuit-tabpanel-${index}`,
   };
-}
-
-function getSportIcon(sportGroup) {
-  let icon;
-  const color = '#8B5CF6';
-
-  if (!sportGroup || typeof sportGroup !== 'string') {
-    return { icon: <SportsIcon />, color };
-  }
-
-  switch (sportGroup.toLowerCase()) {
-    case 'soccer':
-      icon = <SportsSoccerIcon />;
-      break;
-    case 'basketball':
-      icon = <SportsBasketballIcon />;
-      break;
-    case 'american football':
-    case 'football':
-      icon = <SportsFootballIcon />;
-      break;
-    case 'baseball':
-      icon = <SportsBaseballIcon />;
-      break;
-    case 'hockey':
-    case 'ice hockey':
-      icon = <SportsHockeyIcon />;
-      break;
-    case 'tennis':
-      icon = <SportsTennisIcon />;
-      break;
-    case 'golf':
-      icon = <SportsGolfIcon />;
-      break;
-    case 'mixed martial arts':
-    case 'mma':
-    case 'boxing':
-      icon = <SportsMmaIcon />;
-      break;
-    case 'rugby league':
-      icon = <SportsRugbyIcon />;
-      break;
-    case 'aussie rules':
-      icon = <SportsKabaddiIcon />;
-      break;
-    case 'cricket':
-      icon = <CricketIcon />;
-      break;
-    case 'lacrosse':
-      icon = <LacrosseIcon />;
-      break;
-    case 'politics':
-      icon = <HowToVoteIcon />;
-      break;
-    default:
-      icon = <SportsIcon />;
-      break;
-  }
-
-  return { icon, color };
 }
 
 const steps = ['Select Events', 'Configure Circuit'];
@@ -187,6 +168,46 @@ function CreateCircuitPage() {
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const [isCaptain, setIsCaptain] = useState(false);
 
+  // Move loadMarketData function definition before useEffect
+  const loadMarketData = useCallback(async () => {
+    if (loadingMarket) {
+      console.log('Already loading market data, skipping duplicate call');
+      return;
+    }
+    
+    setLoadingMarket(true);
+    setMarketError(null);
+    console.log('Fetching market data...');
+    
+    try {
+      const marketData = await browseMarket();
+      console.log('Market data received:', marketData);
+      
+      if (!marketData || typeof marketData !== 'object') {
+        throw new Error('Invalid market data format');
+      }
+      
+      // Check if the data contains grouped_sports in the expected format
+      if (marketData?.data?.grouped_sports) {
+        console.log('Found grouped_sports data:', marketData.data.grouped_sports);
+        setSportsGroups(marketData.data.grouped_sports);
+        setAllSports(marketData.data.sports || []);
+      } else {
+        console.warn('No grouped_sports found in market data');
+        setSportsGroups({});
+        setAllSports([]);
+        setMarketError('No sports available at the moment');
+      }
+    } catch (error) {
+      console.error('Error loading market data:', error);
+      setSportsGroups({});
+      setAllSports([]);
+      setMarketError(`Failed to load sports: ${error.message || 'Unknown error'}`);
+    } finally {
+      setLoadingMarket(false);
+    }
+  }, [loadingMarket]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -199,8 +220,8 @@ function CreateCircuitPage() {
           const eventsData = await getLeagueEvents(leagueId);
           setAvailableEvents(eventsData.filter(event => !event.completed) || []);
           
-          // Load market data if on market tab
-          if (tabValue === 0) {
+          // Always load market data on mount
+          if (!Object.keys(sportsGroups).length) {
             loadMarketData();
           }
         } else {
@@ -214,7 +235,7 @@ function CreateCircuitPage() {
       }
     };
     fetchData();
-  }, [leagueId, currentUser.id, tabValue]);
+  }, [leagueId, currentUser.id, loadMarketData, sportsGroups]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -247,6 +268,10 @@ function CreateCircuitPage() {
           : item
       )
     );
+  };
+
+  const handleTiebreakerSelect = (eventId) => {
+    setFormData(prev => ({ ...prev, tiebreaker_event_id: eventId }));
   };
 
   const handleSubmit = async (e) => {
@@ -393,119 +418,143 @@ function CreateCircuitPage() {
     }
   };
 
-  const loadMarketData = async () => {
-    if (loadingMarket) return;
-    setLoadingMarket(true);
-    setMarketError('');
-    try {
-      console.log('Calling browseMarket API');
-      const marketData = await browseMarket();
-      console.log('Market data received:', marketData);
-      if (marketData?.data?.grouped_sports) {
-        setSportsGroups(marketData.data.grouped_sports);
-        setAllSports(marketData.data.sports || []);
-      } else {
-        console.error('Market data format invalid:', marketData);
-        setMarketError('Failed to load market data or format invalid.');
-        setSportsGroups({});
-        setAllSports([]);
-      }
-    } catch (err) {
-      console.error('Error loading market data:', err);
-      setMarketError('Failed to load market data: ' + (err.message || 'Unknown error'));
-    } finally {
-      setLoadingMarket(false);
-    }
-  };
-
-  const handleGroupSelect = (group) => {
+  const handleGroupSelect = useCallback((group) => {
+    console.log('Group selected:', group);
     setSelectedGroup(group);
     setViewState('sports');
-    setSelectedSport(null);
-    setMarketEvents([]);
-    setSearchTerm('');
-  };
+  }, []);
 
-  const handleSportSelect = async (sport) => {
-     if (!sport || !sport.key) {
-      console.error('Invalid sport object passed to handleSportSelect:', sport);
-      setMarketError('Invalid sport selected.');
+  const handleSportSelect = useCallback((sport) => {
+    console.log('Sport selected:', sport);
+    
+    if (!sport || typeof sport !== 'string' || sport.trim() === '') {
+      console.error('Invalid sport selected:', sport);
+      setMarketError('Invalid sport selection');
       return;
     }
+    
+    // Format sport for API call - lowercase and replace spaces with underscores
+    const formattedSport = sport.toLowerCase().replace(/\s+/g, '_');
+    console.log('Formatted sport for API:', formattedSport);
+    
     setSelectedSport(sport);
     setViewState('events');
     setLoadingMarket(true);
+    setMarketError(null);
+    
+    getAvailableSportEvents(formattedSport)
+      .then(events => {
+        console.log('Received events:', events);
+        if (Array.isArray(events)) {
+          // More robust filtering of valid events
+          const validEvents = events.filter(event => {
+            if (!event || typeof event !== 'object') return false;
+            // Check for required properties
+            if (!event.id || !event.home_team || !event.away_team || !event.commence_time) {
+              console.warn('Skipping event with missing properties:', event);
+              return false;
+            }
+            return true;
+          });
+          console.log(`Found ${validEvents.length} valid events to display out of ${events.length} total`);
+          setMarketEvents(validEvents);
+          setSearchTerm('');
+        } else {
+          console.error('Expected events array but got:', events);
+          setMarketEvents([]);
+          setMarketError('No events available for this sport');
+        }
+      })
+      .catch(error => {
+        console.error('Failed to load events for sport:', sport, error);
+        setMarketEvents([]);
+        setMarketError(`Error loading events: ${error.message || 'Unknown error'}`);
+      })
+      .finally(() => {
+        setLoadingMarket(false);
+      });
+  }, []);
+
+  const handleBackToGroups = useCallback(() => {
+    setViewState('groups');
+    setSelectedGroup(null);
+  }, []);
+
+  const handleBackToSports = useCallback(() => {
+    setViewState('sports');
+    setSelectedSport(null);
     setMarketEvents([]);
-    setSearchTerm('');
-    setMarketError('');
-    try {
-      console.log(`Calling getAvailableSportEvents API for sport key: ${sport.key}`);
-      const formattedKey = sport.key.replace(/ /g, '_').toLowerCase();
-      const events = await getAvailableSportEvents(formattedKey);
-      console.log('Events received for sport:', events);
-      const validEvents = Array.isArray(events) ? events : [];
-      setMarketEvents(validEvents);
-      if(validEvents.length === 0) {
-        setMarketError(`No upcoming events found for ${sport.title}.`);
-      }
-    } catch (err) {
-      console.error(`Failed to load events for ${sport.title}:`, err);
-      setMarketError(`Failed to load events for ${sport.title}: ` + (err.message || 'Unknown error'));
-       setMarketEvents([]);
-    } finally {
-      setLoadingMarket(false);
-    }
-  };
+  }, []);
 
   // === Render Functions ===
 
   // --- Step 1 Render Functions ---
   const renderMarketSportsGroups = () => {
+    if (loadingMarket) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+
+    if (marketError) {
+      return (
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography color="error" variant="body1">
+            {marketError}
+          </Typography>
+          <Button 
+            variant="contained" 
+            sx={{ mt: 2 }} 
+            onClick={() => {
+              setMarketError(null);
+              loadMarketData();
+            }}
+          >
+            Retry
+          </Button>
+        </Box>
+      );
+    }
+
+    // Check if sportsGroups is an object with keys
+    const groups = Object.keys(sportsGroups);
+    if (!groups || groups.length === 0) {
+      return (
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="body1">No sports groups found.</Typography>
+        </Box>
+      );
+    }
+
     return (
-      <Grid container spacing={3}>
-        {Object.keys(sportsGroups).map((group) => (
-          <Grid item xs={12} sm={6} md={4} key={group}>
-            <Card 
-              onClick={() => handleGroupSelect(group)}
+      <Grid container spacing={3} sx={{ p: 3 }}>
+        {groups.map((group) => (
+          <Grid item xs={12} sm={6} md={4} lg={3} key={group}>
+            <Paper
               sx={{
+                p: 3,
+                textAlign: 'center',
                 cursor: 'pointer',
-                backgroundColor: 'rgba(30, 41, 59, 0.8)',
-                borderRadius: '12px',
-                borderTop: '3px solid #8B5CF6',
-                transition: 'all 0.3s ease',
+                transition: 'transform 0.2s',
                 '&:hover': {
-                  transform: 'translateY(-5px)',
-                  boxShadow: '0 10px 20px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(139, 92, 246, 0.2)',
-                  background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(51, 65, 85, 0.9))',
-                }
+                  transform: 'scale(1.03)',
+                  boxShadow: 6,
+                },
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '150px',
               }}
+              onClick={() => handleGroupSelect(group)}
             >
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
-                  <Box 
-                    sx={{ 
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      width: '45px',
-                      height: '45px',
-                      borderRadius: '50%',
-                      backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                      color: '#8B5CF6',
-                      '& > *': { fontSize: '1.8rem' },
-                    }}
-                  >
-                    {getSportIcon(group).icon}
-                  </Box>
-                  <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                    {group}
-                  </Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary">
-                  {sportsGroups[group].length} sports available
-                </Typography>
-              </CardContent>
-            </Card>
+              <Box sx={{ mb: 2 }}>
+                {getSportIcon(group)}
+              </Box>
+              <Typography variant="h6">{group}</Typography>
+            </Paper>
           </Grid>
         ))}
       </Grid>
@@ -515,12 +564,29 @@ function CreateCircuitPage() {
   const renderMarketSports = () => {
     if (!selectedGroup || !sportsGroups[selectedGroup]) return null;
     
+    const sports = sportsGroups[selectedGroup];
+    if (!Array.isArray(sports) || sports.length === 0) {
+      return (
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="body1">No sports found in this category.</Typography>
+          <Button 
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={handleBackToGroups}
+            sx={{ mt: 2 }}
+          >
+            Back to Categories
+          </Button>
+        </Box>
+      );
+    }
+    
     return (
       <>
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
           <Button 
             startIcon={<ArrowBackIcon />} 
-            onClick={() => setViewState('groups')}
+            onClick={handleBackToGroups}
             sx={{ mr: 2 }}
           >
             Back to Categories
@@ -531,11 +597,11 @@ function CreateCircuitPage() {
         </Box>
         
         <List component={Paper} sx={{ bgcolor: 'rgba(30, 41, 59, 0.8)', borderRadius: '12px' }}>
-          {sportsGroups[selectedGroup].map((sport) => (
+          {sports.map((sport) => (
             <ListItem 
               key={sport.key} 
               button 
-              onClick={() => handleSportSelect(sport)}
+              onClick={() => handleSportSelect(sport.key)}
               divider
               sx={{ 
                 transition: 'all 0.2s ease',
@@ -587,13 +653,13 @@ function CreateCircuitPage() {
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
           <Button 
             startIcon={<ArrowBackIcon />} 
-            onClick={() => setViewState('sports')}
+            onClick={handleBackToSports}
             sx={{ mr: 2 }}
           >
             Back to Sports
           </Button>
           <Typography variant="h5" component="div">
-            Events for {selectedSport.title}
+            Events for {selectedSport}
           </Typography>
         </Box>
         
@@ -714,7 +780,7 @@ function CreateCircuitPage() {
           </Box>
           <TabPanel value={tabValue} index={0}>{renderMarketContent()}</TabPanel>
           <TabPanel value={tabValue} index={1}>
-            <Box component="div">
+            <Box component="div" sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>Create Custom Event</Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12}><TextField fullWidth label="Event Title / Question" name="name" value={customEvent.name} onChange={(e) => setCustomEvent(prev => ({...prev, name: e.target.value}))} required size="small" /></Grid>
@@ -731,8 +797,6 @@ function CreateCircuitPage() {
                     <DateTimePicker label="End Time" value={customEvent.startTime} onChange={(d) => setCustomEvent(prev => ({...prev, startTime: d}))} slotProps={{ textField: { fullWidth: true, required: true, size: 'small' } }} />
                   </LocalizationProvider>
                 </Grid>
-                <Grid item xs={12} sm={6}><TextField fullWidth label="Context 1 (Optional)" name="homeTeam" value={customEvent.homeTeam} onChange={(e) => setCustomEvent(prev => ({...prev, homeTeam: e.target.value}))} size="small" /></Grid>
-                <Grid item xs={12} sm={6}><TextField fullWidth label="Context 2 (Optional)" name="awayTeam" value={customEvent.awayTeam} onChange={(e) => setCustomEvent(prev => ({...prev, awayTeam: e.target.value}))} size="small" /></Grid>
                 <Grid item xs={12}><Divider sx={{ my: 1 }}><Typography variant="caption">Answer</Typography></Divider></Grid>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth required size="small">
@@ -746,13 +810,13 @@ function CreateCircuitPage() {
                   <Grid item xs={12} sm={6}><TextField fullWidth required label="Options (comma-separated)" name="answerOptionsString" value={customEvent.answerOptionsString} onChange={(e) => setCustomEvent(prev => ({...prev, answerOptionsString: e.target.value}))} placeholder="Option A, Option B" helperText="Min. 2 options" size="small" /></Grid>
                 )}
                 <Grid item xs={12}>
-                  <Button variant="contained" color="secondary" onClick={handleAddCustomEvent} startIcon={<AddIcon />}>Add Custom Event</Button>
+                  <Button variant="contained" color="primary" onClick={handleAddCustomEvent} startIcon={<AddIcon />}>Add Custom Event</Button>
                 </Grid>
               </Grid>
             </Box>
           </TabPanel>
           <Divider />
-           <Box sx={{ p: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', bgcolor: 'grey.100' }}>
+           <Box sx={{ p: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', bgcolor: 'background.paper' }}>
              <Typography variant="body2" sx={{ mr: 2, fontWeight: 'medium' }}>Selected Events: {selectedEvents.length}</Typography>
            </Box>
       </Card>
