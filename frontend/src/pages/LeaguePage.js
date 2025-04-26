@@ -874,29 +874,6 @@ function LeaguePage() {
               Edit League
             </Button>
           )}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              bgcolor: 'rgba(234, 179, 8, 0.1)',
-              border: '1px solid rgba(234, 179, 8, 0.5)',
-              borderRadius: '8px',
-              px: 2,
-              py: 1,
-            }}
-          >
-            <AttachMoneyIcon sx={{ color: '#EAB308' }} />
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: '#EAB308',
-                fontWeight: 'bold'
-              }}
-            >
-              {league?.balance !== undefined && league?.balance !== null ? parseFloat(league.balance).toFixed(2) : '0.00'}
-            </Typography>
-          </Box>
         </Box>
 
         {/* League Details Card */}
