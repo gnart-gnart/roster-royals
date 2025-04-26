@@ -503,6 +503,13 @@ export const getOtherUserBettingStats = async (userId) => {
   return handleResponse(response);
 };
 
+export const getOtherUserBetHistory = async (userId) => {
+  const response = await fetch(`${API_URL}/api/profile/${userId}/bet-history/`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
 export const updateUserProfile = async (profileData) => {
   const isFormData = profileData instanceof FormData;
   const response = await fetch(`${API_URL}/api/profile/update/`, {
