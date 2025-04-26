@@ -379,8 +379,7 @@ function UserProfilePage() {
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         {/* Page Header */}
         <Box sx={{ display: 'flex', mb: 3, alignItems: 'center' }}>
-          <Button 
-            startIcon={<ArrowBackIcon />} 
+          <IconButton 
             sx={{ 
               color: '#f8fafc',
               mr: 2,
@@ -390,35 +389,43 @@ function UserProfilePage() {
             }}
             onClick={() => navigate(-1)}
           >
-            Back
-          </Button>
+            <ArrowBackIcon />
+          </IconButton>
           <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
             {user.username}'s Profile
           </Typography>
         </Box>
         
-        {/* User Profile Content */}
+        {/* Profile Overview and Stats */}
         <Grid container spacing={3}>
-          {/* Profile Overview */}
+          {/* Left Column - Profile Info */}
           <Grid item xs={12} md={4}>
             <Paper 
               sx={{ 
                 p: 4, 
                 textAlign: 'center',
                 bgcolor: 'rgba(30, 41, 59, 0.7)', 
-                borderRadius: 2
+                borderRadius: 2,
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                mb: 3
               }}
             >
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                position: 'relative'
+              }}>
                 <Avatar 
                   src={userImageSource}
                   sx={{ 
                     bgcolor: '#8B5CF6', 
-                    width: 140, 
-                    height: 140, 
-                    fontSize: '56px', 
+                    width: 120, 
+                    height: 120, 
+                    fontSize: '48px', 
                     mb: 3,
-                    border: '4px solid rgba(139, 92, 246, 0.2)'
+                    border: '4px solid rgba(139, 92, 246, 0.3)',
+                    boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
                   }}
                 >
                   {user.username?.[0]?.toUpperCase()}
@@ -428,7 +435,7 @@ function UserProfilePage() {
                   {user.username}
                 </Typography>
                 
-                <Typography variant="body1" sx={{ color: '#94a3b8', mb: 3 }}>
+                <Typography variant="body1" sx={{ color: '#94a3b8', mb: 2 }}>
                   Member since {bettingStats.date_joined}
                 </Typography>
                 
@@ -439,31 +446,222 @@ function UserProfilePage() {
                     color: 'white',
                     fontSize: '0.9rem',
                     fontWeight: 'bold',
+                    py: 0.5,
                     mb: 2
                   }}
                 />
                 
                 {user.bio && (
-                  <Typography variant="body1" sx={{ color: '#f8fafc', mt: 2 }}>
+                  <Typography variant="body1" sx={{ color: '#f8fafc', mt: 1, mx: 'auto', maxWidth: '90%' }}>
                     {user.bio}
                   </Typography>
                 )}
               </Box>
             </Paper>
+            
+            {/* Betting Stats - Vertical Cards */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {loadingStats ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                  <CircularProgress sx={{ color: '#8B5CF6' }} />
+                </Box>
+              ) : (
+                <>
+                  {/* Win Rate */}
+                  <Paper sx={{ 
+                    p: 2, 
+                    bgcolor: 'rgba(30, 41, 59, 0.7)', 
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    {bettingStats.stats_visible?.win_rate ? (
+                      <>
+                        <Box sx={{ 
+                          bgcolor: 'rgba(16, 185, 129, 0.15)', 
+                          borderRadius: '50%', 
+                          p: 1.5,
+                          mr: 2
+                        }}>
+                          <TrendingUpIcon sx={{ fontSize: 32, color: '#10B981' }} />
+                        </Box>
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                            {bettingStats.win_rate}%
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                            Win Rate
+                          </Typography>
+                        </Box>
+                      </>
+                    ) : (
+                      <>
+                        <Box sx={{ 
+                          bgcolor: 'rgba(148, 163, 184, 0.15)', 
+                          borderRadius: '50%', 
+                          p: 1.5,
+                          mr: 2
+                        }}>
+                          <LockIcon sx={{ fontSize: 32, color: '#94a3b8' }} />
+                        </Box>
+                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                          Win Rate Hidden
+                        </Typography>
+                      </>
+                    )}
+                  </Paper>
+                  
+                  {/* Current Streak */}
+                  <Paper sx={{ 
+                    p: 2, 
+                    bgcolor: 'rgba(30, 41, 59, 0.7)', 
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    {bettingStats.stats_visible?.betting_history ? (
+                      <>
+                        <Box sx={{ 
+                          bgcolor: 'rgba(245, 158, 11, 0.15)', 
+                          borderRadius: '50%', 
+                          p: 1.5,
+                          mr: 2
+                        }}>
+                          <WhatshotIcon sx={{ fontSize: 32, color: '#F59E0B' }} />
+                        </Box>
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                            {bettingStats.current_streak > 0 && '+'}
+                            {bettingStats.current_streak}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                            Current Streak
+                          </Typography>
+                        </Box>
+                      </>
+                    ) : (
+                      <>
+                        <Box sx={{ 
+                          bgcolor: 'rgba(148, 163, 184, 0.15)', 
+                          borderRadius: '50%', 
+                          p: 1.5,
+                          mr: 2
+                        }}>
+                          <LockIcon sx={{ fontSize: 32, color: '#94a3b8' }} />
+                        </Box>
+                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                          Streak Hidden
+                        </Typography>
+                      </>
+                    )}
+                  </Paper>
+                
+                  {/* Total Bets */}
+                  <Paper sx={{ 
+                    p: 2, 
+                    bgcolor: 'rgba(30, 41, 59, 0.7)', 
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    {bettingStats.stats_visible?.betting_history ? (
+                      <>
+                        <Box sx={{ 
+                          bgcolor: 'rgba(139, 92, 246, 0.15)', 
+                          borderRadius: '50%', 
+                          p: 1.5,
+                          mr: 2
+                        }}>
+                          <ScoreboardIcon sx={{ fontSize: 32, color: '#8B5CF6' }} />
+                        </Box>
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                            {bettingStats.total_bets}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                            Total Bets
+                          </Typography>
+                        </Box>
+                      </>
+                    ) : (
+                      <>
+                        <Box sx={{ 
+                          bgcolor: 'rgba(148, 163, 184, 0.15)', 
+                          borderRadius: '50%', 
+                          p: 1.5,
+                          mr: 2
+                        }}>
+                          <LockIcon sx={{ fontSize: 32, color: '#94a3b8' }} />
+                        </Box>
+                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                          Bets Hidden
+                        </Typography>
+                      </>
+                    )}
+                  </Paper>
+                
+                  {/* Lifetime Winnings */}
+                  <Paper sx={{ 
+                    p: 2, 
+                    bgcolor: 'rgba(30, 41, 59, 0.7)', 
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    {bettingStats.stats_visible?.betting_history ? (
+                      <>
+                        <Box sx={{ 
+                          bgcolor: 'rgba(96, 165, 250, 0.15)', 
+                          borderRadius: '50%', 
+                          p: 1.5,
+                          mr: 2
+                        }}>
+                          <AttachMoneyIcon sx={{ fontSize: 32, color: '#60A5FA' }} />
+                        </Box>
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                            {bettingStats.lifetime_winnings}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                            Lifetime Winnings
+                          </Typography>
+                        </Box>
+                      </>
+                    ) : (
+                      <>
+                        <Box sx={{ 
+                          bgcolor: 'rgba(148, 163, 184, 0.15)', 
+                          borderRadius: '50%', 
+                          p: 1.5,
+                          mr: 2
+                        }}>
+                          <LockIcon sx={{ fontSize: 32, color: '#94a3b8' }} />
+                        </Box>
+                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                          Winnings Hidden
+                        </Typography>
+                      </>
+                    )}
+                  </Paper>
+                </>
+              )}
+            </Box>
           </Grid>
           
-          {/* Achievements */}
-          <Grid item xs={12} md={4}>
+          {/* Right Column - Achievements */}
+          <Grid item xs={12} md={8}>
             <Paper 
               sx={{ 
                 p: 3, 
                 bgcolor: 'rgba(30, 41, 59, 0.7)', 
                 borderRadius: 2,
-                mt: { xs: 2, md: 0 },
                 mb: { xs: 2, md: 0 },
                 boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
                 overflow: 'hidden',
-                position: 'relative'
+                position: 'relative',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column'
               }}
             >
               {/* Add a decorative gradient top border */}
@@ -487,18 +685,37 @@ function UserProfilePage() {
               
               {/* Show loading state or hidden message if applicable */}
               {loadingHistory ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4, flex: 1 }}>
                   <CircularProgress sx={{ color: '#8B5CF6' }} />
                 </Box>
               ) : !bettingStats.stats_visible?.betting_history ? (
-                <Box sx={{ textAlign: 'center', p: 3 }}>
-                  <LockIcon sx={{ fontSize: 40, color: '#94a3b8', mb: 1 }} />
-                  <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                    Achievements Hidden
+                <Box sx={{ textAlign: 'center', p: 3, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <LockIcon sx={{ fontSize: 48, color: '#94a3b8', mb: 2 }} />
+                  <Typography variant="body1" sx={{ color: '#94a3b8' }}>
+                    Achievement data is private
                   </Typography>
                 </Box>
               ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: 2,
+                  flex: 1,
+                  overflowY: 'auto',
+                  pr: 1,
+                  mr: -1,
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: 'rgba(0, 0, 0, 0.1)',
+                    borderRadius: '10px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: 'rgba(139, 92, 246, 0.5)',
+                    borderRadius: '10px',
+                  }
+                }}>
                   {/* Achievement Items with improved styling */}
                   {achievements.map(achievement => (
                     <Paper 
@@ -507,9 +724,11 @@ function UserProfilePage() {
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        p: 2,
+                        p: 2.5,
                         borderRadius: 2,
-                        bgcolor: 'rgba(22, 28, 36, 0.7)',
+                        bgcolor: achievement.unlocked 
+                          ? 'rgba(25, 32, 45, 0.9)' 
+                          : 'rgba(22, 28, 36, 0.7)',
                         transition: 'all 0.3s ease',
                         border: '1px solid',
                         borderColor: achievement.unlocked ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 255, 255, 0.03)',
@@ -518,7 +737,6 @@ function UserProfilePage() {
                         '&:hover': {
                           transform: 'translateY(-2px)',
                           boxShadow: achievement.unlocked ? '0 8px 16px rgba(255, 215, 0, 0.15)' : '0 4px 8px rgba(0, 0, 0, 0.1)',
-                          bgcolor: achievement.unlocked ? 'rgba(25, 32, 45, 0.9)' : 'rgba(22, 28, 36, 0.8)',
                         }
                       }}
                     >
@@ -540,14 +758,14 @@ function UserProfilePage() {
                       {/* Achievement icon with animated background for unlocked achievements */}
                       <Box 
                         sx={{
-                          width: 50,
-                          height: 50,
+                          width: 60,
+                          height: 60,
                           borderRadius: '50%',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '22px',
-                          mr: 2,
+                          fontSize: '28px',
+                          mr: 2.5,
                           position: 'relative',
                           background: achievement.unlocked 
                             ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' 
@@ -588,6 +806,7 @@ function UserProfilePage() {
                             variant="body1" 
                             sx={{ 
                               fontWeight: 'bold', 
+                              fontSize: '1.05rem',
                               color: achievement.unlocked ? '#FFD700' : '#f8fafc',
                               textShadow: achievement.unlocked ? '0 0 10px rgba(255, 215, 0, 0.3)' : 'none'
                             }}
@@ -611,7 +830,14 @@ function UserProfilePage() {
                           )}
                         </Box>
                         
-                        <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 0.5 }}>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: '#9CA3AF', 
+                            mb: 0.5,
+                            fontSize: '0.9rem' 
+                          }}
+                        >
                           {achievement.description}
                         </Typography>
                         
@@ -641,7 +867,7 @@ function UserProfilePage() {
                               sx={{
                                 width: '30%', // This could be dynamic based on progress toward achievement
                                 height: '100%',
-                                bgcolor: 'rgba(255, 255, 255, 0.3)',
+                                bgcolor: 'rgba(139, 92, 246, 0.4)',
                                 borderRadius: 5
                               }}
                             />
@@ -651,147 +877,6 @@ function UserProfilePage() {
                     </Paper>
                   ))}
                 </Box>
-              )}
-            </Paper>
-          </Grid>
-          
-          {/* Betting Stats */}
-          <Grid item xs={12} md={8}>
-            <Paper 
-              sx={{ 
-                p: 4, 
-                bgcolor: 'rgba(30, 41, 59, 0.7)', 
-                borderRadius: 2,
-                height: '100%'
-              }}
-            >
-              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc', mb: 3 }}>
-                Betting Statistics
-              </Typography>
-              
-              {loadingStats ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                  <CircularProgress sx={{ color: '#8B5CF6' }} />
-                </Box>
-              ) : (
-                <Grid container spacing={3}>
-                  {/* Win Rate */}
-                  <Grid item xs={6} sm={3}>
-                    <Box 
-                      sx={{ 
-                        textAlign: 'center',
-                        p: 2
-                      }}
-                    >
-                      {bettingStats.stats_visible?.win_rate ? (
-                        <>
-                          <TrendingUpIcon sx={{ fontSize: 40, color: '#10B981', mb: 1 }} />
-                          <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                            {bettingStats.win_rate}%
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                            Win Rate
-                          </Typography>
-                        </>
-                      ) : (
-                        <>
-                          <LockIcon sx={{ fontSize: 40, color: '#94a3b8', mb: 1 }} />
-                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                            Win Rate Hidden
-                          </Typography>
-                        </>
-                      )}
-                    </Box>
-                  </Grid>
-                  
-                  {/* Current Streak */}
-                  <Grid item xs={6} sm={3}>
-                    <Box 
-                      sx={{ 
-                        textAlign: 'center',
-                        p: 2
-                      }}
-                    >
-                      {bettingStats.stats_visible?.betting_history ? (
-                        <>
-                          <WhatshotIcon sx={{ fontSize: 40, color: '#F59E0B', mb: 1 }} />
-                          <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                            {bettingStats.current_streak > 0 && '+'}
-                            {bettingStats.current_streak}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                            Current Streak
-                          </Typography>
-                        </>
-                      ) : (
-                        <>
-                          <LockIcon sx={{ fontSize: 40, color: '#94a3b8', mb: 1 }} />
-                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                            Streak Hidden
-                          </Typography>
-                        </>
-                      )}
-                    </Box>
-                  </Grid>
-                  
-                  {/* Total Bets */}
-                  <Grid item xs={6} sm={3}>
-                    <Box 
-                      sx={{ 
-                        textAlign: 'center',
-                        p: 2
-                      }}
-                    >
-                      {bettingStats.stats_visible?.betting_history ? (
-                        <>
-                          <ScoreboardIcon sx={{ fontSize: 40, color: '#8B5CF6', mb: 1 }} />
-                          <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                            {bettingStats.total_bets}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                            Total Bets
-                          </Typography>
-                        </>
-                      ) : (
-                        <>
-                          <LockIcon sx={{ fontSize: 40, color: '#94a3b8', mb: 1 }} />
-                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                            Bets Hidden
-                          </Typography>
-                        </>
-                      )}
-                    </Box>
-                  </Grid>
-                  
-                  {/* Lifetime Winnings */}
-                  <Grid item xs={6} sm={3}>
-                    <Box 
-                      sx={{ 
-                        textAlign: 'center',
-                        p: 2
-                      }}
-                    >
-                      {bettingStats.stats_visible?.betting_history ? (
-                        <>
-                          <AttachMoneyIcon sx={{ fontSize: 40, color: '#60A5FA', mb: 1 }} />
-                          <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                            {bettingStats.lifetime_winnings}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                            Lifetime Winnings
-                          </Typography>
-                        </>
-                      ) : (
-                        <>
-                          <LockIcon sx={{ fontSize: 40, color: '#94a3b8', mb: 1 }} />
-                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                            Winnings Hidden
-                          </Typography>
-                        </>
-                      )}
-                    </Box>
-                  </Grid>
-                </Grid>
               )}
             </Paper>
           </Grid>
