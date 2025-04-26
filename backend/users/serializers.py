@@ -5,7 +5,9 @@ class UserSerializer(serializers.ModelSerializer):
     profile_image_url = serializers.SerializerMethodField()
     
     def get_profile_image_url(self, obj):
-        return obj.profile_image_url
+        if hasattr(obj, 'profile_image') and obj.profile_image:
+            return obj.profile_image_url
+        return '/media/profile_images/default_profile.png'
         
     class Meta:
         model = User

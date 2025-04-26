@@ -172,6 +172,9 @@ def search_users(request):
         .exclude(is_staff=True)\
         .exclude(is_superuser=True)
     
+    # Get the base URL for building absolute URLs
+    base_url = request.build_absolute_uri('/').rstrip('/')
+    
     results = []
     for user in users[:10]:  # Limit to 10 results
         # Check friendship status
@@ -182,12 +185,29 @@ def search_users(request):
             status='pending'
         ).exists()
         
-        results.append({
+        # Create a data dictionary directly instead of using the serializer
+        user_data = {
             'id': user.id,
             'username': user.username,
             'points': user.points,
-            'friendStatus': 'friends' if is_friend else 'pending' if pending_request else 'none'
-        })
+            'friendStatus': 'friends' if is_friend else 'pending' if pending_request else 'none',
+        }
+        
+        # Handle profile image directly - ensure we return an absolute URL
+        if hasattr(user, 'profile_image') and user.profile_image and hasattr(user.profile_image, 'url'):
+            img_url = user.profile_image.url
+            # Make sure it's an absolute URL with hostname
+            if img_url.startswith('/'):
+                img_url = f"{base_url}{img_url}"
+            user_data['profile_image_url'] = img_url
+        else:
+            # Set a default image URL (including hostname)
+            user_data['profile_image_url'] = f"{base_url}/media/profile_images/default_profile.png"
+        
+        # Debug logging
+        print(f"User {user.username}: profile_image_url = {user_data.get('profile_image_url')}")
+        
+        results.append(user_data)
     
     return Response(results)
 
