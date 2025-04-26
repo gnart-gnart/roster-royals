@@ -9,7 +9,7 @@ import {
   Divider,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 function Chat({ leagueId }) {
   const [messages, setMessages] = useState([]);
@@ -19,6 +19,48 @@ function Chat({ leagueId }) {
   const messagesEndRef = useRef(null);
   const user = JSON.parse(localStorage.getItem('user'));
 
+  // Function to get the proper image URL
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    
+    // If the URL is already absolute (starts with http or https), return it as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    // If the URL starts with /media/, prepend the API URL
+    if (imageUrl.startsWith('/media/')) {
+      return `${process.env.REACT_APP_API_URL}${imageUrl}`;
+    }
+    // Otherwise, assume it's a relative media path and construct the full URL
+    return `${process.env.REACT_APP_API_URL}/media/${imageUrl.replace('media/', '')}`;
+  };
+
+  // Function to get sender profile image source
+  const getSenderImageSource = (sender) => {
+    // If this is the current user, check for embedded image data
+    if (sender.id === user.id) {
+      // Try embedded image from user object first
+      if (user.embeddedImageData) {
+        return user.embeddedImageData;
+      }
+      
+      // Then try session storage with user-specific key
+      const userSpecificKey = `profileImageDataUrl_${sender.id}`;
+      const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+      if (profileImageDataUrl) {
+        return profileImageDataUrl;
+      }
+    }
+    
+    // Add fallback to use API-based avatar for other users
+    if (sender.profile_image_url) {
+      return getImageUrl(sender.profile_image_url);
+    }
+    
+    // Return avatar API URL as fallback
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(sender.username)}&background=random`;
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -26,6 +68,13 @@ function Chat({ leagueId }) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Add auto-scroll on component mount as well
+  useEffect(() => {
+    if (!loading) {
+      scrollToBottom();
+    }
+  }, [loading]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -119,6 +168,29 @@ function Chat({ leagueId }) {
     }
   };
 
+  // Helper function to safely format timestamps
+  const formatTimestamp = (timestamp) => {
+    try {
+      // Check if timestamp is a valid string
+      if (!timestamp || typeof timestamp !== 'string') {
+        return '';
+      }
+      
+      // Try to parse the timestamp with parseISO for better compatibility
+      const date = parseISO(timestamp);
+      
+      // Verify that the date is valid before formatting
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      
+      return format(date, 'MMM d, h:mm a');
+    } catch (err) {
+      console.error('Error formatting timestamp:', err);
+      return '';
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ p: 2, textAlign: 'center', color: '#CBD5E1' }}>
@@ -138,12 +210,13 @@ function Chat({ leagueId }) {
   return (
     <Paper 
       sx={{ 
-        height: '500px',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         bgcolor: 'rgba(22, 28, 36, 0.4)',
         border: '1px solid rgba(30, 41, 59, 0.8)',
         borderRadius: '8px',
+        overflow: 'hidden', // Prevent content from overflowing
       }}
     >
       <Box sx={{ p: 2, borderBottom: '1px solid rgba(30, 41, 59, 0.8)' }}>
@@ -152,8 +225,30 @@ function Chat({ leagueId }) {
         </Typography>
       </Box>
       
-      <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-        {messages.map((message) => (
+      <Box sx={{ 
+        flex: 1, 
+        overflow: 'auto', 
+        p: 2,
+        '&::-webkit-scrollbar': {
+          width: '8px',
+          background: 'transparent',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: 'rgba(148, 163, 184, 0.3)',
+          borderRadius: '4px',
+          '&:hover': {
+            background: 'rgba(148, 163, 184, 0.5)',
+          }
+        },
+        '&::-webkit-scrollbar-track': {
+          background: 'rgba(15, 23, 42, 0.3)',
+          borderRadius: '4px',
+        },
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'rgba(148, 163, 184, 0.3) rgba(15, 23, 42, 0.3)',
+      }}>
+        {messages.map((message) => {
+          return (
           <Box 
             key={message.id}
             sx={{ 
@@ -163,62 +258,77 @@ function Chat({ leagueId }) {
             }}
           >
             <Avatar 
+              src={getSenderImageSource(message.sender)}
               sx={{ 
                 bgcolor: message.sender.id === user.id ? '#8B5CF6' : '#3B82F6',
                 width: 32,
                 height: 32,
                 fontSize: '14px',
               }}
+              imgProps={{
+                style: { objectFit: 'cover' },
+                onError: (e) => {
+                  console.error('Error loading profile image:', e);
+                  e.target.src = ''; // Clear src to show fallback
+                }
+              }}
             >
               {message.sender.username[0].toUpperCase()}
             </Avatar>
             
-            <Box sx={{ mx: 1, maxWidth: '70%' }}>
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: '12px',
-                  bgcolor: message.sender.id === user.id 
-                    ? 'rgba(139, 92, 246, 0.2)' 
-                    : 'rgba(30, 41, 59, 0.6)',
-                  border: '1px solid',
-                  borderColor: message.sender.id === user.id 
-                    ? 'rgba(139, 92, 246, 0.3)' 
-                    : 'rgba(30, 41, 59, 0.8)',
+            <Box 
+              sx={{ 
+                maxWidth: '70%',
+                ml: message.sender.id === user.id ? 0 : 1,
+                mr: message.sender.id === user.id ? 1 : 0,
+                p: 1.5,
+                bgcolor: message.sender.id === user.id ? 'rgba(139, 92, 246, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                borderRadius: '12px',
+                wordBreak: 'break-word',
+              }}
+            >
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  display: 'block', 
+                  mb: 0.5, 
+                  color: message.sender.id === user.id ? '#C4B5FD' : '#93C5FD',
+                  fontWeight: 'bold',
                 }}
               >
-                <Typography variant="body2" sx={{ color: '#f8fafc' }}>
-                  {message.message}
-                </Typography>
-                <Typography 
-                  variant="caption" 
-                  sx={{ 
-                    display: 'block',
-                    mt: 0.5,
-                    color: '#94A3B8',
-                    textAlign: message.sender.id === user.id ? 'right' : 'left',
-                  }}
-                >
-                  {format(new Date(message.created_at), 'MMM d, h:mm a')}
-                </Typography>
-              </Box>
+                {message.sender.username}
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#f1f5f9' }}>
+                {message.content || message.message || "No message content available"}
+              </Typography>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  display: 'block', 
+                  mt: 0.5, 
+                  color: '#94A3B8',
+                  textAlign: message.sender.id === user.id ? 'right' : 'left',
+                }}
+              >
+                {message.timestamp ? formatTimestamp(message.timestamp) : ''}
+              </Typography>
             </Box>
           </Box>
-        ))}
+        );
+        })}
         <div ref={messagesEndRef} />
       </Box>
       
-      <Divider />
-      
       <Box 
         component="form" 
-        onSubmit={handleSendMessage}
         sx={{ 
-          p: 2,
+          p: 1.5, 
           display: 'flex',
           alignItems: 'center',
-          gap: 1,
+          borderTop: '1px solid rgba(30, 41, 59, 0.8)',
+          mt: 'auto', // Push to bottom
         }}
+        onSubmit={handleSendMessage}
       >
         <TextField
           fullWidth
@@ -227,29 +337,43 @@ function Chat({ leagueId }) {
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           sx={{
+            mr: 1,
             '& .MuiOutlinedInput-root': {
-              color: '#CBD5E1',
-              backgroundColor: 'rgba(15, 23, 42, 0.3)',
+              backgroundColor: 'rgba(30, 41, 59, 0.5)',
+              color: '#f1f5f9',
               '& fieldset': {
                 borderColor: 'rgba(148, 163, 184, 0.2)',
               },
               '&:hover fieldset': {
-                borderColor: 'rgba(148, 163, 184, 0.3)',
+                borderColor: 'rgba(148, 163, 184, 0.5)',
               },
               '&.Mui-focused fieldset': {
                 borderColor: '#8B5CF6',
               },
             },
+            '& .MuiOutlinedInput-input': {
+              '&::placeholder': {
+                color: '#94A3B8',
+                opacity: 1,
+              },
+            },
+          }}
+          InputProps={{
+            sx: { borderRadius: '12px' },
           }}
         />
         <IconButton 
-          type="submit" 
-          color="primary"
+          color="primary" 
+          type="submit"
+          disabled={!newMessage.trim()}
           sx={{ 
-            color: '#8B5CF6',
+            bgcolor: 'rgba(139, 92, 246, 0.1)',
             '&:hover': {
-              backgroundColor: 'rgba(139, 92, 246, 0.1)',
+              bgcolor: 'rgba(139, 92, 246, 0.2)',
             },
+            '&.Mui-disabled': {
+              opacity: 0.5,
+            }
           }}
         >
           <SendIcon />

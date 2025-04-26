@@ -178,6 +178,10 @@ export const inviteToLeague = async (leagueId, userId) => {
   const data = await response.json();
   if (!response.ok) {
     console.error('Invite failed:', data);
+    // Check for specific error that might indicate a duplicate invite
+    if (data.error && data.error.includes('already exists')) {
+      throw new Error('This person has already been invited to this league');
+    }
     throw new Error(data.error || 'Failed to send invite');
   }
 
@@ -475,8 +479,36 @@ export const getUserProfile = async () => {
   return handleResponse(response);
 };
 
+export const getOtherUserProfile = async (userId) => {
+  const response = await fetch(`${API_URL}/api/profile/${userId}/`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
 export const getUserBettingStats = async () => {
   const response = await fetch(`${API_URL}/api/profile/betting-stats/`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
+export const getUserBetHistory = async () => {
+  const response = await fetch(`${API_URL}/api/profile/bet-history/`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
+export const getOtherUserBettingStats = async (userId) => {
+  const response = await fetch(`${API_URL}/api/profile/${userId}/betting-stats/`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
+export const getOtherUserBetHistory = async (userId) => {
+  const response = await fetch(`${API_URL}/api/profile/${userId}/bet-history/`, {
     headers: getHeaders(),
   });
   return handleResponse(response);
@@ -490,6 +522,15 @@ export const updateUserProfile = async (profileData) => {
       'Authorization': getHeaders().Authorization
     } : getHeaders(),
     body: isFormData ? profileData : JSON.stringify(profileData),
+  });
+  return handleResponse(response);
+};
+
+export const updateUserSettings = async (settingsData) => {
+  const response = await fetch(`${API_URL}/api/profile/settings/`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(settingsData),
   });
   return handleResponse(response);
 };

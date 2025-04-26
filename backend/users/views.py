@@ -11,6 +11,16 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.conf import settings
 from groups.models import LeagueEvent, UserBet  # Add this import
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import Group
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+import datetime
+import json
+import logging
+import random
+import string
+import re
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
@@ -104,15 +114,33 @@ def get_friend_requests(request):
         to_user=request.user,
         status='pending'
     )
-    return Response({
-        'requests': [
-            {
-                'id': req.id,
-                'from_user': UserSerializer(req.from_user).data,
-                'created_at': req.created_at
-            } for req in received_requests
-        ]
-    })
+    
+    # Get the base URL for building absolute URLs
+    base_url = request.build_absolute_uri('/').rstrip('/')
+    
+    results = []
+    for req in received_requests:
+        # Get the user data with full profile image URL
+        from_user_data = UserSerializer(req.from_user).data
+        
+        # Ensure profile image URL is included as an absolute URL
+        if hasattr(req.from_user, 'profile_image') and req.from_user.profile_image and hasattr(req.from_user.profile_image, 'url'):
+            img_url = req.from_user.profile_image.url
+            # Make sure it's an absolute URL with hostname
+            if img_url.startswith('/'):
+                img_url = f"{base_url}{img_url}"
+            from_user_data['profile_image_url'] = img_url
+        else:
+            # Set a default image URL (including hostname)
+            from_user_data['profile_image_url'] = f"{base_url}/media/profile_images/default_profile.png"
+            
+        results.append({
+            'id': req.id,
+            'from_user': from_user_data,
+            'created_at': req.created_at
+        })
+    
+    return Response({'requests': results})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -134,11 +162,12 @@ def handle_friend_request(request, request_id):
             Friendship.objects.create(user=request.user, friend=friend_request.from_user)
             Friendship.objects.create(user=friend_request.from_user, friend=request.user)
             
-            # Create notification for sender
+            # Create notification for sender with user data included in the related_user field
             Notification.objects.create(
                 user=friend_request.from_user,
                 message=f"{request.user.username} accepted your friend request",
-                notification_type='friend_accepted'
+                notification_type='friend_accepted',
+                related_user=request.user  # Add this field to store the user who accepted
             )
             
             return Response({'message': 'Friend request accepted'})
@@ -172,6 +201,9 @@ def search_users(request):
         .exclude(is_staff=True)\
         .exclude(is_superuser=True)
     
+    # Get the base URL for building absolute URLs
+    base_url = request.build_absolute_uri('/').rstrip('/')
+    
     results = []
     for user in users[:10]:  # Limit to 10 results
         # Check friendship status
@@ -182,12 +214,29 @@ def search_users(request):
             status='pending'
         ).exists()
         
-        results.append({
+        # Create a data dictionary directly instead of using the serializer
+        user_data = {
             'id': user.id,
             'username': user.username,
             'points': user.points,
-            'friendStatus': 'friends' if is_friend else 'pending' if pending_request else 'none'
-        })
+            'friendStatus': 'friends' if is_friend else 'pending' if pending_request else 'none',
+        }
+        
+        # Handle profile image directly - ensure we return an absolute URL
+        if hasattr(user, 'profile_image') and user.profile_image and hasattr(user.profile_image, 'url'):
+            img_url = user.profile_image.url
+            # Make sure it's an absolute URL with hostname
+            if img_url.startswith('/'):
+                img_url = f"{base_url}{img_url}"
+            user_data['profile_image_url'] = img_url
+        else:
+            # Set a default image URL (including hostname)
+            user_data['profile_image_url'] = f"{base_url}/media/profile_images/default_profile.png"
+        
+        # Debug logging
+        print(f"User {user.username}: profile_image_url = {user_data.get('profile_image_url')}")
+        
+        results.append(user_data)
     
     return Response(results)
 
@@ -198,8 +247,13 @@ def get_notifications(request):
     notifications = Notification.objects.filter(user=request.user)
     print(f"Found {notifications.count()} notifications")
     
-    # Debug: Print all notifications in detail
+    # Get the base URL for building absolute URLs
+    base_url = request.build_absolute_uri('/').rstrip('/')
+    
+    response_data = []
+    
     for n in notifications:
+        # Debug: Print all notifications in detail
         print(f"""
         Notification details:
         - ID: {n.id}
@@ -210,16 +264,36 @@ def get_notifications(request):
         - Reference ID: {n.reference_id}
         - Created At: {n.created_at}
         """)
-    
-    response_data = [{
-        'id': n.id,
-        'message': n.message,
-        'type': n.notification_type,
-        'created_at': n.created_at,
-        'is_read': n.is_read,
-        'requires_action': n.requires_action,
-        'reference_id': n.reference_id
-    } for n in notifications]
+        
+        notification_data = {
+            'id': n.id,
+            'message': n.message,
+            'type': n.notification_type,
+            'created_at': n.created_at,
+            'is_read': n.is_read,
+            'requires_action': n.requires_action,
+            'reference_id': n.reference_id
+        }
+        
+        # Add related user data if available (for friend requests/acceptances)
+        if n.related_user:
+            # Serialize the related user
+            related_user_data = UserSerializer(n.related_user).data
+            
+            # Ensure profile image URL is included as an absolute URL
+            if hasattr(n.related_user, 'profile_image') and n.related_user.profile_image and hasattr(n.related_user.profile_image, 'url'):
+                img_url = n.related_user.profile_image.url
+                # Make sure it's an absolute URL with hostname
+                if img_url.startswith('/'):
+                    img_url = f"{base_url}{img_url}"
+                related_user_data['profile_image_url'] = img_url
+            else:
+                # Set a default image URL (including hostname)
+                related_user_data['profile_image_url'] = f"{base_url}/media/profile_images/default_profile.png"
+            
+            notification_data['related_user'] = related_user_data
+        
+        response_data.append(notification_data)
     
     return Response(response_data)
 
@@ -365,6 +439,37 @@ def update_profile(request):
     serializer = UserSerializer(user)
     return Response(serializer.data)
 
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_user_settings(request):
+    """Update the user's settings"""
+    user = request.user
+    
+    # Get the settings from the request data
+    if 'settings' in request.data:
+        settings_data = request.data['settings']
+        
+        # Store settings in the user object
+        # If user doesn't have settings yet, initialize an empty dict
+        if not hasattr(user, 'settings') or user.settings is None:
+            user.settings = {}
+        
+        # Update settings
+        for key, value in settings_data.items():
+            user.settings[key] = value
+        
+        user.save()
+        
+        # Return the updated user data with settings
+        response_data = {
+            'id': user.id,
+            'username': user.username,
+            'settings': user.settings
+        }
+        return Response(response_data)
+    
+    return Response({'error': 'No settings provided'}, status=400)
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_betting_stats(request):
@@ -483,4 +588,403 @@ def get_user_betting_stats(request):
         })
     
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_password(request):
+    """
+    Update user password
+    Requires current_password and new_password in request data
+    """
+    user = request.user
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+    
+    if not current_password or not new_password:
+        return Response({'detail': 'Both current and new password are required'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    
+    # Verify current password
+    if not user.check_password(current_password):
+        return Response({'detail': 'Current password is incorrect'}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+    
+    # Set new password
+    user.set_password(new_password)
+    user.save()
+    
+    # Update token to force re-login with new password
+    Token.objects.filter(user=user).delete()
+    token, _ = Token.objects.get_or_create(user=user)
+    
+    return Response({
+        'detail': 'Password updated successfully',
+        'token': token.key
+    })
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+    """
+    Delete user account
+    """
+    user = request.user
+    
+    try:
+        # Delete user tokens
+        Token.objects.filter(user=user).delete()
+        
+        # Delete the user (this will cascade to related models if set up properly)
+        user.delete()
+        
+        return Response({'detail': 'Account deleted successfully'}, 
+                        status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'detail': f'Failed to delete account: {str(e)}'}, 
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def view_user_profile(request, user_id):
+    """View another user's profile with privacy settings respected"""
+    try:
+        # Get the requested user
+        viewed_user = User.objects.get(id=user_id)
+        
+        # Get friendship status to determine what to show
+        is_friend = request.user.friends.filter(id=user_id).exists()
+        
+        # Basic serialization for the user
+        user_data = {
+            'id': viewed_user.id,
+            'username': viewed_user.username,
+            'points': viewed_user.points,
+            'date_joined': viewed_user.date_joined,
+            'bio': viewed_user.bio,
+            # Include profile image if available
+            'profile_image': viewed_user.profile_image.url if viewed_user.profile_image else None
+        }
+        
+        # Add friend status
+        user_data['is_friend'] = is_friend
+        
+        # If user has privacy settings, honor them
+        # Check if user has settings for visibility
+        if hasattr(viewed_user, 'settings'):
+            settings = viewed_user.settings
+            # Example of respecting settings (would need to match your settings model)
+            if not is_friend and not settings.get('show_profile_to_non_friends', True):
+                return Response({'error': 'Profile is private'}, status=403)
+        
+        return Response(user_data)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_other_user_betting_stats(request, user_id):
+    """Get another user's betting statistics with privacy settings respected"""
+    try:
+        # Get the requested user
+        viewed_user = User.objects.get(id=user_id)
+        
+        # Check if the viewer is a friend of the user
+        is_friend = request.user.friends.filter(id=user_id).exists()
+        
+        # Default values if user has hidden their stats
+        hidden_stats = {
+            'total_bets': 0,
+            'win_rate': 0,
+            'current_streak': 0,
+            'lifetime_winnings': 0,
+            'user_level': 1,
+            'date_joined': viewed_user.date_joined.strftime('%b %Y') if viewed_user.date_joined else 'Unknown',
+            'stats_visible': False
+        }
+        
+        # Check if viewing user is allowed to see betting stats
+        show_betting_history = True
+        show_win_rate = True
+        show_stats = True
+        show_achievements = True
+        
+        # If the viewed user has set privacy settings, respect them
+        if hasattr(viewed_user, 'settings') and viewed_user.settings:
+            # Get user settings
+            user_settings = viewed_user.settings
+            show_betting_history = user_settings.get('showHistory', True)
+            show_win_rate = user_settings.get('showWinRate', True)
+            show_stats = user_settings.get('showStats', True)
+            show_achievements = user_settings.get('showAchievements', True)
+        
+        # If user is not a friend and settings are private, return hidden stats
+        if not is_friend and not show_stats:
+            return Response(hidden_stats)
+            
+        # Otherwise, calculate and return the actual stats
+        try:
+            # Find all of the user's bets across all leagues
+            total_bets = 0
+            won_bets = 0
+            current_streak = 0
+            lifetime_winnings = 0
+            
+            # Get all league events with user bets
+            league_events = LeagueEvent.objects.filter(market_data__has_key='user_bets')
+            
+            # Track all bets chronologically for streak calculation
+            all_bets_results = []
+            
+            # Process bets from LeagueEvent market_data
+            for event in league_events:
+                if event.market_data and 'user_bets' in event.market_data:
+                    user_bets = [bet for bet in event.market_data.get('user_bets', []) 
+                                if bet.get('user_id') == viewed_user.id]
+                    
+                    for bet in user_bets:
+                        total_bets += 1
+                        # Check if the event is completed and has a result
+                        if event.completed and 'result' in bet:
+                            result = bet.get('result', '').lower()
+                            if result == 'won':
+                                won_bets += 1
+                                # Add payout to lifetime winnings
+                                payout = float(bet.get('payout', 0))
+                                lifetime_winnings += payout
+                            
+                            # Add to chronological list for streak calculation
+                            all_bets_results.append({
+                                'date': bet.get('bet_time', event.created_at),
+                                'result': result
+                            })
+            
+            # Process UserBet model if it's used in the system
+            user_bet_objects = UserBet.objects.filter(user=viewed_user)
+            for bet in user_bet_objects:
+                total_bets += 1
+                if bet.result == 'won':
+                    won_bets += 1
+                    # Need to calculate payout based on points_wagered and the odds if available
+                    payout = bet.points_wagered * 2  # Default multiplier if we don't have odds
+                    lifetime_winnings += payout
+                
+                # Add to chronological list for streak calculation
+                all_bets_results.append({
+                    'date': bet.created_at,
+                    'result': bet.result
+                })
+            
+            # Sort all bets by date
+            all_bets_results = sorted(all_bets_results, key=lambda x: x['date'], reverse=True)
+            
+            # Calculate current streak
+            if all_bets_results:
+                current_result = all_bets_results[0]['result']
+                for bet in all_bets_results:
+                    if bet['result'] == current_result:
+                        if current_result == 'won':
+                            current_streak += 1
+                        elif current_result == 'lost':
+                            current_streak -= 1
+                    else:
+                        break
+            
+            # Calculate win rate
+            win_rate = 0
+            if total_bets > 0:
+                win_rate = (won_bets / total_bets) * 100
+            
+            # Calculate user level
+            base_level = 1
+            if total_bets > 50:
+                base_level = 5
+            elif total_bets > 30:
+                base_level = 4
+            elif total_bets > 15:
+                base_level = 3
+            elif total_bets > 5:
+                base_level = 2
+            
+            # Bonus for high win rate
+            win_rate_bonus = 0
+            if win_rate > 65:
+                win_rate_bonus = 1
+            
+            user_level = min(10, base_level + win_rate_bonus)  # Cap at level 10
+            
+            # Format the date joined
+            date_joined = viewed_user.date_joined.strftime('%b %Y') if viewed_user.date_joined else 'Unknown'
+            
+            return Response({
+                'total_bets': total_bets if show_betting_history else 0,
+                'win_rate': round(win_rate, 1) if show_win_rate else 0,
+                'current_streak': current_streak if show_betting_history else 0,
+                'lifetime_winnings': round(lifetime_winnings, 2) if show_betting_history else 0,
+                'user_level': user_level,
+                'date_joined': date_joined,
+                'stats_visible': {
+                    'betting_history': show_betting_history,
+                    'win_rate': show_win_rate,
+                    'stats': show_stats,
+                    'achievements': show_achievements
+                },
+                'settings': {
+                    'showHistory': show_betting_history,
+                    'showWinRate': show_win_rate,
+                    'showStats': show_stats,
+                    'showAchievements': show_achievements
+                }
+            })
+        
+        except Exception as e:
+            print(f"Error getting betting stats: {str(e)}")
+            return Response(hidden_stats)
+            
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_bet_history(request):
+    """Get the current user's betting history"""
+    user = request.user
+    
+    try:
+        bet_history = []
+        
+        # Get all league events with user bets
+        league_events = LeagueEvent.objects.filter(market_data__has_key='user_bets').order_by('-commence_time')
+        
+        # Process bets from LeagueEvent market_data
+        for event in league_events:
+            if event.market_data and 'user_bets' in event.market_data:
+                user_bets = [bet for bet in event.market_data.get('user_bets', []) 
+                            if bet.get('user_id') == user.id]
+                
+                for bet in user_bets:
+                    # Only add to history if the event is completed or the bet has a result
+                    if event.completed or 'result' in bet:
+                        bet_entry = {
+                            'id': f"{event.id}_{bet.get('user_id')}",
+                            'date': bet.get('bet_time', event.created_at),
+                            'event': event.event_name or f"{event.home_team} vs {event.away_team}",
+                            'pick': bet.get('outcomeKey', 'Unknown'),
+                            'amount': bet.get('amount', 0),
+                            'result': bet.get('result', 'Pending') if event.completed else 'Pending',
+                            'payout': bet.get('payout', 0) if event.completed and bet.get('result', '').lower() == 'won' else 0,
+                            'league_id': event.league.id if event.league else None,
+                            'event_id': event.id
+                        }
+                        bet_history.append(bet_entry)
+        
+        # Process UserBet model if it's used in the system
+        user_bet_objects = UserBet.objects.filter(user=user).order_by('-created_at')
+        for bet in user_bet_objects:
+            bet_entry = {
+                'id': f"userbet_{bet.id}",
+                'date': bet.created_at.strftime('%Y-%m-%d'),
+                'event': bet.bet.name if bet.bet else 'Unknown Event',
+                'pick': bet.choice,
+                'amount': bet.points_wagered,
+                'result': bet.result.capitalize() if bet.result else 'Pending',
+                'payout': bet.points_earned if bet.result == 'won' else 0,
+                'league_id': bet.bet.league.id if bet.bet and bet.bet.league else None,
+                'event_id': bet.league_event.id if bet.league_event else None
+            }
+            bet_history.append(bet_entry)
+        
+        # Sort the combined history by date, most recent first
+        bet_history.sort(key=lambda x: x['date'], reverse=True)
+        
+        return Response(bet_history)
+    
+    except Exception as e:
+        print(f"Error getting bet history: {str(e)}")
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_other_user_bet_history(request, user_id):
+    """Get another user's betting history with privacy settings respected"""
+    try:
+        # Get the requested user
+        viewed_user = User.objects.get(id=user_id)
+        
+        # Check if the viewer is a friend of the user
+        is_friend = request.user.friends.filter(id=user_id).exists()
+        
+        # Check if viewing user is allowed to see betting history
+        show_betting_history = True
+        show_achievements = True
+        
+        # If the viewed user has set privacy settings, respect them
+        if hasattr(viewed_user, 'settings') and viewed_user.settings:
+            # Get user settings
+            user_settings = viewed_user.settings
+            show_betting_history = user_settings.get('showHistory', True)
+            show_achievements = user_settings.get('showAchievements', True)
+        
+        # If user is not a friend and settings are private, return empty history
+        if not is_friend and (not show_betting_history or not show_achievements):
+            return Response([])
+            
+        try:
+            bet_history = []
+            
+            # Get all league events with user bets
+            league_events = LeagueEvent.objects.filter(market_data__has_key='user_bets').order_by('-commence_time')
+            
+            # Process bets from LeagueEvent market_data
+            for event in league_events:
+                if event.market_data and 'user_bets' in event.market_data:
+                    user_bets = [bet for bet in event.market_data.get('user_bets', []) 
+                                if bet.get('user_id') == viewed_user.id]
+                    
+                    for bet in user_bets:
+                        # Only add to history if the event is completed or the bet has a result
+                        if event.completed or 'result' in bet:
+                            bet_entry = {
+                                'id': f"{event.id}_{bet.get('user_id')}",
+                                'date': bet.get('bet_time', event.created_at),
+                                'event': event.event_name or f"{event.home_team} vs {event.away_team}",
+                                'pick': bet.get('outcomeKey', 'Unknown'),
+                                'amount': bet.get('amount', 0),
+                                'result': bet.get('result', 'Pending') if event.completed else 'Pending',
+                                'payout': bet.get('payout', 0) if event.completed and bet.get('result', '').lower() == 'won' else 0,
+                                'league_id': event.league.id if event.league else None,
+                                'event_id': event.id
+                            }
+                            bet_history.append(bet_entry)
+            
+            # Process UserBet model if it's used in the system
+            user_bet_objects = UserBet.objects.filter(user=viewed_user).order_by('-created_at')
+            for bet in user_bet_objects:
+                bet_entry = {
+                    'id': f"userbet_{bet.id}",
+                    'date': bet.created_at.strftime('%Y-%m-%d'),
+                    'event': bet.bet.name if bet.bet else 'Unknown Event',
+                    'pick': bet.choice,
+                    'amount': bet.points_wagered,
+                    'result': bet.result.capitalize() if bet.result else 'Pending',
+                    'payout': bet.points_earned if bet.result == 'won' else 0,
+                    'league_id': bet.bet.league.id if bet.bet and bet.bet.league else None,
+                    'event_id': bet.league_event.id if bet.league_event else None
+                }
+                bet_history.append(bet_entry)
+            
+            # Sort the combined history by date, most recent first
+            bet_history.sort(key=lambda x: x['date'], reverse=True)
+            
+            return Response(bet_history)
+            
+        except Exception as e:
+            print(f"Error getting other user's bet history: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500) 

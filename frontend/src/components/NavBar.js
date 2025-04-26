@@ -209,6 +209,35 @@ function NavBar() {
     setProfileAnchorEl(null);
   };
 
+  // Add image helper function (similar to what we have in other components)
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    
+    // If the URL is already absolute (starts with http or https), return it as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    // If the URL starts with /media/, prepend the API URL
+    if (imageUrl.startsWith('/media/')) {
+      return `${process.env.REACT_APP_API_URL}${imageUrl}`;
+    }
+    // Otherwise, assume it's a relative media path and construct the full URL
+    return `${process.env.REACT_APP_API_URL}/media/${imageUrl.replace('media/', '')}`;
+  };
+
+  // Function to get user profile image source
+  const getUserImageSource = (user) => {
+    if (!user) return null;
+    
+    // If profile_image_url is available, use it
+    if (user.profile_image_url) {
+      return getImageUrl(user.profile_image_url);
+    }
+    
+    // Return avatar API URL as fallback
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=random`;
+  };
+
   return (
     <Box sx={{ 
       display: 'flex', 
@@ -360,7 +389,18 @@ function NavBar() {
               {friendRequests.map((request) => (
                 <ListItem key={request.id}>
                   <ListItemAvatar>
-                    <Avatar>{request.from_user.username[0]}</Avatar>
+                    <Avatar 
+                      src={getUserImageSource(request.from_user)} 
+                      sx={{ bgcolor: '#8B5CF6' }}
+                      imgProps={{
+                        onError: (e) => {
+                          console.error('Error loading profile image:', e);
+                          e.target.src = ''; // Clear src to show fallback
+                        }
+                      }}
+                    >
+                      {request.from_user.username[0]?.toUpperCase()}
+                    </Avatar>
                   </ListItemAvatar>
                   <ListItemText 
                     primary={request.from_user.username}
@@ -433,7 +473,25 @@ function NavBar() {
                     marginBottom: '4px', // Add spacing between items
                   }}
                 >
-                  <ListItemText 
+                  {/* Add avatar for friend acceptance notifications */}
+                  {notificationType === 'friend_accepted' && notification.related_user && (
+                    <ListItemAvatar>
+                      <Avatar 
+                        src={getUserImageSource(notification.related_user)} 
+                        sx={{ bgcolor: '#8B5CF6' }}
+                        imgProps={{
+                          onError: (e) => {
+                            console.error('Error loading profile image:', e);
+                            e.target.src = ''; // Clear src to show fallback
+                          }
+                        }}
+                      >
+                        {notification.related_user.username?.[0]?.toUpperCase()}
+                      </Avatar>
+                    </ListItemAvatar>
+                  )}
+                  
+                  <ListItemText
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         {notificationType === 'league_invite' && (

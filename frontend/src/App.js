@@ -14,6 +14,8 @@ import CreateCircuitPage from './pages/CreateCircuitPage';
 import CircuitPage from './pages/CircuitPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import CompleteEventPage from './pages/CompleteEventPage';
+import SettingsPage from './pages/SettingsPage';
+import UserProfilePage from './pages/UserProfilePage';
 
 const theme = createTheme({
   palette: {
@@ -152,6 +154,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/:userId"
+            element={
+              <ProtectedRoute>
+                <UserProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             }
           />

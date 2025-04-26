@@ -14,6 +14,7 @@ class User(AbstractUser):
     )
     bio = models.TextField(blank=True, null=True)  # Bio information
     profile_image = models.ImageField(upload_to='profile_images/', default='profile_images/default_profile.png', blank=True)
+    settings = models.JSONField(default=dict, blank=True, null=True)  # User settings as JSON
 
     @property
     def profile_image_url(self):
@@ -62,6 +63,7 @@ class Notification(models.Model):
     is_read = models.BooleanField(default=False)
     requires_action = models.BooleanField(default=False)
     reference_id = models.IntegerField(null=True, blank=True)
+    related_user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='related_notifications', null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
