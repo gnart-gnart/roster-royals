@@ -77,11 +77,7 @@ services:
     env_file:
       - .env
     volumes:
-      - type: bind
-        source: ./frontend
-        target: /app
-        volume:
-          nocopy: true
+      - ./frontend:/app
       - node_modules:/app/node_modules
       - react_build:/app/build
     ports:
