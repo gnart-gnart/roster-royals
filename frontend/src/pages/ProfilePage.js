@@ -534,18 +534,9 @@ function ProfilePage() {
 
   // Generate historical performance data - Make this more stable
   const generatePerformanceData = useCallback(() => {
-    // Create mock performance data based on betting history and stats
+    // Don't generate mock data, just return empty array if no history
     if (!betHistory || betHistory.length === 0) {
-      // Generate fixed placeholder data - completely static, no randomness
-      return [
-        { date: '2024-04-18', winRate: 48, profit: 120 },
-        { date: '2024-04-19', winRate: 51, profit: 155 },
-        { date: '2024-04-20', winRate: 53, profit: 185 },
-        { date: '2024-04-21', winRate: 54, profit: 205 },
-        { date: '2024-04-22', winRate: 56, profit: 250 },
-        { date: '2024-04-23', winRate: 55, profit: 285 },
-        { date: '2024-04-24', winRate: 57, profit: 330 }
-      ];
+      return [];
     }
 
     // For real data, only sort and calculate once
@@ -607,64 +598,53 @@ function ProfilePage() {
   const PerformanceChart = memo(({ data, loading }) => {
     // Remove console.log to reduce noise and prevent unnecessary work
     
-    if (loading) {
-      return (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-          <CircularProgress size={30} sx={{ color: '#8B5CF6' }} />
-        </Box>
-      );
-    }
-    
-    if (!data || data.length === 0) {
-      return (
-        <Typography variant="body1" sx={{ color: '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-          No performance data available
-        </Typography>
-      );
-    }
-
     // Memoize chart data and options to prevent unnecessary recalculations
-    const chartData = useMemo(() => ({
-      labels: data.map(item => item.date),
-      datasets: [
-        {
-          label: 'Win Rate (%)',
-          data: data.map(item => item.winRate),
-          borderColor: '#8B5CF6',
-          borderWidth: 3,
-          backgroundColor: 'rgba(139, 92, 246, 0.1)', // Reduced opacity
-          fill: true,
-          tension: 0.4,
-          yAxisID: 'y',
-          pointRadius: 4,
-          pointBackgroundColor: '#8B5CF6',
-          pointBorderColor: '#121a29',
-          pointBorderWidth: 2,
-          pointHoverRadius: 6,
-          pointHoverBackgroundColor: '#8B5CF6',
-          pointHoverBorderColor: '#fff',
-          pointHoverBorderWidth: 2,
-        },
-        {
-          label: 'Profit',
-          data: data.map(item => item.profit),
-          borderColor: '#10B981',
-          borderWidth: 3,
-          backgroundColor: 'rgba(16, 185, 129, 0.1)', // Reduced opacity
-          fill: true,
-          tension: 0.4,
-          yAxisID: 'y1',
-          pointRadius: 4,
-          pointBackgroundColor: '#10B981',
-          pointBorderColor: '#121a29',
-          pointBorderWidth: 2,
-          pointHoverRadius: 6,
-          pointHoverBackgroundColor: '#10B981',
-          pointHoverBorderColor: '#fff',
-          pointHoverBorderWidth: 2,
-        },
-      ],
-    }), [data]);
+    // Move useMemo calls outside of conditional statements
+    const chartData = useMemo(() => {
+      if (!data || data.length === 0) return null;
+      
+      return {
+        labels: data.map(item => item.date),
+        datasets: [
+          {
+            label: 'Win Rate (%)',
+            data: data.map(item => item.winRate),
+            borderColor: '#8B5CF6',
+            borderWidth: 3,
+            backgroundColor: 'rgba(139, 92, 246, 0.1)', // Reduced opacity
+            fill: true,
+            tension: 0.4,
+            yAxisID: 'y',
+            pointRadius: 4,
+            pointBackgroundColor: '#8B5CF6',
+            pointBorderColor: '#121a29',
+            pointBorderWidth: 2,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#8B5CF6',
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 2,
+          },
+          {
+            label: 'Profit',
+            data: data.map(item => item.profit),
+            borderColor: '#10B981',
+            borderWidth: 3,
+            backgroundColor: 'rgba(16, 185, 129, 0.1)', // Reduced opacity
+            fill: true,
+            tension: 0.4,
+            yAxisID: 'y1',
+            pointRadius: 4,
+            pointBackgroundColor: '#10B981',
+            pointBorderColor: '#121a29',
+            pointBorderWidth: 2,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#10B981',
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 2,
+          },
+        ],
+      };
+    }, [data]);
 
     const options = useMemo(() => ({
       responsive: true,
@@ -826,6 +806,23 @@ function ProfilePage() {
       }
     }), []); // Empty dependency array since nothing inside options needs to change
 
+    // Now handle the conditional rendering after the hooks are defined
+    if (loading) {
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+          <CircularProgress size={30} sx={{ color: '#8B5CF6' }} />
+        </Box>
+      );
+    }
+    
+    if (!data || data.length === 0) {
+      return (
+        <Typography variant="body1" sx={{ color: '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+          No performance data available
+        </Typography>
+      );
+    }
+
     return (
       <Box 
         sx={{ 
@@ -853,14 +850,31 @@ function ProfilePage() {
 
   // Create a memoized PerformanceMetrics component
   const PerformanceMetrics = memo(({ betHistory, performanceData }) => {
+    // Add sport key mapping function
+    const mapSportKeyToName = (sportKey) => {
+      if (!sportKey) return 'Unknown';
+      const key = sportKey.toLowerCase();
+      if (key.startsWith('americanfootball')) return 'Football';
+      if (key.startsWith('basketball')) return 'Basketball';
+      if (key.startsWith('soccer')) return 'Soccer';
+      if (key.startsWith('boxing')) return 'Boxing';
+      if (key.startsWith('tennis')) return 'Tennis';
+      if (key.startsWith('golf')) return 'Golf';
+      if (key.startsWith('baseball')) return 'Baseball';
+      if (key.startsWith('hockey')) return 'Hockey';
+      return 'Other';
+    };
+
     // Calculate metrics once
-    const { avgWinAmount, bestWin, favoriteSport, trend } = useMemo(() => {
+    const { avgWinAmount, bestWin, favoriteSport } = useMemo(() => {
+      // Debug: Log the full betHistory
+      console.log('Full betHistory:', betHistory);
+
       // Calculate average win amount
       const wonBets = betHistory.filter(bet => bet.result.toLowerCase() === 'won');
       let avgWinAmount = '$0';
       if (wonBets.length > 0) {
         const totalPayout = wonBets.reduce((sum, bet) => {
-          // Safely parse payout value, handling different data types
           const payout = parseFloat(typeof bet.payout === 'string' ? bet.payout.replace(/[^0-9.-]+/g, '') : bet.payout || 0);
           const amount = parseFloat(typeof bet.amount === 'string' ? bet.amount.replace(/[^0-9.-]+/g, '') : bet.amount || 0);
           return sum + (payout - amount);
@@ -873,7 +887,6 @@ function ProfilePage() {
       let bestWin = '$0';
       if (wonBets.length > 0) {
         const bestBet = wonBets.reduce((best, bet) => {
-          // Safely parse payout value, handling different data types
           const payout = parseFloat(typeof bet.payout === 'string' ? bet.payout.replace(/[^0-9.-]+/g, '') : bet.payout || 0);
           const amount = parseFloat(typeof bet.amount === 'string' ? bet.amount.replace(/[^0-9.-]+/g, '') : bet.amount || 0);
           const profit = payout - amount;
@@ -882,54 +895,11 @@ function ProfilePage() {
         bestWin = `$${Math.round(bestBet.profit)}`;
       }
       
-      // Calculate favorite sport
+      // Calculate favorite sport with improved sport mapping
       let favoriteSport = 'N/A';
       const sportCounts = betHistory.reduce((counts, bet) => {
-        // Improve sport extraction logic
-        
-        // Check if the bet has a direct sport property
-        let sport = 'Unknown';
-        
-        if (bet.sport) {
-          // If we have a direct sport property, use it
-          sport = bet.sport;
-        } else {
-          // Extract from the event name based on team or event name
-          // FC Barcelona Bàsquet @ AS Monaco -> Basketball
-          // Kevin Johnson @ Eric Tudor -> Boxing
-          // Cincinnati Bearcats @ Nebraska Cornhuskers -> Football
-          // Kansas State Wildcats @ Iowa State Cyclones -> Football
-          
-          if (bet.event.includes('Barcelona Bàsquet') || bet.event.includes('basketball') || 
-              bet.event.includes('euroleague') || bet.event.includes('NBA')) {
-            sport = 'Basketball';
-          } else if (bet.event.includes('boxing') || bet.event.includes('Johnson @ Eric Tudor')) {
-            sport = 'Boxing';
-          } else if (bet.event.includes('Bearcats') || bet.event.includes('Cornhuskers') || 
-                    bet.event.includes('Wildcats') || bet.event.includes('Cyclones') || 
-                    bet.event.includes('football') || bet.event.includes('ncaaf')) {
-            sport = 'Football';
-          } else if (bet.event.includes('soccer') || bet.event.includes('FC') || 
-                    /barcelona(?!\sbàsquet)/i.test(bet.event)) { // Barcelona but not Bàsquet
-            sport = 'Soccer';
-          }
-        }
-
-        // Clean up sport names for better display
-        if (sport.includes('basketball')) {
-          sport = 'Basketball';
-        } else if (sport.includes('boxing')) {
-          sport = 'Boxing';
-        } else if (sport.includes('football')) {
-          sport = 'Football';
-        }
-        
-        // Convert to proper case for display
-        sport = sport.charAt(0).toUpperCase() + sport.slice(1).toLowerCase();
-        
-        // Log what we found to help debug
-        console.log(`Detected sport for bet "${bet.event}": ${sport}`);
-        
+        // Get standardized sport name using the mapping function
+        const sport = bet.sport ? mapSportKeyToName(bet.sport) : 'Unknown';
         counts[sport] = (counts[sport] || 0) + 1;
         return counts;
       }, {});
@@ -940,49 +910,31 @@ function ProfilePage() {
       if (entries.length > 0) {
         // Sort entries by count (highest first)
         entries.sort((a, b) => b[1] - a[1]);
-        const [topSport, count] = entries[0];
-        
-        // Only set a favorite sport if we have at least 1 bet on it
-        if (count >= 1) {
-          favoriteSport = topSport === 'Unknown' ? 'Mixed' : topSport;
+        const [topSport, topCount] = entries[0];
+        const totalBets = Object.values(sportCounts).reduce((a, b) => a + b, 0);
+
+        // If top sport is Unknown, show Mixed
+        if (topSport === 'Unknown') {
+          favoriteSport = 'Mixed';
         } else {
-          favoriteSport = 'Mixed'; // Not enough data for a clear favorite
+          // If top sport has more than half of all bets, show it as favorite
+          if (topCount > totalBets / 2) {
+            favoriteSport = topSport;
+          } else {
+            // Otherwise, show Mixed
+            favoriteSport = 'Mixed';
+          }
         }
       }
       
-      // Calculate trend
-      let trend = { icon: <TrendingFlatIcon sx={{ color: '#9CA3AF', mr: 0.5 }} />, text: 'Neutral' };
-      if (performanceData.length >= 2) {
-        const firstWinRate = performanceData[0].winRate;
-        const lastWinRate = performanceData[performanceData.length - 1].winRate;
-        const difference = lastWinRate - firstWinRate;
-        
-        if (difference > 5) {
-          trend = {
-            icon: <TrendingUpIcon sx={{ color: '#10B981', mr: 0.5 }} />,
-            text: 'Improving'
-          };
-        } else if (difference < -5) {
-          trend = {
-            icon: <TrendingDownIcon sx={{ color: '#EF4444', mr: 0.5 }} />,
-            text: 'Declining'
-          };
-        } else {
-          trend = {
-            icon: <TrendingFlatIcon sx={{ color: '#9CA3AF', mr: 0.5 }} />,
-            text: 'Steady'
-          };
-        }
-      }
-      
-      return { avgWinAmount, bestWin, favoriteSport, trend };
-    }, [betHistory, performanceData]);
+      return { avgWinAmount, bestWin, favoriteSport };
+    }, [betHistory]);
     
     return (
       <Box sx={{ mt: 3 }}>
         <Grid container spacing={2}>
           {/* Average Win */}
-          <Grid item xs={6} sm={3}>
+          <Grid item xs={6} sm={6}>
             <Box sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2, height: '100%' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <TrendingUpIcon sx={{ color: '#10B981', fontSize: '1rem', mr: 1 }} />
@@ -997,7 +949,7 @@ function ProfilePage() {
           </Grid>
           
           {/* Most Profitable Bet */}
-          <Grid item xs={6} sm={3}>
+          <Grid item xs={6} sm={6}>
             <Box sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2, height: '100%' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <EmojiEventsIcon sx={{ color: '#F59E0B', fontSize: '1rem', mr: 1 }} />
@@ -1007,37 +959,6 @@ function ProfilePage() {
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
                 {bestWin}
-              </Typography>
-            </Box>
-          </Grid>
-          
-          {/* Favorite Sport */}
-          <Grid item xs={6} sm={3}>
-            <Box sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2, height: '100%' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <SportsSoccerIcon sx={{ color: '#60A5FA', fontSize: '1rem', mr: 1 }} />
-                <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 'medium' }}>
-                  Favorite Sport
-                </Typography>
-              </Box>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                {favoriteSport}
-              </Typography>
-            </Box>
-          </Grid>
-          
-          {/* Performance Trend */}
-          <Grid item xs={6} sm={3}>
-            <Box sx={{ bgcolor: 'rgba(22, 28, 36, 0.7)', p: 2, borderRadius: 2, height: '100%' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <ShowChartIcon sx={{ color: '#8B5CF6', fontSize: '1rem', mr: 1 }} />
-                <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 'medium' }}>
-                  Trend
-                </Typography>
-              </Box>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f8fafc', display: 'flex', alignItems: 'center' }}>
-                {trend.icon}
-                {trend.text}
               </Typography>
             </Box>
           </Grid>
