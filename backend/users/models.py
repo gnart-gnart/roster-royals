@@ -14,6 +14,7 @@ class User(AbstractUser):
     )
     bio = models.TextField(blank=True, null=True)  # Bio information
     profile_image = models.ImageField(upload_to='profile_images/', default='profile_images/default_profile.png', blank=True)
+    settings = models.JSONField(default=dict, blank=True, null=True)  # User settings as JSON
 
     @property
     def profile_image_url(self):

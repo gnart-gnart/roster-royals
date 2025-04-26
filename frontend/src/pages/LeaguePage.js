@@ -91,6 +91,7 @@ import Chat from '../components/Chat';
 function InviteDialog({ open, onClose, friends, onInvite, loading }) {
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const user = JSON.parse(localStorage.getItem('user')) || {};
 
   const handleToggleFriend = (friendId) => {
     setSelectedFriends(prev => {
@@ -111,6 +112,48 @@ function InviteDialog({ open, onClose, friends, onInvite, loading }) {
   const filteredFriends = friends.filter(friend =>
     friend.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Function to get the proper image URL
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    
+    // If the URL is already absolute (starts with http or https), return it as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    // If the URL starts with /media/, prepend the API URL
+    if (imageUrl.startsWith('/media/')) {
+      return `${process.env.REACT_APP_API_URL}${imageUrl}`;
+    }
+    // Otherwise, assume it's a relative media path and construct the full URL
+    return `${process.env.REACT_APP_API_URL}/media/${imageUrl.replace('media/', '')}`;
+  };
+
+  // Function to get friend profile image source
+  const getFriendImageSource = (friend) => {
+    // If this is the current user, check for embedded image data
+    if (friend.id === user.id) {
+      // Try embedded image from user object first
+      if (user.embeddedImageData) {
+        return user.embeddedImageData;
+      }
+      
+      // Then try session storage with user-specific key
+      const userSpecificKey = `profileImageDataUrl_${friend.id}`;
+      const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+      if (profileImageDataUrl) {
+        return profileImageDataUrl;
+      }
+    }
+    
+    // Add fallback to use API-based avatar for other users
+    if (friend.profile_image_url) {
+      return getImageUrl(friend.profile_image_url);
+    }
+    
+    // Return avatar API URL as fallback
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(friend.username)}&background=random`;
+  };
 
   return (
     <Dialog 
@@ -194,6 +237,7 @@ function InviteDialog({ open, onClose, friends, onInvite, loading }) {
                       label={
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <Avatar
+                            src={getFriendImageSource(friend)}
                             sx={{
                               width: 32,
                               height: 32,

@@ -522,3 +522,12 @@ export const updateUserProfile = async (profileData) => {
   return handleResponse(response);
 };
 
+export const updateUserSettings = async (settingsData) => {
+  const response = await fetch(`${API_URL}/api/profile/settings/`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(settingsData),
+  });
+  return handleResponse(response);
+};
+

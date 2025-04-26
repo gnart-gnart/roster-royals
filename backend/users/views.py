@@ -11,6 +11,16 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.conf import settings
 from groups.models import LeagueEvent, UserBet  # Add this import
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import Group
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+import datetime
+import json
+import logging
+import random
+import string
+import re
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
@@ -429,6 +439,37 @@ def update_profile(request):
     serializer = UserSerializer(user)
     return Response(serializer.data)
 
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_user_settings(request):
+    """Update the user's settings"""
+    user = request.user
+    
+    # Get the settings from the request data
+    if 'settings' in request.data:
+        settings_data = request.data['settings']
+        
+        # Store settings in the user object
+        # If user doesn't have settings yet, initialize an empty dict
+        if not hasattr(user, 'settings') or user.settings is None:
+            user.settings = {}
+        
+        # Update settings
+        for key, value in settings_data.items():
+            user.settings[key] = value
+        
+        user.save()
+        
+        # Return the updated user data with settings
+        response_data = {
+            'id': user.id,
+            'username': user.username,
+            'settings': user.settings
+        }
+        return Response(response_data)
+    
+    return Response({'error': 'No settings provided'}, status=400)
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_betting_stats(request):
@@ -665,17 +706,22 @@ def get_other_user_betting_stats(request, user_id):
         # Check if viewing user is allowed to see betting stats
         show_betting_history = True
         show_win_rate = True
+        show_stats = True
+        show_achievements = True
         
         # If the viewed user has set privacy settings, respect them
-        if hasattr(viewed_user, 'settings'):
-            if isinstance(viewed_user.settings, dict):
-                show_betting_history = viewed_user.settings.get('showHistory', True)
-                show_win_rate = viewed_user.settings.get('showWinRate', True)
+        if hasattr(viewed_user, 'settings') and viewed_user.settings:
+            # Get user settings
+            user_settings = viewed_user.settings
+            show_betting_history = user_settings.get('showHistory', True)
+            show_win_rate = user_settings.get('showWinRate', True)
+            show_stats = user_settings.get('showStats', True)
+            show_achievements = user_settings.get('showAchievements', True)
         
         # If user is not a friend and settings are private, return hidden stats
-        if not is_friend and (not show_betting_history or not show_win_rate):
+        if not is_friend and not show_stats:
             return Response(hidden_stats)
-        
+            
         # Otherwise, calculate and return the actual stats
         try:
             # Find all of the user's bets across all leagues
@@ -779,16 +825,26 @@ def get_other_user_betting_stats(request, user_id):
                 'date_joined': date_joined,
                 'stats_visible': {
                     'betting_history': show_betting_history,
-                    'win_rate': show_win_rate
+                    'win_rate': show_win_rate,
+                    'stats': show_stats,
+                    'achievements': show_achievements
+                },
+                'settings': {
+                    'showHistory': show_betting_history,
+                    'showWinRate': show_win_rate,
+                    'showStats': show_stats,
+                    'showAchievements': show_achievements
                 }
             })
-            
+        
         except Exception as e:
             print(f"Error getting betting stats: {str(e)}")
             return Response(hidden_stats)
             
     except User.DoesNotExist:
-        return Response({'error': 'User not found'}, status=404) 
+        return Response({'error': 'User not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -862,16 +918,19 @@ def get_other_user_bet_history(request, user_id):
         
         # Check if viewing user is allowed to see betting history
         show_betting_history = True
+        show_achievements = True
         
         # If the viewed user has set privacy settings, respect them
-        if hasattr(viewed_user, 'settings'):
-            if isinstance(viewed_user.settings, dict):
-                show_betting_history = viewed_user.settings.get('showHistory', True)
+        if hasattr(viewed_user, 'settings') and viewed_user.settings:
+            # Get user settings
+            user_settings = viewed_user.settings
+            show_betting_history = user_settings.get('showHistory', True)
+            show_achievements = user_settings.get('showAchievements', True)
         
         # If user is not a friend and settings are private, return empty history
-        if not is_friend and not show_betting_history:
+        if not is_friend and (not show_betting_history or not show_achievements):
             return Response([])
-        
+            
         try:
             bet_history = []
             
@@ -924,6 +983,8 @@ def get_other_user_bet_history(request, user_id):
         except Exception as e:
             print(f"Error getting other user's bet history: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+        
     except User.DoesNotExist:
-        return Response({'error': 'User not found'}, status=404) 
+        return Response({'error': 'User not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500) 

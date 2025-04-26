@@ -42,7 +42,9 @@ function UserProfilePage() {
     date_joined: '',
     stats_visible: {
       betting_history: true,
-      win_rate: true
+      win_rate: true,
+      stats: true,
+      achievements: true
     }
   });
   const [loadingStats, setLoadingStats] = useState(true);
@@ -131,7 +133,28 @@ function UserProfilePage() {
       try {
         setLoadingStats(true);
         const stats = await getOtherUserBettingStats(userId);
-        setBettingStats(stats);
+        
+        // Set visibility flags based on server response
+        const statsVisibility = {
+          betting_history: stats.stats_visible !== false,  // Default to true if not specified
+          win_rate: stats.stats_visible !== false,         // Default to true if not specified
+          stats: stats.stats_visible !== false,            // Default to true if not specified
+          achievements: stats.stats_visible !== false      // Default to true if not specified
+        };
+        
+        // If user has specific settings that were returned from server
+        if (stats.settings) {
+          // Update visibility based on user settings from the server
+          statsVisibility.betting_history = stats.settings.showHistory !== false;
+          statsVisibility.win_rate = stats.settings.showWinRate !== false;
+          statsVisibility.stats = stats.settings.showStats !== false;
+          statsVisibility.achievements = stats.settings.showAchievements !== false;
+        }
+        
+        setBettingStats({
+          ...stats,
+          stats_visible: statsVisibility
+        });
       } catch (error) {
         console.error('Failed to fetch betting stats:', error);
       } finally {
@@ -465,6 +488,21 @@ function UserProfilePage() {
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                   <CircularProgress sx={{ color: '#8B5CF6' }} />
                 </Box>
+              ) : !bettingStats.stats_visible?.stats ? (
+                <Paper sx={{ 
+                  p: 3, 
+                  bgcolor: 'rgba(30, 41, 59, 0.7)', 
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column'
+                }}>
+                  <LockIcon sx={{ fontSize: 40, color: '#94a3b8', mb: 1 }} />
+                  <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                    Betting Statistics Hidden
+                  </Typography>
+                </Paper>
               ) : (
                 <>
                   {/* Win Rate */}
@@ -475,8 +513,8 @@ function UserProfilePage() {
                     display: 'flex',
                     alignItems: 'center'
                   }}>
-                    {bettingStats.stats_visible?.win_rate ? (
-                      <>
+                      {bettingStats.stats_visible?.win_rate ? (
+                        <>
                         <Box sx={{ 
                           bgcolor: 'rgba(16, 185, 129, 0.15)', 
                           borderRadius: '50%', 
@@ -493,9 +531,9 @@ function UserProfilePage() {
                             Win Rate
                           </Typography>
                         </Box>
-                      </>
-                    ) : (
-                      <>
+                        </>
+                      ) : (
+                        <>
                         <Box sx={{ 
                           bgcolor: 'rgba(148, 163, 184, 0.15)', 
                           borderRadius: '50%', 
@@ -504,11 +542,11 @@ function UserProfilePage() {
                         }}>
                           <LockIcon sx={{ fontSize: 32, color: '#94a3b8' }} />
                         </Box>
-                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                          Win Rate Hidden
-                        </Typography>
-                      </>
-                    )}
+                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                            Win Rate Hidden
+                          </Typography>
+                        </>
+                      )}
                   </Paper>
                   
                   {/* Current Streak */}
@@ -519,8 +557,8 @@ function UserProfilePage() {
                     display: 'flex',
                     alignItems: 'center'
                   }}>
-                    {bettingStats.stats_visible?.betting_history ? (
-                      <>
+                      {bettingStats.stats_visible?.betting_history ? (
+                        <>
                         <Box sx={{ 
                           bgcolor: 'rgba(245, 158, 11, 0.15)', 
                           borderRadius: '50%', 
@@ -538,9 +576,9 @@ function UserProfilePage() {
                             Current Streak
                           </Typography>
                         </Box>
-                      </>
-                    ) : (
-                      <>
+                        </>
+                      ) : (
+                        <>
                         <Box sx={{ 
                           bgcolor: 'rgba(148, 163, 184, 0.15)', 
                           borderRadius: '50%', 
@@ -549,13 +587,13 @@ function UserProfilePage() {
                         }}>
                           <LockIcon sx={{ fontSize: 32, color: '#94a3b8' }} />
                         </Box>
-                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                          Streak Hidden
-                        </Typography>
-                      </>
-                    )}
+                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                            Streak Hidden
+                          </Typography>
+                        </>
+                      )}
                   </Paper>
-                
+                  
                   {/* Total Bets */}
                   <Paper sx={{ 
                     p: 2, 
@@ -564,8 +602,8 @@ function UserProfilePage() {
                     display: 'flex',
                     alignItems: 'center'
                   }}>
-                    {bettingStats.stats_visible?.betting_history ? (
-                      <>
+                      {bettingStats.stats_visible?.betting_history ? (
+                        <>
                         <Box sx={{ 
                           bgcolor: 'rgba(139, 92, 246, 0.15)', 
                           borderRadius: '50%', 
@@ -582,9 +620,9 @@ function UserProfilePage() {
                             Total Bets
                           </Typography>
                         </Box>
-                      </>
-                    ) : (
-                      <>
+                        </>
+                      ) : (
+                        <>
                         <Box sx={{ 
                           bgcolor: 'rgba(148, 163, 184, 0.15)', 
                           borderRadius: '50%', 
@@ -593,13 +631,13 @@ function UserProfilePage() {
                         }}>
                           <LockIcon sx={{ fontSize: 32, color: '#94a3b8' }} />
                         </Box>
-                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                          Bets Hidden
-                        </Typography>
-                      </>
-                    )}
+                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                            Bets Hidden
+                          </Typography>
+                        </>
+                      )}
                   </Paper>
-                
+                  
                   {/* Lifetime Winnings */}
                   <Paper sx={{ 
                     p: 2, 
@@ -608,8 +646,8 @@ function UserProfilePage() {
                     display: 'flex',
                     alignItems: 'center'
                   }}>
-                    {bettingStats.stats_visible?.betting_history ? (
-                      <>
+                      {bettingStats.stats_visible?.betting_history ? (
+                        <>
                         <Box sx={{ 
                           bgcolor: 'rgba(96, 165, 250, 0.15)', 
                           borderRadius: '50%', 
@@ -626,9 +664,9 @@ function UserProfilePage() {
                             Lifetime Winnings
                           </Typography>
                         </Box>
-                      </>
-                    ) : (
-                      <>
+                        </>
+                      ) : (
+                        <>
                         <Box sx={{ 
                           bgcolor: 'rgba(148, 163, 184, 0.15)', 
                           borderRadius: '50%', 
@@ -637,16 +675,16 @@ function UserProfilePage() {
                         }}>
                           <LockIcon sx={{ fontSize: 32, color: '#94a3b8' }} />
                         </Box>
-                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                          Winnings Hidden
-                        </Typography>
+                          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                            Winnings Hidden
+                          </Typography>
                       </>
                     )}
                   </Paper>
-                </>
-              )}
-            </Box>
-          </Grid>
+                        </>
+                      )}
+                    </Box>
+                  </Grid>
           
           {/* Right Column - Achievements */}
           <Grid item xs={12} md={8}>
@@ -688,11 +726,11 @@ function UserProfilePage() {
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4, flex: 1 }}>
                   <CircularProgress sx={{ color: '#8B5CF6' }} />
                 </Box>
-              ) : !bettingStats.stats_visible?.betting_history ? (
+              ) : !bettingStats.stats_visible?.achievements ? (
                 <Box sx={{ textAlign: 'center', p: 3, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                   <LockIcon sx={{ fontSize: 48, color: '#94a3b8', mb: 2 }} />
                   <Typography variant="body1" sx={{ color: '#94a3b8' }}>
-                    Achievement data is private
+                    Achievements are private
                   </Typography>
                 </Box>
               ) : (

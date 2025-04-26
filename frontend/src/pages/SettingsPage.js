@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, 
@@ -16,6 +16,7 @@ import {
   DialogActions,
   TextField,
   Alert,
+  Snackbar,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LockIcon from '@mui/icons-material/Lock';
@@ -24,15 +25,25 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import DeleteIcon from '@mui/icons-material/Delete';
 import NavBar from '../components/NavBar';
 import { updatePassword, deleteAccount } from '../services/auth';
+import { updateUserSettings } from '../services/api';
 
 function SettingsPage() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user')) || { username: 'user' };
+  const storedUser = JSON.parse(localStorage.getItem('user')) || { username: 'user' };
   
   // State for switches 
   const [settings, setSettings] = useState({
     showHistory: true,
     showWinRate: true,
+    showStats: true,
+    showAchievements: true
+  });
+  
+  // State for snackbar
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
   });
   
   // State for password change
@@ -50,12 +61,52 @@ function SettingsPage() {
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  // Load user settings on component mount
+  useEffect(() => {
+    // Get settings from user object if they exist
+    if (storedUser && storedUser.settings) {
+      setSettings({
+        showHistory: storedUser.settings.showHistory !== false,
+        showWinRate: storedUser.settings.showWinRate !== false,
+        showStats: storedUser.settings.showStats !== false,
+        showAchievements: storedUser.settings.showAchievements !== false
+      });
+    }
+  }, []);
+
   // Handle switch changes
-  const handleSwitchChange = (setting) => {
-    setSettings(prev => ({
-      ...prev,
-      [setting]: !prev[setting]
-    }));
+  const handleSwitchChange = async (setting) => {
+    const newSettings = {
+      ...settings,
+      [setting]: !settings[setting]
+    };
+    
+    setSettings(newSettings);
+    
+    try {
+      // Save settings to backend
+      const response = await updateUserSettings({ settings: newSettings });
+      
+      // Update user in localStorage with new settings
+      const updatedUser = { ...storedUser, settings: newSettings };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      setSnackbar({
+        open: true,
+        message: 'Settings updated successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Failed to update settings:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to update settings',
+        severity: 'error'
+      });
+      
+      // Revert the setting if update failed
+      setSettings(settings);
+    }
   };
   
   // Handle password dialog open/close
@@ -138,6 +189,14 @@ function SettingsPage() {
       console.error('Account deletion error:', error);
       setDeleteError(error.message);
     }
+  };
+
+  // Handle snackbar close
+  const handleCloseSnackbar = () => {
+    setSnackbar({
+      ...snackbar,
+      open: false
+    });
   };
   
   return (
@@ -242,15 +301,15 @@ function SettingsPage() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                   <Box>
                     <Typography variant="subtitle1" sx={{ color: '#f8fafc' }}>
-                      Show Betting History
+                      Show Betting Statistics
                     </Typography>
                     <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      Allow friends to see your betting history
+                      Show your betting statistics to other users
                     </Typography>
                   </Box>
                   <Switch 
-                    checked={settings.showHistory}
-                    onChange={() => handleSwitchChange('showHistory')}
+                    checked={settings.showStats}
+                    onChange={() => handleSwitchChange('showStats')}
                     sx={{
                       '& .MuiSwitch-switchBase.Mui-checked': {
                         color: '#8B5CF6',
@@ -269,15 +328,15 @@ function SettingsPage() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                   <Box>
                     <Typography variant="subtitle1" sx={{ color: '#f8fafc' }}>
-                      Show Win Rate
+                      Show Achievements
                     </Typography>
                     <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-                      Display your win percentage to others
+                      Share your achievements with other users
                     </Typography>
                   </Box>
                   <Switch 
-                    checked={settings.showWinRate}
-                    onChange={() => handleSwitchChange('showWinRate')}
+                    checked={settings.showAchievements}
+                    onChange={() => handleSwitchChange('showAchievements')}
                     sx={{
                       '& .MuiSwitch-switchBase.Mui-checked': {
                         color: '#8B5CF6',
@@ -300,125 +359,125 @@ function SettingsPage() {
         onClose={handleClosePasswordDialog}
         PaperProps={{
           sx: {
-            bgcolor: 'rgba(30, 41, 59, 0.95)',
-            borderRadius: 2,
-            width: '100%',
-            maxWidth: '400px'
+            backgroundColor: 'rgba(30, 41, 59, 0.95)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: 2
           }
         }}
       >
-        <DialogTitle sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-          Change Password
-        </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
-          {passwordError && (
-            <Alert severity="error" sx={{ mb: 2, bgcolor: 'rgba(239, 68, 68, 0.1)' }}>
-              {passwordError}
-            </Alert>
-          )}
+        <DialogTitle sx={{ color: '#f8fafc' }}>Change Password</DialogTitle>
+        <DialogContent>
           {passwordSuccess && (
-            <Alert severity="success" sx={{ mb: 2, bgcolor: 'rgba(16, 185, 129, 0.1)' }}>
+            <Alert severity="success" sx={{ mb: 2 }}>
               {passwordSuccess}
             </Alert>
           )}
-          <TextField
-            margin="dense"
-            label="Current Password"
-            type={showCurrentPassword ? "text" : "password"}
-            fullWidth
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <IconButton 
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  edge="end"
-                  sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
-                >
-                  {showCurrentPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                </IconButton>
-              )
-            }}
-            variant="outlined"
-            sx={{
-              mb: 2,
-              '& .MuiInputLabel-root': { color: '#9CA3AF' },
-              '& .MuiOutlinedInput-root': {
-                color: '#f8fafc',
-                '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
-                '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-                '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
-              }
-            }}
-          />
-          <TextField
-            margin="dense"
-            label="New Password"
-            type={showNewPassword ? "text" : "password"}
-            fullWidth
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <IconButton 
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  edge="end"
-                  sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
-                >
-                  {showNewPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                </IconButton>
-              )
-            }}
-            variant="outlined"
-            sx={{
-              mb: 2,
-              '& .MuiInputLabel-root': { color: '#9CA3AF' },
-              '& .MuiOutlinedInput-root': {
-                color: '#f8fafc',
-                '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
-                '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-                '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
-              }
-            }}
-          />
-          <TextField
-            margin="dense"
-            label="Confirm New Password"
-            type={showConfirmPassword ? "text" : "password"}
-            fullWidth
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <IconButton 
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  edge="end"
-                  sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
-                >
-                  {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                </IconButton>
-              )
-            }}
-            variant="outlined"
-            sx={{
-              mb: 1,
-              '& .MuiInputLabel-root': { color: '#9CA3AF' },
-              '& .MuiOutlinedInput-root': {
-                color: '#f8fafc',
-                '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
-                '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-                '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
-              }
-            }}
-          />
+          
+          {passwordError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {passwordError}
+            </Alert>
+          )}
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Box sx={{ position: 'relative' }}>
+              <TextField
+                fullWidth
+                label="Current Password"
+                type={showCurrentPassword ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: '#f8fafc',
+                    '& fieldset': {
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(255, 255, 255, 0.3)',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#94a3b8',
+                  },
+                }}
+              />
+              <IconButton
+                sx={{ position: 'absolute', right: 8, top: 8, color: '#94a3b8' }}
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              >
+                {showCurrentPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+              </IconButton>
+            </Box>
+            
+            <Box sx={{ position: 'relative' }}>
+              <TextField
+                fullWidth
+                label="New Password"
+                type={showNewPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: '#f8fafc',
+                    '& fieldset': {
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(255, 255, 255, 0.3)',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#94a3b8',
+                  },
+                }}
+              />
+              <IconButton
+                sx={{ position: 'absolute', right: 8, top: 8, color: '#94a3b8' }}
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                {showNewPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+              </IconButton>
+            </Box>
+            
+            <Box sx={{ position: 'relative' }}>
+              <TextField
+                fullWidth
+                label="Confirm New Password"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: '#f8fafc',
+                    '& fieldset': {
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(255, 255, 255, 0.3)',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#94a3b8',
+                  },
+                }}
+              />
+              <IconButton
+                sx={{ position: 'absolute', right: 8, top: 8, color: '#94a3b8' }}
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+              </IconButton>
+            </Box>
+          </Box>
         </DialogContent>
-        <DialogActions sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', p: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button 
             onClick={handleClosePasswordDialog}
-            sx={{ 
-              color: '#9CA3AF',
-              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' }
-            }}
+            sx={{ color: '#94a3b8' }}
           >
             Cancel
           </Button>
@@ -427,59 +486,48 @@ function SettingsPage() {
             variant="contained"
             sx={{ 
               bgcolor: '#8B5CF6',
-              '&:hover': { bgcolor: '#7C3AED' }
+              '&:hover': {
+                bgcolor: '#7C3AED'
+              } 
             }}
           >
-            Change Password
+            Update Password
           </Button>
         </DialogActions>
       </Dialog>
       
-      {/* Delete Account Confirmation Dialog */}
+      {/* Delete Account Dialog */}
       <Dialog 
         open={deleteDialog} 
         onClose={handleCloseDeleteDialog}
         PaperProps={{
           sx: {
-            bgcolor: 'rgba(30, 41, 59, 0.95)',
-            borderRadius: 2,
-            width: '100%',
-            maxWidth: '400px'
+            backgroundColor: 'rgba(30, 41, 59, 0.95)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: 2
           }
         }}
       >
-        <DialogTitle sx={{ color: '#f8fafc', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-          Delete Account
-        </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
+        <DialogTitle sx={{ color: '#f8fafc' }}>Delete Account</DialogTitle>
+        <DialogContent>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            This action cannot be undone. Your account will be permanently deleted.
+          </Alert>
+          
           {deleteError && (
-            <Alert severity="error" sx={{ mb: 2, bgcolor: 'rgba(239, 68, 68, 0.1)' }}>
+            <Alert severity="error" sx={{ mt: 2 }}>
               {deleteError}
             </Alert>
           )}
-          <Typography sx={{ color: '#f8fafc' }}>
-            Are you sure you want to delete your account? This action cannot be undone.
-          </Typography>
-          <Typography sx={{ color: '#f8fafc', mt: 2, fontWeight: 'bold' }}>
-            All your data, including:
-          </Typography>
-          <Box component="ul" sx={{ color: '#9CA3AF', mt: 1, pl: 2 }}>
-            <li>Betting history</li>
-            <li>League participation</li>
-            <li>Friend connections</li>
-            <li>All other personal data</li>
-          </Box>
-          <Typography sx={{ color: '#f8fafc', mt: 2 }}>
-            will be permanently deleted from our systems.
+          
+          <Typography variant="body1" sx={{ color: '#f8fafc', mt: 2 }}>
+            Are you sure you want to delete your account?
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', p: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button 
             onClick={handleCloseDeleteDialog}
-            sx={{ 
-              color: '#9CA3AF',
-              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' }
-            }}
+            sx={{ color: '#94a3b8' }}
           >
             Cancel
           </Button>
@@ -488,13 +536,32 @@ function SettingsPage() {
             variant="contained"
             sx={{ 
               bgcolor: '#EF4444',
-              '&:hover': { bgcolor: '#DC2626' }
+              '&:hover': {
+                bgcolor: '#DC2626'
+              } 
             }}
           >
-            Confirm Deletion
+            Delete Account
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={5000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
