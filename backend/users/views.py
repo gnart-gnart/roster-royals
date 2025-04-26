@@ -104,15 +104,33 @@ def get_friend_requests(request):
         to_user=request.user,
         status='pending'
     )
-    return Response({
-        'requests': [
-            {
-                'id': req.id,
-                'from_user': UserSerializer(req.from_user).data,
-                'created_at': req.created_at
-            } for req in received_requests
-        ]
-    })
+    
+    # Get the base URL for building absolute URLs
+    base_url = request.build_absolute_uri('/').rstrip('/')
+    
+    results = []
+    for req in received_requests:
+        # Get the user data with full profile image URL
+        from_user_data = UserSerializer(req.from_user).data
+        
+        # Ensure profile image URL is included as an absolute URL
+        if hasattr(req.from_user, 'profile_image') and req.from_user.profile_image and hasattr(req.from_user.profile_image, 'url'):
+            img_url = req.from_user.profile_image.url
+            # Make sure it's an absolute URL with hostname
+            if img_url.startswith('/'):
+                img_url = f"{base_url}{img_url}"
+            from_user_data['profile_image_url'] = img_url
+        else:
+            # Set a default image URL (including hostname)
+            from_user_data['profile_image_url'] = f"{base_url}/media/profile_images/default_profile.png"
+            
+        results.append({
+            'id': req.id,
+            'from_user': from_user_data,
+            'created_at': req.created_at
+        })
+    
+    return Response({'requests': results})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -134,11 +152,12 @@ def handle_friend_request(request, request_id):
             Friendship.objects.create(user=request.user, friend=friend_request.from_user)
             Friendship.objects.create(user=friend_request.from_user, friend=request.user)
             
-            # Create notification for sender
+            # Create notification for sender with user data included in the related_user field
             Notification.objects.create(
                 user=friend_request.from_user,
                 message=f"{request.user.username} accepted your friend request",
-                notification_type='friend_accepted'
+                notification_type='friend_accepted',
+                related_user=request.user  # Add this field to store the user who accepted
             )
             
             return Response({'message': 'Friend request accepted'})
@@ -218,8 +237,13 @@ def get_notifications(request):
     notifications = Notification.objects.filter(user=request.user)
     print(f"Found {notifications.count()} notifications")
     
-    # Debug: Print all notifications in detail
+    # Get the base URL for building absolute URLs
+    base_url = request.build_absolute_uri('/').rstrip('/')
+    
+    response_data = []
+    
     for n in notifications:
+        # Debug: Print all notifications in detail
         print(f"""
         Notification details:
         - ID: {n.id}
@@ -230,16 +254,36 @@ def get_notifications(request):
         - Reference ID: {n.reference_id}
         - Created At: {n.created_at}
         """)
-    
-    response_data = [{
-        'id': n.id,
-        'message': n.message,
-        'type': n.notification_type,
-        'created_at': n.created_at,
-        'is_read': n.is_read,
-        'requires_action': n.requires_action,
-        'reference_id': n.reference_id
-    } for n in notifications]
+        
+        notification_data = {
+            'id': n.id,
+            'message': n.message,
+            'type': n.notification_type,
+            'created_at': n.created_at,
+            'is_read': n.is_read,
+            'requires_action': n.requires_action,
+            'reference_id': n.reference_id
+        }
+        
+        # Add related user data if available (for friend requests/acceptances)
+        if n.related_user:
+            # Serialize the related user
+            related_user_data = UserSerializer(n.related_user).data
+            
+            # Ensure profile image URL is included as an absolute URL
+            if hasattr(n.related_user, 'profile_image') and n.related_user.profile_image and hasattr(n.related_user.profile_image, 'url'):
+                img_url = n.related_user.profile_image.url
+                # Make sure it's an absolute URL with hostname
+                if img_url.startswith('/'):
+                    img_url = f"{base_url}{img_url}"
+                related_user_data['profile_image_url'] = img_url
+            else:
+                # Set a default image URL (including hostname)
+                related_user_data['profile_image_url'] = f"{base_url}/media/profile_images/default_profile.png"
+            
+            notification_data['related_user'] = related_user_data
+        
+        response_data.append(notification_data)
     
     return Response(response_data)
 

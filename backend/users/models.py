@@ -62,6 +62,7 @@ class Notification(models.Model):
     is_read = models.BooleanField(default=False)
     requires_action = models.BooleanField(default=False)
     reference_id = models.IntegerField(null=True, blank=True)
+    related_user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='related_notifications', null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
