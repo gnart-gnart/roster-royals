@@ -242,9 +242,9 @@ function ProfilePage() {
       },
       {
         id: 4,
-        name: 'Diverse Bettor',
-        description: 'Place bets on 3 different sports',
-        icon: '🌐',
+        name: 'Big Winner',
+        description: 'Accumulate $1000 in lifetime winnings',
+        icon: '💵',
         unlocked: false,
         unlockedDate: null
       },
@@ -317,37 +317,12 @@ function ProfilePage() {
       achievementsList[2].unlockedDate = safeFormatDate(firstBigBet.date);
     }
 
-    // 4. Diverse Bettor achievement
-    // Count unique sports
-    const sportSet = new Set();
-    betHistory.forEach(bet => {
-      let sport = 'Unknown';
-      
-      if (bet.sport) {
-        sport = bet.sport;
-      } else if (bet.event.includes('Barcelona Bàsquet') || bet.event.includes('basketball') || 
-          bet.event.includes('euroleague') || bet.event.includes('NBA')) {
-        sport = 'Basketball';
-      } else if (bet.event.includes('boxing') || bet.event.includes('Johnson @ Eric Tudor')) {
-        sport = 'Boxing';
-      } else if (bet.event.includes('Bearcats') || bet.event.includes('Cornhuskers') || 
-                bet.event.includes('Wildcats') || bet.event.includes('Cyclones') || 
-                bet.event.includes('football') || bet.event.includes('ncaaf')) {
-        sport = 'Football';
-      } else if (bet.event.includes('soccer') || bet.event.includes('FC') || 
-                /barcelona(?!\sbàsquet)/i.test(bet.event)) {
-        sport = 'Soccer';
-      }
-      
-      if (sport !== 'Unknown') {
-        sportSet.add(sport);
-      }
-    });
-
-    if (sportSet.size >= 3) {
+    // 4. Big Winner achievement
+    if (bettingStats.lifetime_winnings >= 1000) {
+      // For unlocked date, use the date of the most recent bet as an approximation
       const latestBet = betHistory.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
       achievementsList[3].unlocked = true;
-      achievementsList[3].unlockedDate = safeFormatDate(latestBet.date);
+      achievementsList[3].unlockedDate = safeFormatDate(latestBet?.date);
     }
 
     // 5. High Roller achievement
@@ -371,7 +346,7 @@ function ProfilePage() {
     }
 
     return achievementsList;
-  }, [betHistory]); // Remove formatDate from dependencies
+  }, [betHistory, bettingStats]);
 
   // State for achievements
   const [achievements, setAchievements] = useState([]);
