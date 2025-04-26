@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
-import { getLeagues, getFriends, removeFriend, getFriendRequests, getNotifications, handleFriendRequest, handleLeagueInvite, markNotificationsRead } from '../services/api';
+import { getLeagues, getFriends, removeFriend, getFriendRequests, getNotifications, handleFriendRequest, handleLeagueInvite, markNotificationsRead, getUserBettingStats } from '../services/api';
 import LeagueCard from '../components/LeagueCard';
 import FriendsList from '../components/FriendsList';
 import NavBar from '../components/NavBar';
@@ -47,6 +47,12 @@ function HomePage() {
   const [notifications, setNotifications] = useState([]);
   const [profileAnchorEl, setProfileAnchorEl] = useState(null);
   const profileMenuOpen = Boolean(profileAnchorEl);
+  const [bettingStats, setBettingStats] = useState({
+    total_bets: 0,
+    win_rate: 0,
+    current_streak: 0,
+    lifetime_winnings: 0
+  });
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user')) || { username: '' };
 
@@ -77,15 +83,26 @@ function HomePage() {
     }
   };
 
+  const loadBettingStats = async () => {
+    try {
+      const stats = await getUserBettingStats();
+      setBettingStats(stats);
+    } catch (err) {
+      console.error('Failed to load betting stats:', err);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [leaguesData, friendsData] = await Promise.all([
+        const [leaguesData, friendsData, statsData] = await Promise.all([
           getLeagues(),
-          getFriends()
+          getFriends(),
+          getUserBettingStats()
         ]);
         setLeagues(leaguesData);
         setFriends(friendsData);
+        setBettingStats(statsData);
         
         // Also load notifications and friend requests
         loadFriendRequests();
@@ -198,11 +215,11 @@ function HomePage() {
         tooltip: "Unread notifications awaiting your attention" 
       },
       { 
-        label: "Success Rate", 
-        value: "87%", 
+        label: "Win Rate", 
+        value: bettingStats.win_rate ? `${bettingStats.win_rate}%` : "0%", 
         icon: <ShowChartIcon />, 
         color: '#10B981',
-        tooltip: "Your prediction success rate" 
+        tooltip: "Your prediction win rate" 
       },
     ];
 
@@ -511,21 +528,21 @@ function HomePage() {
               <Box sx={{ p: 2, borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Typography sx={{ color: '#CBD5E1' }}>Total Bets</Typography>
-                  <Typography sx={{ color: '#10B981', fontWeight: 'bold' }}>0</Typography>
+                  <Typography sx={{ color: '#10B981', fontWeight: 'bold' }}>{bettingStats.total_bets || 0}</Typography>
                 </Box>
               </Box>
               
               <Box sx={{ p: 2, borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Typography sx={{ color: '#CBD5E1' }}>Win Rate</Typography>
-                  <Typography sx={{ color: '#10B981', fontWeight: 'bold' }}>0%</Typography>
+                  <Typography sx={{ color: '#10B981', fontWeight: 'bold' }}>{bettingStats.win_rate ? `${bettingStats.win_rate}%` : '0%'}</Typography>
                 </Box>
               </Box>
               
               <Box sx={{ p: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography sx={{ color: '#CBD5E1' }}>Current Points</Typography>
-                  <Typography sx={{ color: '#10B981', fontWeight: 'bold' }}>1500</Typography>
+                  <Typography sx={{ color: '#CBD5E1' }}>Balance</Typography>
+                  <Typography sx={{ color: '#10B981', fontWeight: 'bold' }}>${user.money || 0}</Typography>
                 </Box>
               </Box>
             </Box>
