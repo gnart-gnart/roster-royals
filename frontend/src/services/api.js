@@ -535,3 +535,21 @@ export const updateUserSettings = async (settingsData) => {
   return handleResponse(response);
 };
 
+/**
+ * Join a circuit
+ * @param {string|number} circuitId - The ID of the circuit to join
+ * @returns {Promise<Object>} - A promise resolving to the API response
+ */
+export const joinCircuit = async (circuitId) => {
+  try {
+    const response = await fetch(`${API_URL}/api/circuits/${circuitId}/join/`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    console.error('Error joining circuit:', error);
+    throw error;
+  }
+};
+

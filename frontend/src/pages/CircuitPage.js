@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -19,26 +19,7 @@ import {
   Avatar,
   Card,
   CardContent,
-  Divider,
-  Tooltip,
-  Stepper,
-  Step,
-  StepLabel,
-  Tabs,
-  Tab,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  IconButton,
-  InputAdornment,
-  List,
-  ListItem,
-  ListItemText,
-  Checkbox,
-  ListItemIcon,
-  Radio
+  Tooltip
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'; // Leaderboard icon
@@ -49,67 +30,10 @@ import PlayCircleIcon from '@mui/icons-material/PlayCircle'; // Active icon
 import ScheduleIcon from '@mui/icons-material/Schedule'; // Upcoming icon
 import FunctionsIcon from '@mui/icons-material/Functions'; // Weight/Multiplier icon
 import GavelIcon from '@mui/icons-material/Gavel'; // Tiebreaker icon
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import SearchIcon from '@mui/icons-material/Search';
-import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
-import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
-import SportsFootballIcon from '@mui/icons-material/SportsFootball';
-import SportsBaseballIcon from '@mui/icons-material/SportsBaseball';
-import SportsHockeyIcon from '@mui/icons-material/SportsHockey';
-import SportsIcon from '@mui/icons-material/Sports';
-import SportsTennisIcon from '@mui/icons-material/SportsTennis';
-import SportsGolfIcon from '@mui/icons-material/SportsGolf';
-import SportsMmaIcon from '@mui/icons-material/SportsMma';
-import { getCircuitDetail, getLeague, createCircuit, browseMarket, getAvailableSportEvents } from '../services/api';
+import { getCircuitDetail, joinCircuit } from '../services/api';
 import NavBar from '../components/NavBar';
 import { format } from 'date-fns'; // For date formatting
-import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-
-const steps = ['Select Events', 'Configure Circuit'];
-
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`circuit-tabpanel-${index}`}
-      aria-labelledby={`circuit-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-function a11yProps(index) {
-  return {
-    id: `circuit-tab-${index}`,
-    'aria-controls': `circuit-tabpanel-${index}`,
-  };
-}
-
-function getSportIcon(sport) {
-  if (!sport || typeof sport !== 'string') {
-    return { icon: <SportsIcon />, color: '#8B5CF6' };
-  }
-  let iconComponent = <SportsIcon />;
-  const color = '#8B5CF6';
-  switch (sport.toLowerCase()) {
-    case 'basketball': iconComponent = <SportsBasketballIcon />; break;
-    case 'soccer': iconComponent = <SportsSoccerIcon />; break;
-    case 'american football': case 'football': iconComponent = <SportsFootballIcon />; break;
-    case 'baseball': iconComponent = <SportsBaseballIcon />; break;
-    case 'hockey': case 'ice hockey': iconComponent = <SportsHockeyIcon />; break;
-    case 'tennis': iconComponent = <SportsTennisIcon />; break;
-    case 'golf': iconComponent = <SportsGolfIcon />; break;
-    case 'mixed martial arts': case 'mma': case 'boxing': iconComponent = <SportsMmaIcon />; break;
-    default: break;
-  }
-  return { icon: iconComponent, color: color };
-}
+import Confetti from 'react-confetti';
 
 function CircuitPage() {
   const { leagueId, circuitId } = useParams(); // Get both leagueId and circuitId
@@ -117,48 +41,13 @@ function CircuitPage() {
   const [circuit, setCircuit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
-  // Step Control
-  const [activeStep, setActiveStep] = useState(0);
-
-  // Step 1 State (Event Selection)
-  const [selectedEvents, setSelectedEvents] = useState([]); // Holds full event objects
-  const [tabValue, setTabValue] = useState(0); // For Market/Custom tabs
-  // Market Event State
-  const [sportsGroups, setSportsGroups] = useState({});
-  const [allSports, setAllSports] = useState([]);
-  const [selectedGroup, setSelectedGroup] = useState(null);
-  const [selectedSport, setSelectedSport] = useState(null);
-  const [marketEvents, setMarketEvents] = useState([]);
-  const [loadingMarket, setLoadingMarket] = useState(false);
-  const [marketError, setMarketError] = useState('');
-  const [addingEventId, setAddingEventId] = useState(null); // To show loading on add button
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewState, setViewState] = useState('groups'); // For Market tab navigation
-  // Custom Event State
-  const [customEvent, setCustomEvent] = useState({
-    name: '',
-    sport: '',
-    homeTeam: '', // Context only
-    awayTeam: '', // Context only
-    startTime: new Date(Date.now() + 86400000),
-    answerType: 'number',
-    answerOptionsString: '',
-  });
-
-  // Step 2 State (Configuration)
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    entry_fee: '0.00',
-    start_date: null,
-    end_date: null,
-    tiebreaker_event_id: '', // Store the ID of the selected tiebreaker
-  });
-  // Note: Weights will be stored directly within the selectedEvents objects in Step 2
-
   const [isCaptain, setIsCaptain] = useState(false);
+  const [hasJoined, setHasJoined] = useState(false); // User has joined the circuit
+  const [joiningCircuit, setJoiningCircuit] = useState(false); // Loading state for join button
+  const [showConfetti, setShowConfetti] = useState(false); // Control confetti animation
 
   useEffect(() => {
     const fetchCircuit = async () => {
@@ -169,6 +58,10 @@ function CircuitPage() {
         setError('');
         const captainCheck = data.captain?.id === currentUser.id;
         setIsCaptain(captainCheck);
+
+        // Check if current user is a participant
+        const isParticipant = data.participants?.some(p => p.user.id === currentUser.id);
+        setHasJoined(isParticipant);
       } catch (err) {
         setError(err.message || 'Failed to load circuit details.');
         console.error(err);
@@ -179,6 +72,47 @@ function CircuitPage() {
 
     fetchCircuit();
   }, [circuitId, currentUser.id]);
+
+  const handleJoinCircuit = async () => {
+    setJoiningCircuit(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      const response = await joinCircuit(circuitId);
+      
+      // Show success message and confetti
+      setSuccess('Successfully joined circuit!');
+      setHasJoined(true);
+      setShowConfetti(true);
+      
+      // Update circuit data to include the user as a participant
+      setCircuit(prev => {
+        // Create a new participant entry for the current user
+        const newParticipant = {
+          user: currentUser,
+          score: 0,
+          paid_entry: true
+        };
+        
+        // Add the new participant to the list
+        return {
+          ...prev,
+          participants: [...(prev.participants || []), newParticipant]
+        };
+      });
+      
+      // Hide confetti after 5 seconds
+      setTimeout(() => {
+        setShowConfetti(false);
+      }, 5000);
+      
+    } catch (err) {
+      setError(err.message || 'Failed to join circuit. Please try again.');
+    } finally {
+      setJoiningCircuit(false);
+    }
+  };
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -239,211 +173,35 @@ function CircuitPage() {
   // Sort participants by score descending
   const sortedParticipants = [...(circuit.participants || [])].sort((a, b) => b.score - a.score);
 
-  // === Handlers ===
-
-  // --- Step Navigation ---
-  const handleNext = () => {
-    if (activeStep === 0 && selectedEvents.length === 0) {
-        setError("Please select at least one event before proceeding.");
-        return;
-    }
-    setError(''); // Clear error on step change
-    // If moving from step 0 to 1, ensure weights are initialized if not already present
-    if (activeStep === 0) {
-        setSelectedEvents(prev => prev.map(ev => ({ ...ev, weight: ev.weight || 1 })));
-    }
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-  };
-
-  const handleBack = () => {
-    setError(''); // Clear error on step change
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
-
-  // --- Event Selection/Modification (Step 1 & 2) ---
-
-   const handleAddMarketEvent = (event) => {
-    // Prevent duplicates
-    if (selectedEvents.some(item => item.id === event.id)) {
-        setError('This event is already added.');
-        return;
-    }
-     setError('');
-    const newEvent = {
-        id: event.id, // Use the API's event ID
-        event_name: `${event.away_team} @ ${event.home_team}`,
-        sport: event.sport_key || event.sport,
-        home_team: event.home_team,
-        away_team: event.away_team,
-        commence_time: event.commence_time,
-        event_key: event.id, // Store original key if needed later
-        custom: false, // Mark as market event
-        answerType: 'market', // Special type for market events
-        answerOptions: [],
-        // Include market data if available (may need for betting later)
-        bookmakers: event.bookmakers,
-        weight: 1 // Default weight
-    };
-    setSelectedEvents(prev => [...prev, newEvent]);
-    setError(`${newEvent.event_name} added.`); // Feedback
-    setTimeout(() => setError(''), 3000); // Clear feedback
-  };
-
-  const handleAddCustomEvent = () => {
-     // Reset errors/success
-     setError('');
-     setError('');
-
-    // Validation
-    if (!customEvent.name || !customEvent.sport || !customEvent.answerType) {
-      setError('Please provide a title/question, category, and answer type.');
-      return;
-    }
-
-    let answerOptions = [];
-    if (customEvent.answerType === 'multipleChoice') {
-      if (!customEvent.answerOptionsString.trim()) {
-        setError('Please provide the options for the multiple choice event.');
-        return;
-      }
-      answerOptions = customEvent.answerOptionsString.split(',').map(opt => opt.trim()).filter(opt => opt !== '');
-      if (answerOptions.length < 2) {
-          setError('Please provide at least two valid options for multiple choice.');
-          return;
-      }
-    }
-
-    const customId = `custom-${Date.now()}`;
-    const newEvent = {
-      id: customId,
-      event_name: customEvent.name,
-      sport: customEvent.sport,
-      home_team: customEvent.homeTeam,
-      away_team: customEvent.awayTeam,
-      commence_time: customEvent.startTime.toISOString(),
-      event_key: customId,
-      custom: true,
-      answerType: customEvent.answerType,
-      answerOptions: answerOptions,
-      weight: 1 // Default weight
-    };
-
-    setSelectedEvents(prev => [...prev, newEvent]);
-    setError(`Custom event "${customEvent.name}" added.`);
-
-    // Reset the custom event form
-    setCustomEvent({
-      name: '', sport: '', homeTeam: '', awayTeam: '',
-      startTime: new Date(Date.now() + 86400000),
-      answerType: 'number', answerOptionsString: '',
-    });
-  };
-
-  const handleRemoveEvent = (eventId) => {
-    setSelectedEvents(prev => prev.filter(event => event.id !== eventId));
-    // If the removed event was the tiebreaker, reset it
-    if (formData.tiebreaker_event_id === eventId) {
-        setFormData(prev => ({ ...prev, tiebreaker_event_id: '' }));
-    }
-  };
-
-  // --- Configuration (Step 2) ---
-   const handleWeightChange = (eventId, newWeight) => {
-    const weight = Math.max(1, parseInt(newWeight, 10) || 1); // Ensure weight is at least 1
-    setSelectedEvents(prev =>
-      prev.map(event =>
-        event.id === eventId ? { ...event, weight: weight } : event
-      )
-    );
-  };
-
-  const handleTiebreakerSelect = (eventId) => {
-    setFormData(prev => ({ ...prev, tiebreaker_event_id: eventId }));
-  };
-
-   const handleInputChange = (e) => { // For Step 2 form fields
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleDateChange = (name, date) => { // For Step 2 form fields
-    setFormData({ ...formData, [name]: date });
-  };
-
-  const handleTabChange = (event, newValue) => { // For Step 1 Tabs
-    setTabValue(newValue);
-    if (newValue === 0 && Object.keys(sportsGroups).length === 0) { loadMarketData(); }
-  };
-
-  // --- API Calls ---
-  const loadMarketData = async () => {
-    if (loadingMarket) return; setLoadingMarket(true); setMarketError('');
-    try {
-      const marketData = await browseMarket();
-      if (marketData?.data?.grouped_sports) {
-        setSportsGroups(marketData.data.grouped_sports);
-        setAllSports(marketData.data.sports || []);
-      } else {
-        setMarketError('Failed to load market data or format invalid.'); setSportsGroups({}); setAllSports([]);
-      }
-    } catch (err) {
-      setMarketError('Failed to load market data: ' + (err.message || 'Unknown error'));
-    } finally { setLoadingMarket(false); }
-  };
-
-  const handleGroupSelect = (group) => {
-    setSelectedGroup(group); setViewState('sports'); setSelectedSport(null); setMarketEvents([]); setSearchTerm('');
-  };
-
-  const handleSportSelect = async (sport) => {
-    if (!sport || !sport.key) { setMarketError('Invalid sport selected.'); return; }
-    setSelectedSport(sport); setViewState('events'); setLoadingMarket(true);
-    setMarketEvents([]); setSearchTerm(''); setMarketError('');
-    try {
-      const formattedKey = sport.key.replace(/ /g, '_').toLowerCase();
-      const events = await getAvailableSportEvents(formattedKey);
-      const validEvents = Array.isArray(events) ? events : [];
-      setMarketEvents(validEvents);
-      if(validEvents.length === 0) { setMarketError(`No upcoming events found for ${sport.title}.`); }
-    } catch (err) {
-      setMarketError(`Failed to load events for ${sport.title}: ` + (err.message || 'Unknown error')); setMarketEvents([]);
-    } finally { setLoadingMarket(false); }
-  };
-
-  // === Render Functions ===
-
-  // Placeholder for Step 1 Content
-  const renderStep1Content = () => {
-      return (
-          <Box>
-             <Typography variant="h6">Step 1: Select Events</Typography>
-             {/* TODO: Implement Tabs (Market/Custom) here */}
-             <Typography>Market Tab Placeholder</Typography>
-             <Typography>Custom Event Tab Placeholder</Typography>
-             <pre>{JSON.stringify(selectedEvents, null, 2)}</pre> {/* Debug: Show selected */}
-          </Box>
-      );
-  };
-
-  // Placeholder for Step 2 Content
-  const renderStep2Content = () => {
-      return (
-          <Box>
-              <Typography variant="h6">Step 2: Configure Circuit</Typography>
-              {/* TODO: Implement Event List w/ Weights & Tiebreaker */}
-              <Typography>Selected Events List Placeholder</Typography>
-              <pre>{JSON.stringify(selectedEvents, null, 2)}</pre> {/* Debug: Show selected */}
-
-              {/* TODO: Implement Config Fields (Name, Desc, Fee, Dates) */}
-               <Typography>Config Fields Placeholder</Typography>
-          </Box>
-      );
-  };
-
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh', pb: 4 }}>
+      {/* Confetti effect when user joins */}
+      {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
+      
       <NavBar />
       <Container maxWidth="lg" sx={{ mt: 4 }}>
+        {/* Success message */}
+        {success && (
+          <Alert 
+            severity="success" 
+            sx={{ mb: 2 }}
+            onClose={() => setSuccess('')}
+          >
+            {success}
+          </Alert>
+        )}
+        
+        {/* Error message */}
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ mb: 2 }}
+            onClose={() => setError('')}
+          >
+            {error}
+          </Alert>
+        )}
+        
         {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -465,12 +223,21 @@ function CircuitPage() {
               size="small"
             />
           </Box>
-           {/* Add Join/View Bets Button Here - Logic needed */}
-           {/* Example Button: */}
-           <Button variant="contained" disabled={circuit.status !== 'upcoming' && circuit.status !== 'active'}>
-            {/* Logic needed: Show "Join Circuit ($X)" or "View Your Bets" */}
-            Join Circuit (${circuit.entry_fee})
-           </Button>
+           {/* Join Circuit Button */}
+           {hasJoined ? (
+             <Button variant="contained" color="success" startIcon={<CheckCircleIcon />}>
+               Joined
+             </Button>
+           ) : (
+             <Button 
+               variant="contained" 
+               color="primary"
+               onClick={handleJoinCircuit}
+               disabled={circuit.status !== 'upcoming' && circuit.status !== 'active' || joiningCircuit}
+             >
+               {joiningCircuit ? <CircularProgress size={24} /> : `Join Circuit ($${circuit.entry_fee})`}
+             </Button>
+           )}
         </Box>
 
         {/* Description */}
@@ -533,6 +300,11 @@ function CircuitPage() {
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
               Component Events
             </Typography>
+            {!hasJoined && circuit.status !== 'completed' && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                You must join this circuit to place bets on these events.
+              </Alert>
+            )}
             <Paper sx={{ bgcolor: 'rgba(30, 41, 59, 0.7)', p: 1 }}>
               <TableContainer>
                 <Table size="small">
@@ -574,8 +346,8 @@ function CircuitPage() {
                              <Button
                                 size="small"
                                 variant="outlined"
-                                onClick={() => navigate(`/league/${leagueId}/event/${league_event.id}/place-user-bet`)} // Navigate to standard bet page for this event
-                                disabled={league_event.completed || circuit.status === 'completed'} // Disable if event or circuit is done
+                                onClick={() => navigate(`/league/${leagueId}/event/${league_event.id}/place-user-bet`)} 
+                                disabled={!hasJoined || league_event.completed || circuit.status === 'completed'} 
                                 sx={{ ml: 1 }}
                               >
                                 Place Bet
@@ -646,56 +418,6 @@ function CircuitPage() {
               )}
           </Grid>
         </Grid>
-
-        {/* Stepper */}
-        <Stepper activeStep={activeStep} sx={{ mt: 4, mb: 4 }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-
-        {/* Alerts */}
-        {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>{error}</Alert>}
-
-        {/* Content Area */}
-        <Box sx={{ mb: 4 }}>
-            {activeStep === 0 && renderStep1Content()}
-            {activeStep === 1 && renderStep2Content()}
-        </Box>
-
-        {/* Navigation Buttons */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          {activeStep !== 0 && (
-            <Button
-              onClick={handleBack}
-              sx={{ mr: 1 }}
-              disabled={loading} // Disable if submitting
-            >
-              Back
-            </Button>
-          )}
-          {activeStep === 0 && (
-             <Button
-                variant="contained"
-                onClick={handleNext}
-                disabled={selectedEvents.length === 0} // Disable if no events selected
-            >
-                Next
-             </Button>
-          )}
-          {activeStep === steps.length - 1 && (
-            <Button
-                variant="contained"
-                color="primary"
-                onClick={() => {}} // Placeholder for submission
-                disabled={loading} // Disable while submitting
-            >
-              {loading ? <CircularProgress size={24} /> : 'Create Circuit'}
-            </Button>
-          )}
-        </Box>
       </Container>
     </Box>
   );
