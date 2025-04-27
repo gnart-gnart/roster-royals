@@ -12,6 +12,7 @@ import PlaceBetPage from './pages/PlaceBetPage';
 import CreateEventPage from './pages/CreateEventPage';
 import CreateCircuitPage from './pages/CreateCircuitPage';
 import CircuitPage from './pages/CircuitPage';
+import PlaceCircuitBetPage from './pages/PlaceCircuitBetPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import CompleteEventPage from './pages/CompleteEventPage';
 import SettingsPage from './pages/SettingsPage';
@@ -186,6 +187,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MarketPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/circuit/:circuitId/event/:eventId/place-bet"
+            element={
+              <ProtectedRoute>
+                <PlaceCircuitBetPage />
               </ProtectedRoute>
             }
           />

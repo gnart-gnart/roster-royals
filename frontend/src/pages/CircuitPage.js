@@ -346,7 +346,7 @@ function CircuitPage() {
                              <Button
                                 size="small"
                                 variant="outlined"
-                                onClick={() => navigate(`/league/${leagueId}/event/${league_event.id}/place-user-bet`)} 
+                                onClick={() => navigate(`/circuit/${circuitId}/event/${league_event.id}/place-bet`)} 
                                 disabled={!hasJoined || league_event.completed || circuit.status === 'completed'} 
                                 sx={{ ml: 1 }}
                               >
