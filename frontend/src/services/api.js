@@ -472,6 +472,24 @@ export const getCircuitDetail = async (circuitId) => {
     }
 };
 
+/**
+ * Fetch user bets for a specific event within a circuit
+ * @param {string|number} circuitId - The ID of the circuit
+ * @param {string|number} eventId - The ID of the event
+ * @returns {Promise<Array>} - A promise that resolves to an array of user bets for the event
+ */
+export const getCircuitUserBets = async (circuitId, eventId) => {
+  try {
+    const response = await fetch(`${API_URL}/api/circuits/${circuitId}/events/${eventId}/bets/`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    console.error('Error fetching circuit user bets:', error);
+    throw error;
+  }
+};
+
 export const getUserProfile = async () => {
   const response = await fetch(`${API_URL}/api/profile/`, {
     headers: getHeaders(),
@@ -549,6 +567,31 @@ export const joinCircuit = async (circuitId) => {
     return handleResponse(response);
   } catch (error) {
     console.error('Error joining circuit:', error);
+    throw error;
+  }
+};
+
+/**
+ * Complete a circuit with tiebreaker
+ * @param {number} circuitId - The ID of the circuit to complete
+ * @param {number} tiebreakerEventId - The ID of the tiebreaker event
+ * @param {string|number} tiebreakerValue - The correct value for the tiebreaker
+ * @returns {Promise<Object>} - A promise that resolves to the API response
+ */
+export const completeCircuitWithTiebreaker = async (circuitId, tiebreakerEventId, tiebreakerValue) => {
+  try {
+    const response = await fetch(`${API_URL}/api/circuits/${circuitId}/complete-with-tiebreaker/`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        tiebreaker_event_id: tiebreakerEventId,
+        tiebreaker_value: tiebreakerValue
+      }),
+    });
+    
+    return handleResponse(response);
+  } catch (error) {
+    console.error('Error completing circuit with tiebreaker:', error);
     throw error;
   }
 };

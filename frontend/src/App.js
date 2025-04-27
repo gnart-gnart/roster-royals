@@ -191,7 +191,7 @@ function App() {
             }
           />
           <Route
-            path="/circuit/:circuitId/event/:eventId/place-bet"
+            path="/league/:leagueId/circuit/:circuitId/event/:eventId/place-bet"
             element={
               <ProtectedRoute>
                 <PlaceCircuitBetPage />

@@ -30,10 +30,10 @@ import FunctionsIcon from '@mui/icons-material/Functions';
 import GavelIcon from '@mui/icons-material/Gavel';
 import { format } from 'date-fns';
 import NavBar from '../components/NavBar';
-import { getCircuitDetail, getEventDetails, getLeague, placeBet } from '../services/api';
+import { getCircuitDetail, getEventDetails, getLeague, placeBet, getCircuitUserBets } from '../services/api';
 
 function PlaceCircuitBetPage() {
-  const { circuitId, eventId } = useParams();
+  const { leagueId, circuitId, eventId } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || {});
 
@@ -42,8 +42,9 @@ function PlaceCircuitBetPage() {
   const [eventDetails, setEventDetails] = useState(null);
   const [componentEvent, setComponentEvent] = useState(null);
   const [weight, setWeight] = useState(1);
-
-  // State for bet
+  
+  // State for user bet
+  const [userBet, setUserBet] = useState(null);
   const [betValue, setBetValue] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -58,6 +59,7 @@ function PlaceCircuitBetPage() {
         
         // Get circuit details
         const circuitData = await getCircuitDetail(circuitId);
+        console.log('Circuit data:', circuitData);
         setCircuit(circuitData);
         
         // Find the specific component event
@@ -66,21 +68,35 @@ function PlaceCircuitBetPage() {
         );
         
         if (foundEvent) {
+          console.log('Found component event:', foundEvent);
           setComponentEvent(foundEvent.league_event);
           setWeight(foundEvent.weight);
           setIsTiebreaker(circuitData.tiebreaker_event?.id === foundEvent.league_event.id);
           
           // Get detailed event information
           const detailedEvent = await getEventDetails(eventId);
+          console.log('Detailed event data:', detailedEvent);
           setEventDetails(detailedEvent);
           
           // Check if user already has a bet on this event in this circuit
-          const userHasBet = detailedEvent.user_bets?.some(
-            bet => bet.user_id === user.id && bet.circuit_id === parseInt(circuitId)
-          );
-          
-          if (userHasBet) {
-            setErrorMsg('You have already placed a bet on this event for this circuit.');
+          try {
+            const existingBets = await getCircuitUserBets(circuitId, eventId);
+            console.log('Existing bets for this event in circuit:', existingBets);
+            
+            const currentUserBet = existingBets.find(bet => bet.user_id === user.id);
+            if (currentUserBet) {
+              console.log('User already has a bet:', currentUserBet);
+              setUserBet(currentUserBet);
+              setErrorMsg('You have already placed a prediction on this event for this circuit.');
+              
+              // Pre-fill the form with their existing bet value
+              if (currentUserBet.outcome) {
+                setBetValue(currentUserBet.outcome);
+              }
+            }
+          } catch (err) {
+            console.error('Error fetching existing bets:', err);
+            // Continue without failing if we can't fetch bets
           }
         } else {
           setErrorMsg('Event not found in this circuit');
@@ -103,8 +119,13 @@ function PlaceCircuitBetPage() {
     setSubmitting(true);
     
     try {
+      // Check if user already has a bet
+      if (userBet) {
+        throw new Error('You have already placed a prediction for this event in this circuit.');
+      }
+      
       if (!betValue) {
-        throw new Error('Please select a bet value');
+        throw new Error('Please select a prediction value');
       }
       
       // Format the bet data according to the event type
@@ -121,9 +142,9 @@ function PlaceCircuitBetPage() {
         }
       }
       
-      // Call API to place the bet
+      // Call API to place the bet with circuit-specific data
       await placeBet({
-        leagueId: circuit.league.id,
+        leagueId: leagueId,
         eventKey: componentEvent.event_key,
         eventId: componentEvent.id,
         eventName: componentEvent.event_name,
@@ -135,17 +156,26 @@ function PlaceCircuitBetPage() {
         outcomeKey: outcomeKey,
         odds: odds,
         amount: 0, // No money is placed on circuit bets
-        circuitId: circuitId // Add circuit ID for backend to know this is a circuit bet
+        circuitId: circuitId, // Add circuit ID for backend to know this is a circuit bet
+        isCircuitBet: true, // Flag to indicate this is a circuit bet
+        weight: weight // Include the weight of this event in the circuit
       });
       
       setSuccessMsg('Your prediction has been recorded!');
       
+      // Set the user bet locally to prevent multiple submissions
+      setUserBet({
+        user_id: user.id,
+        outcome: outcomeKey,
+        created_at: new Date().toISOString()
+      });
+      
       // Navigate back to circuit page after short delay
       setTimeout(() => {
-        navigate(`/circuit/${circuitId}`);
+        navigate(`/league/${leagueId}/circuit/${circuitId}`);
       }, 2000);
     } catch (err) {
-      setErrorMsg(err.message || 'Failed to place bet.');
+      setErrorMsg(err.message || 'Failed to place prediction.');
     }
     
     setSubmitting(false);
@@ -212,7 +242,34 @@ function PlaceCircuitBetPage() {
       }
     } else {
       // This is a market event (typically sports)
-      // Handle home/away team selection
+      // Debug logs to check outcome data
+      console.log('Rendering market event input with outcomes:', eventDetails?.outcomes);
+      console.log('Market data from component event:', componentEvent.market_data);
+      
+      // Check if outcomes exist in eventDetails
+      if (!eventDetails?.outcomes || eventDetails.outcomes.length === 0) {
+        // Fallback to using basic home/away options if no outcomes are available
+        const fallbackOptions = [
+          { name: 'home', price: 1.0 },
+          { name: 'away', price: 1.0 }
+        ];
+        
+        return (
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Select Outcome</InputLabel>
+            <Select
+              value={betValue}
+              onChange={(e) => setBetValue(e.target.value)}
+              label="Select Outcome"
+            >
+              <MenuItem value="home">{componentEvent.home_team || 'Home'} (1.0)</MenuItem>
+              <MenuItem value="away">{componentEvent.away_team || 'Away'} (1.0)</MenuItem>
+            </Select>
+          </FormControl>
+        );
+      }
+      
+      // Handle home/away team selection with available outcomes
       return (
         <FormControl fullWidth margin="normal">
           <InputLabel>Select Outcome</InputLabel>
@@ -223,8 +280,8 @@ function PlaceCircuitBetPage() {
           >
             {eventDetails?.outcomes?.map((outcome, index) => (
               <MenuItem key={index} value={outcome.name}>
-                {outcome.name === 'home' ? `${componentEvent.home_team} (${outcome.price})` :
-                 outcome.name === 'away' ? `${componentEvent.away_team} (${outcome.price})` :
+                {outcome.name === 'home' ? `${componentEvent.home_team || 'Home'} (${outcome.price})` :
+                 outcome.name === 'away' ? `${componentEvent.away_team || 'Away'} (${outcome.price})` :
                  outcome.name === 'draw' ? `Draw (${outcome.price})` :
                  `${outcome.name} (${outcome.price})`}
               </MenuItem>
@@ -253,14 +310,14 @@ function PlaceCircuitBetPage() {
         <Button
           startIcon={<ArrowBackIcon />}
           variant="outlined"
-          onClick={() => navigate(`/circuit/${circuitId}`)}
+          onClick={() => navigate(`/league/${leagueId}/circuit/${circuitId}`)} 
           sx={{ mb: 3 }}
         >
           Back to Circuit
         </Button>
 
         <Typography variant="h4" gutterBottom>
-          Place Prediction
+          {userBet ? 'Your Prediction' : 'Place Prediction'}
         </Typography>
 
         {errorMsg && <Alert severity="error" sx={{ mb: 2 }}>{errorMsg}</Alert>}
@@ -334,28 +391,63 @@ function PlaceCircuitBetPage() {
           </Card>
         )}
 
-        <Paper sx={{ p: 3, bgcolor: 'rgba(30, 41, 59, 0.7)' }}>
-          <Typography variant="h6" gutterBottom>
-            Your Prediction
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          
-          <form onSubmit={handleSubmit}>
-            {renderBetInput()}
+        {userBet ? (
+          // Display existing bet information if the user already has a bet
+          <Paper sx={{ p: 3, bgcolor: 'rgba(30, 41, 59, 0.7)' }}>
+            <Typography variant="h6" gutterBottom>
+              Your Current Prediction
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
             
-            <Box sx={{ mt: 3 }}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                disabled={submitting || !!errorMsg}
-              >
-                {submitting ? <CircularProgress size={24} /> : 'Submit Prediction'}
-              </Button>
-            </Box>
-          </form>
-        </Paper>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Typography variant="body1">
+                  You predicted: <strong>{userBet.outcome}</strong>
+                </Typography>
+              </Grid>
+              {userBet.created_at && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="text.secondary">
+                    Submitted on {format(new Date(userBet.created_at), 'PPp')}
+                  </Typography>
+                </Grid>
+              )}
+              <Grid item xs={12} sx={{ mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate(`/league/${leagueId}/circuit/${circuitId}`)}
+                  fullWidth
+                >
+                  Return to Circuit
+                </Button>
+              </Grid>
+            </Grid>
+          </Paper>
+        ) : (
+          // Show the prediction form if the user doesn't have a bet yet
+          <Paper sx={{ p: 3, bgcolor: 'rgba(30, 41, 59, 0.7)' }}>
+            <Typography variant="h6" gutterBottom>
+              Your Prediction
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            
+            <form onSubmit={handleSubmit}>
+              {renderBetInput()}
+              
+              <Box sx={{ mt: 3 }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  disabled={submitting || !!errorMsg}
+                >
+                  {submitting ? <CircularProgress size={24} /> : 'Submit Prediction'}
+                </Button>
+              </Box>
+            </form>
+          </Paper>
+        )}
       </Container>
     </Box>
   );
