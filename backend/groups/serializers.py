@@ -105,9 +105,6 @@ class CircuitCreateSerializer(serializers.ModelSerializer):
             component_event_ids = [item['league_event'].id for item in component_events_data]
             if tiebreaker_event.id not in component_event_ids:
                 raise serializers.ValidationError("The tiebreaker event must be one of the selected component events.")
-            # Check tiebreaker type (already handled in model clean, but can double-check here)
-            if tiebreaker_event.betting_type == 'standard':
-                 raise serializers.ValidationError("The selected tiebreaker event must have a tiebreaker betting type.")
 
         # Ensure start_date is before end_date if both provided
         if data.get('start_date') and data.get('end_date') and data['start_date'] >= data['end_date']:

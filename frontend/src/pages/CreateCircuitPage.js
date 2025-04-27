@@ -261,14 +261,8 @@ function CreateCircuitPage() {
   };
 
   const handleTiebreakerSelect = (eventId) => {
-    // Only set tiebreaker if the event is eligible (has tiebreaker_closest betting type)
-    const event = selectedEvents.find(ev => ev.id === eventId);
-    if (event && event.betting_type === 'tiebreaker_closest') {
-      setFormData(prev => ({ ...prev, tiebreaker_event_id: eventId }));
-    } else {
-      setError("Only events with tiebreaker_closest betting type can be selected as tiebreakers");
-      setTimeout(() => setError(''), 3000);
-    }
+    // Allow any event to be selected as a tiebreaker
+    setFormData(prev => ({ ...prev, tiebreaker_event_id: eventId }));
   };
 
   const handleSubmit = async (e) => {
@@ -285,15 +279,6 @@ function CreateCircuitPage() {
     if (formData.tiebreaker_event_id && !selectedEvents.some(item => 
       item.id === formData.tiebreaker_event_id || item.eventId === formData.tiebreaker_event_id)) {
         setError('The selected tiebreaker must be one of the component events.');
-        return;
-    }
-
-    // Validate that the tiebreaker event has the correct betting type
-    const tiebreakerEvent = selectedEvents.find(event => 
-      event.id === formData.tiebreaker_event_id || event.eventId === formData.tiebreaker_event_id);
-    if (tiebreakerEvent && 
-        (tiebreakerEvent.isCustomEvent ? tiebreakerEvent.marketType !== 'tiebreaker_closest' : tiebreakerEvent.betting_type !== 'tiebreaker_closest')) {
-        setError('The selected tiebreaker event must have a tiebreaker_closest betting type.');
         return;
     }
 
@@ -481,9 +466,6 @@ function CreateCircuitPage() {
     
     // Determine the betting type based on the answer type
     let betting_type = 'standard';
-    if (customEvent.answerType === 'number') {
-      betting_type = 'tiebreaker_closest';
-    }
     
     // Prepare data for the API
     const eventData = {
@@ -997,7 +979,6 @@ function CreateCircuitPage() {
                                 </TableHead>
                                 <TableBody>
                                     {selectedEvents.map((event) => {
-                                        const isTiebreakerEligible = event.betting_type === 'tiebreaker_closest';
                                         return (
                                             <TableRow key={event.id} hover>
                                                 <TableCell sx={{pl:1}}>
@@ -1026,9 +1007,16 @@ function CreateCircuitPage() {
                                                     />
                                                 </TableCell>
                                                 <TableCell align="center">
-                                                    <Tooltip title={isTiebreakerEligible ? "Set as tiebreaker" : "Only events with tiebreaker_closest betting type can be selected as tiebreakers"}>
+                                                    <Tooltip title="Select as tiebreaker event">
                                                         <span>
-                                                        <Radio checked={formData.tiebreaker_event_id === event.id} onChange={() => handleTiebreakerSelect(event.id)} value={event.id} name="tiebreaker-radio" disabled={!isTiebreakerEligible} size="small" sx={{ p: 0 }}/>
+                                                        <Radio 
+                                                          checked={formData.tiebreaker_event_id === event.id} 
+                                                          onChange={() => handleTiebreakerSelect(event.id)} 
+                                                          value={event.id} 
+                                                          name="tiebreaker-radio" 
+                                                          size="small" 
+                                                          sx={{ p: 0 }}
+                                                        />
                                                         </span>
                                                     </Tooltip>
                                                 </TableCell>

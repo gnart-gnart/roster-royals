@@ -183,9 +183,6 @@ class Circuit(models.Model):
             # Ensure tiebreaker is one of the component events
             if self.tiebreaker_event and not self.component_events.filter(pk=self.tiebreaker_event.pk).exists():
                 raise ValidationError("The tiebreaker event must be one of the component events.")
-            # Ensure tiebreaker event type is appropriate
-            if self.tiebreaker_event and self.tiebreaker_event.betting_type == 'standard':
-                raise ValidationError("The selected tiebreaker event must have a tiebreaker betting type (e.g., Closest Guess).")
 
     def __str__(self):
         return f"Circuit: {self.name} in League: {self.league.name}"
