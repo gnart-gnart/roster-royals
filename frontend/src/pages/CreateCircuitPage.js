@@ -60,7 +60,7 @@ import SportsKabaddiIcon from '@mui/icons-material/SportsKabaddi';
 import SportsIcon from '@mui/icons-material/Sports';
 import SearchIcon from '@mui/icons-material/Search';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getLeague, getLeagueEvents, createCircuit, browseMarket, getAvailableSportEvents } from '../services/api';
+import { getLeague, getLeagueEvents, createCircuit, browseMarket, getAvailableSportEvents, placeBet, createCustomEvent } from '../services/api';
 import NavBar from '../components/NavBar';
 import { format } from 'date-fns';
 import { getAllMarketEvents, getAvailableSports } from '../services/api';
@@ -260,18 +260,15 @@ function CreateCircuitPage() {
     });
   };
 
-  const handleWeightChange = (eventId, increment) => {
-    setSelectedEvents(prev =>
-      prev.map(item =>
-        item.eventId === eventId
-          ? { ...item, weight: Math.max(1, item.weight + increment) }
-          : item
-      )
-    );
-  };
-
   const handleTiebreakerSelect = (eventId) => {
-    setFormData(prev => ({ ...prev, tiebreaker_event_id: eventId }));
+    // Only set tiebreaker if the event is eligible (has tiebreaker_closest betting type)
+    const event = selectedEvents.find(ev => ev.id === eventId);
+    if (event && event.betting_type === 'tiebreaker_closest') {
+      setFormData(prev => ({ ...prev, tiebreaker_event_id: eventId }));
+    } else {
+      setError("Only events with tiebreaker_closest betting type can be selected as tiebreakers");
+      setTimeout(() => setError(''), 3000);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -283,40 +280,57 @@ function CreateCircuitPage() {
       setError('Please select at least one component event.');
       return;
     }
-    if (formData.tiebreaker_event_id && !selectedEvents.some(item => item.eventId === formData.tiebreaker_event_id)) {
+    
+    // Validate that the tiebreaker event is one of the component events if provided
+    if (formData.tiebreaker_event_id && !selectedEvents.some(item => 
+      item.id === formData.tiebreaker_event_id || item.eventId === formData.tiebreaker_event_id)) {
         setError('The selected tiebreaker must be one of the component events.');
         return;
     }
-    const tiebreakerEvent = availableEvents.find(event => event.id === formData.tiebreaker_event_id);
-    if (tiebreakerEvent && tiebreakerEvent.betting_type === 'standard') {
-        setError('The selected tiebreaker event must have a specific tiebreaker betting type (e.g., Closest Guess).');
+
+    // Validate that the tiebreaker event has the correct betting type
+    const tiebreakerEvent = selectedEvents.find(event => 
+      event.id === formData.tiebreaker_event_id || event.eventId === formData.tiebreaker_event_id);
+    if (tiebreakerEvent && 
+        (tiebreakerEvent.isCustomEvent ? tiebreakerEvent.marketType !== 'tiebreaker_closest' : tiebreakerEvent.betting_type !== 'tiebreaker_closest')) {
+        setError('The selected tiebreaker event must have a tiebreaker_closest betting type.');
         return;
-    }
-
-    const circuitData = {
-      ...formData,
-      entry_fee: parseFloat(formData.entry_fee).toFixed(2),
-      start_date: formData.start_date ? formData.start_date.toISOString() : null,
-      end_date: formData.end_date ? formData.end_date.toISOString() : null,
-      component_events_data: selectedEvents.map(item => ({
-        league_event_id: item.eventId,
-        weight: item.weight,
-      })),
-      tiebreaker_event_id: formData.tiebreaker_event_id || null,
-    };
-
-    if (!circuitData.tiebreaker_event_id) {
-        delete circuitData.tiebreaker_event_id;
     }
 
     try {
       setLoading(true);
+      
+      // Prepare the circuit data for the API - format according to what the backend expects
+      const circuitData = {
+        name: formData.name,
+        description: formData.description || '',
+        entry_fee: parseFloat(formData.entry_fee).toFixed(2),
+        component_events_data: selectedEvents.map(item => ({
+          league_event_id: item.id || item.eventId, // Use the ID from the database
+          weight: item.weight || 1, // Ensure weight is at least 1
+        })),
+        tiebreaker_event_id: formData.tiebreaker_event_id || null,
+      };
+
+      // Add optional date fields if provided
+      if (formData.start_date) {
+        circuitData.start_date = formData.start_date.toISOString();
+      }
+      if (formData.end_date) {
+        circuitData.end_date = formData.end_date.toISOString();
+      }
+
+      console.log('Creating circuit with data:', circuitData);
+
+      // Call the API to create the circuit
       await createCircuit(leagueId, circuitData);
       setSuccess('Circuit created successfully!');
+      
+      // Navigate back to the league page after a short delay
       setTimeout(() => navigate(`/league/${leagueId}`), 2000);
     } catch (err) {
-      setError(err.message || 'Failed to create circuit.');
-      console.error(err);
+      console.error('Error creating circuit:', err);
+      setError(err.message || 'Failed to create circuit. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -341,39 +355,115 @@ function CreateCircuitPage() {
   };
 
   const handleAddMarketEvent = (event) => {
-    if (selectedEvents.some(item => item.id === event.id)) {
-        setSuccess('');
-        setError('This event is already added.');
-        setTimeout(() => setError(''), 3000);
-        return;
+    // Check if this event is already added to the selected events
+    if (selectedEvents.some(item => 
+      item.id === event.id || 
+      item.eventId === event.id || 
+      (item.event_key === event.id && item.event_name === `${event.away_team} @ ${event.home_team}`)
+    )) {
+      setSuccess('');
+      setError('This event is already added to your circuit.');
+      setTimeout(() => setError(''), 3000);
+      return;
     }
-     setError('');
-    const newEvent = {
-        id: event.id,
-        event_name: `${event.away_team} @ ${event.home_team}`,
-        sport: event.sport_key || event.sport,
-        home_team: event.home_team,
-        away_team: event.away_team,
-        commence_time: event.commence_time,
-        event_key: event.id,
-        custom: false,
-        answerType: 'market',
-        answerOptions: [],
-        bookmakers: event.bookmakers,
-        weight: 1
-    };
-    setSelectedEvents(prev => [...prev, newEvent]);
-    setSuccess(`${newEvent.event_name} added.`);
-    setTimeout(() => setSuccess(''), 3000);
+
+    setError('');
+    setLoadingMarket(true);
+    
+    // First check if this event already exists in the league's events
+    getLeagueEvents(leagueId)
+      .then(existingEvents => {
+        // Try to find if this event already exists in the league
+        const existingEvent = existingEvents.find(e => 
+          e.event_key === event.id || 
+          (e.home_team === event.home_team && 
+           e.away_team === event.away_team && 
+           new Date(e.commence_time).toDateString() === new Date(event.commence_time).toDateString())
+        );
+        
+        if (existingEvent) {
+          console.log('Event already exists in the league, using existing event:', existingEvent);
+          // Use the existing event
+          const newEvent = {
+            id: existingEvent.id,
+            eventId: existingEvent.id,
+            event_name: existingEvent.event_name,
+            sport: existingEvent.sport,
+            home_team: existingEvent.home_team,
+            away_team: existingEvent.away_team,
+            commence_time: existingEvent.commence_time,
+            event_key: existingEvent.event_key,
+            custom: false,
+            answerType: 'market',
+            weight: 1
+          };
+          setSelectedEvents(prev => [...prev, newEvent]);
+          setSuccess(`${newEvent.event_name} added to circuit.`);
+          setTimeout(() => setSuccess(''), 3000);
+          setLoadingMarket(false);
+        } else {
+          // Event doesn't exist, create a new one
+          // Prepare data for the API
+          const eventData = {
+            leagueId: leagueId,
+            eventKey: event.id,
+            eventId: event.id,
+            eventName: `${event.away_team} @ ${event.home_team}`,
+            sport: event.sport_key || event.sport,
+            commenceTime: event.commence_time,
+            homeTeam: event.home_team,
+            awayTeam: event.away_team,
+            // Include market data if available
+            marketData: event.bookmakers && event.bookmakers.length > 0 
+              ? { bookmaker: event.bookmakers[0].key, markets: event.bookmakers[0].markets }
+              : {}
+          };
+          
+          // Call the API to add this event to the league
+          return placeBet(eventData);
+        }
+      })
+      .then(response => {
+        if (!response) return; // Skip if we used an existing event
+        
+        // Once the event is saved to the database, add it to the local state
+        const newEvent = {
+          id: response.id || response.event?.id || event.id, // Use the returned ID if available
+          eventId: response.id || response.event?.id || event.id,
+          event_name: `${event.away_team} @ ${event.home_team}`,
+          sport: event.sport_key || event.sport,
+          home_team: event.home_team,
+          away_team: event.away_team,
+          commence_time: event.commence_time,
+          event_key: event.id,
+          custom: false,
+          answerType: 'market',
+          answerOptions: [],
+          bookmakers: event.bookmakers,
+          weight: 1
+        };
+        setSelectedEvents(prev => [...prev, newEvent]);
+        setSuccess(`${newEvent.event_name} added to circuit.`);
+        setTimeout(() => setSuccess(''), 3000);
+      })
+      .catch(error => {
+        console.error('Error adding market event:', error);
+        setError(`Failed to add event: ${error.message || 'Unknown error'}`);
+        setTimeout(() => setError(''), 5000);
+      })
+      .finally(() => {
+        setLoadingMarket(false);
+      });
   };
 
   const handleAddCustomEvent = () => {
-     setError('');
-     setSuccess('');
+    setError('');
+    setSuccess('');
     if (!customEvent.name || !customEvent.sport || !customEvent.answerType) {
       setError('Please provide a title/question, category, and answer type.');
       return;
     }
+    
     let answerOptions = [];
     if (customEvent.answerType === 'multipleChoice') {
       if (!customEvent.answerOptionsString.trim()) {
@@ -386,22 +476,69 @@ function CreateCircuitPage() {
           return;
       }
     }
-    const customId = `custom-${Date.now()}`;
-    const newEvent = {
-      id: customId, event_name: customEvent.name, sport: customEvent.sport,
-      home_team: customEvent.homeTeam, away_team: customEvent.awayTeam,
-      commence_time: customEvent.startTime.toISOString(), event_key: customId,
-      custom: true, answerType: customEvent.answerType, answerOptions: answerOptions,
-      weight: 1
+    
+    setLoading(true);
+    
+    // Determine the betting type based on the answer type
+    let betting_type = 'standard';
+    if (customEvent.answerType === 'number') {
+      betting_type = 'tiebreaker_closest';
+    }
+    
+    // Prepare data for the API
+    const eventData = {
+      league_id: leagueId,
+      event_name: customEvent.name,
+      sport: customEvent.sport,
+      home_team: customEvent.homeTeam || '',
+      away_team: customEvent.awayTeam || '',
+      commence_time: customEvent.startTime.toISOString(),
+      betting_type: betting_type,
+      market_data: {
+        custom: true,
+        answerType: customEvent.answerType,
+        answerOptions: answerOptions
+      }
     };
-    setSelectedEvents(prev => [...prev, newEvent]);
-    setSuccess(`Custom event "${customEvent.name}" added.`);
-    setCustomEvent({
-      name: '', sport: '', homeTeam: '', awayTeam: '',
-      startTime: new Date(Date.now() + 86400000),
-      answerType: 'number', answerOptionsString: '',
-    });
-     setTimeout(() => setSuccess(''), 3000);
+    
+    // Call the API to create the custom event
+    createCustomEvent(eventData)
+      .then(response => {
+        // Once the event is created in the database, add it to the local state
+        const newEvent = {
+          id: response.event.id,
+          eventId: response.event.id,
+          event_name: response.event.event_name,
+          sport: response.event.sport,
+          home_team: response.event.home_team,
+          away_team: response.event.away_team,
+          commence_time: response.event.commence_time,
+          event_key: response.event.event_key,
+          custom: true,
+          answerType: customEvent.answerType,
+          answerOptions: answerOptions,
+          weight: 1,
+          betting_type: betting_type
+        };
+        setSelectedEvents(prev => [...prev, newEvent]);
+        setSuccess(`Custom event "${customEvent.name}" created successfully.`);
+        
+        // Reset the form
+        setCustomEvent({
+          name: '', sport: '', homeTeam: '', awayTeam: '',
+          startTime: new Date(Date.now() + 86400000),
+          answerType: 'number', answerOptionsString: '',
+        });
+        setTimeout(() => setSuccess(''), 3000);
+      })
+      .catch(error => {
+        console.error('Error creating custom event:', error);
+        setError(`Failed to create custom event: ${error.message || 'Unknown error'}`);
+        setTimeout(() => setError(''), 5000);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const handleRemoveEvent = (eventId) => {
@@ -642,6 +779,18 @@ function CreateCircuitPage() {
       return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
+    // Helper function to check if an event is already in selectedEvents
+    const isEventAdded = (event) => {
+      return selectedEvents.some(item => 
+        item.id === event.id || 
+        item.eventId === event.id || 
+        item.event_key === event.id ||
+        (item.home_team === event.home_team && 
+         item.away_team === event.away_team &&
+         new Date(item.commence_time).toDateString() === new Date(event.commence_time).toDateString())
+      );
+    };
+
     // Filter events based on searchTerm
     const filteredEvents = marketEvents.filter(event => 
       event.home_team?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -702,28 +851,31 @@ function CreateCircuitPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredEvents.map((event) => (
-                  <TableRow 
-                    key={event.id}
-                    sx={{ 
-                      '&:hover': { bgcolor: 'rgba(51, 65, 85, 0.8)' },
-                    }}
-                  >
-                    <TableCell>{event.away_team} @ {event.home_team}</TableCell>
-                    <TableCell>{formatDate(event.commence_time)}</TableCell>
-                    <TableCell align="right">
-                      <Button
-                        size="small"
-                        startIcon={<AddIcon />}
-                        variant="outlined"
-                        onClick={() => handleAddMarketEvent(event)}
-                        disabled={selectedEvents.some(item => item.id === event.id)}
-                      >
-                        {selectedEvents.some(item => item.id === event.id) ? 'Added' : 'Add Event'}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filteredEvents.map((event) => {
+                  const added = isEventAdded(event);
+                  return (
+                    <TableRow 
+                      key={event.id}
+                      sx={{ 
+                        '&:hover': { bgcolor: 'rgba(51, 65, 85, 0.8)' },
+                      }}
+                    >
+                      <TableCell>{event.away_team} @ {event.home_team}</TableCell>
+                      <TableCell>{formatDate(event.commence_time)}</TableCell>
+                      <TableCell align="right">
+                        <Button
+                          size="small"
+                          startIcon={<AddIcon />}
+                          variant="outlined"
+                          onClick={() => handleAddMarketEvent(event)}
+                          disabled={added}
+                        >
+                          {added ? 'Added' : 'Add Event'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>
@@ -845,7 +997,7 @@ function CreateCircuitPage() {
                                 </TableHead>
                                 <TableBody>
                                     {selectedEvents.map((event) => {
-                                        const isTiebreakerEligible = event.custom && event.answerType === 'number';
+                                        const isTiebreakerEligible = event.betting_type === 'tiebreaker_closest';
                                         return (
                                             <TableRow key={event.id} hover>
                                                 <TableCell sx={{pl:1}}>
@@ -857,10 +1009,24 @@ function CreateCircuitPage() {
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell align="center">
-                                                    <TextField type="number" size="small" value={event.weight} onChange={(e) => handleWeightChange(event.id, e.target.value)} inputProps={{ min: 1, style: { textAlign: 'center', width: '35px', height: '20px' } }} sx={{ '& .MuiInputBase-root': {height: '30px'} }}/>
+                                                    <TextField 
+                                                      type="number" 
+                                                      size="small" 
+                                                      value={event.weight} 
+                                                      onChange={(e) => {
+                                                        const value = parseInt(e.target.value) || 1;
+                                                        setSelectedEvents(prev => 
+                                                          prev.map(item => 
+                                                            item.id === event.id ? { ...item, weight: Math.max(1, value) } : item
+                                                          )
+                                                        );
+                                                      }} 
+                                                      inputProps={{ min: 1, style: { textAlign: 'center', width: '35px', height: '20px' } }} 
+                                                      sx={{ '& .MuiInputBase-root': {height: '30px'} }}
+                                                    />
                                                 </TableCell>
                                                 <TableCell align="center">
-                                                    <Tooltip title={isTiebreakerEligible ? "Set as tiebreaker" : "Only custom events asking for a number can be tiebreakers"}>
+                                                    <Tooltip title={isTiebreakerEligible ? "Set as tiebreaker" : "Only events with tiebreaker_closest betting type can be selected as tiebreakers"}>
                                                         <span>
                                                         <Radio checked={formData.tiebreaker_event_id === event.id} onChange={() => handleTiebreakerSelect(event.id)} value={event.id} name="tiebreaker-radio" disabled={!isTiebreakerEligible} size="small" sx={{ p: 0 }}/>
                                                         </span>
