@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=150)),
                 ('description', models.TextField(blank=True, null=True)),
                 ('entry_fee', models.DecimalField(decimal_places=2, help_text='Entry fee in currency required to join the circuit.', max_digits=10, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
-                ('status', models.CharField(choices=[('upcoming', 'Upcoming'), ('active', 'Active'), ('calculating', 'Calculating Results'), ('completed', 'Completed')], default='upcoming', max_length=20)),
+                ('status', models.CharField(choices=[('active', 'Active'), ('calculating', 'Calculating Results'), ('completed', 'Completed')], default='active', max_length=20)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('start_date', models.DateTimeField(blank=True, null=True)),
                 ('end_date', models.DateTimeField(blank=True, null=True)),

@@ -17,6 +17,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import CompleteEventPage from './pages/CompleteEventPage';
 import SettingsPage from './pages/SettingsPage';
 import UserProfilePage from './pages/UserProfilePage';
+import CompleteCircuitPage from './pages/CompleteCircuitPage';
 
 const theme = createTheme({
   palette: {
@@ -219,6 +220,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <CompleteEventPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/league/:leagueId/circuit/:circuitId/complete"
+            element={
+              <ProtectedRoute>
+                <CompleteCircuitPage />
               </ProtectedRoute>
             }
           />

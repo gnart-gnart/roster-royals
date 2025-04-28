@@ -159,11 +159,10 @@ class Circuit(models.Model):
         help_text="The designated tiebreaker event. Must be one of the component events."
     )
     status = models.CharField(max_length=20, choices=[
-        ('upcoming', 'Upcoming'),
         ('active', 'Active'),
         ('calculating', 'Calculating Results'),
         ('completed', 'Completed'),
-    ], default='upcoming')
+    ], default='active')
     winner = models.ForeignKey(
         User,
         related_name='circuits_won',

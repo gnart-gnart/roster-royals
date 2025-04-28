@@ -27,7 +27,6 @@ import EventIcon from '@mui/icons-material/Event'; // Events icon
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'; // Entry fee icon
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // Completed icon
 import PlayCircleIcon from '@mui/icons-material/PlayCircle'; // Active icon
-import ScheduleIcon from '@mui/icons-material/Schedule'; // Upcoming icon
 import FunctionsIcon from '@mui/icons-material/Functions'; // Weight/Multiplier icon
 import GavelIcon from '@mui/icons-material/Gavel'; // Tiebreaker icon
 import { getCircuitDetail, joinCircuit } from '../services/api';
@@ -118,8 +117,7 @@ function CircuitPage() {
     switch (status) {
       case 'active': return <PlayCircleIcon color="success" />;
       case 'completed': return <CheckCircleIcon color="action" />;
-      case 'upcoming': return <ScheduleIcon color="warning" />;
-      default: return <ScheduleIcon color="disabled" />;
+      default: return <PlayCircleIcon color="warning" />;
     }
   };
 
@@ -218,26 +216,51 @@ function CircuitPage() {
             <Chip
               icon={getStatusIcon(circuit.status)}
               label={circuit.status.charAt(0).toUpperCase() + circuit.status.slice(1)}
-              color={circuit.status === 'active' ? 'success' : circuit.status === 'completed' ? 'default' : 'warning'}
+              color={circuit.status === 'active' ? 'success' : 'warning'}
               variant="outlined"
               size="small"
             />
           </Box>
-           {/* Join Circuit Button */}
-           {hasJoined ? (
-             <Button variant="contained" color="success" startIcon={<CheckCircleIcon />}>
-               Joined
-             </Button>
-           ) : (
-             <Button 
-               variant="contained" 
-               color="primary"
-               onClick={handleJoinCircuit}
-               disabled={circuit.status !== 'upcoming' && circuit.status !== 'active' || joiningCircuit}
-             >
-               {joiningCircuit ? <CircularProgress size={24} /> : `Join Circuit ($${circuit.entry_fee})`}
-             </Button>
-           )}
+           {/* Action Buttons */}
+           <Box sx={{ display: 'flex', gap: 2 }}>
+             {/* Complete Circuit Button - Visible only to captains for active circuits */}
+             {isCaptain && circuit.status === 'active' && (
+               <Button
+                 variant="contained"
+                 color="primary"
+                 onClick={() => navigate(`/league/${leagueId}/circuit/${circuitId}/complete`)}
+                 startIcon={<CheckCircleIcon />}
+                 sx={{
+                  background: 'linear-gradient(to right, #10B981, #059669)',
+                  borderRadius: '8px',
+                  fontWeight: 'medium',
+                  boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)',
+                  '&:hover': {
+                    boxShadow: '0 6px 15px rgba(16, 185, 129, 0.4)',
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'all 0.3s ease',
+                 }}
+               >
+                 Complete Circuit
+               </Button>
+             )}
+             {/* Join Circuit Button */}
+             {hasJoined ? (
+               <Button variant="contained" color="success" startIcon={<CheckCircleIcon />}>
+                 Joined
+               </Button>
+             ) : (
+               <Button 
+                 variant="contained" 
+                 color="primary"
+                 onClick={handleJoinCircuit}
+                 disabled={circuit.status !== 'active' || joiningCircuit}
+               >
+                 {joiningCircuit ? <CircularProgress size={24} /> : `Join Circuit ($${circuit.entry_fee})`}
+               </Button>
+             )}
+           </Box>
         </Box>
 
         {/* Description */}

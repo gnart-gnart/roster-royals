@@ -1474,7 +1474,7 @@ function LeaguePage() {
                                {circuit.name}
                              </Typography>
                              <Chip 
-                               label={circuit.status || 'Upcoming'} 
+                               label={circuit.status || 'Active'} 
                                color={circuit.status === 'active' ? 'success' : circuit.status === 'completed' ? 'default' : 'warning'}
                                size="small"
                                 sx={{
