@@ -249,6 +249,8 @@ class Command(BaseCommand):
             betting_type='tiebreaker_closest',  # For tiebreaker
             market_data={
                 'options': [str(i) for i in range(10, 50)],  # Points range
+                'custom': True,  # Mark as custom event
+                'answerType': 'number',  # Numeric input required
                 'circuit_bets': []  # Add empty circuit_bets array
             }
         )
@@ -267,6 +269,9 @@ class Command(BaseCommand):
             betting_type='standard',
             market_data={
                 'options': ['Team Rocket', 'Team Galactic'],
+                'custom': True,  # Mark as custom event
+                'answerType': 'multipleChoice',  # Multiple choice input
+                'answerOptions': ['Team Rocket', 'Team Galactic'],  # Same options as before
                 'circuit_bets': []  # Add empty circuit_bets array
             }
         )

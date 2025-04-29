@@ -346,7 +346,10 @@ export const placeBet = async (betData) => {
         outcomeKey: betData.outcomeKey,
         odds: betData.odds,
         amount: betData.amount
-      }
+      },
+      // Add outcomeKey directly at the top level as well
+      // This is critically important for tiebreaker events
+      outcomeKey: betData.outcomeKey
     };
     
     // Add circuit-specific data if this is a circuit bet
@@ -356,6 +359,7 @@ export const placeBet = async (betData) => {
       requestData.weight = betData.weight || 1;
       
       console.log(`[placeBet] Placing circuit bet for circuit ${betData.circuitId} with weight ${betData.weight}`);
+      console.log(`[placeBet] Final request data:`, JSON.stringify(requestData));
     }
 
     // Use getHeaders to stay consistent with other API calls
@@ -722,6 +726,43 @@ export const getCircuitCompletedBets = async (circuitId) => {
     return data;
   } catch (error) {
     console.error(`[getCircuitCompletedBets] Exception:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Complete a specific event within a circuit
+ * @param {string|number} circuitId - The ID of the circuit
+ * @param {string|number} eventId - The ID of the event to complete
+ * @param {string} winningOutcome - The winning outcome of the event
+ * @param {number|null} numericValue - Optional numeric value for tiebreaker events
+ * @returns {Promise<Object>} - A promise that resolves to the updated circuit data
+ */
+export const completeCircuitEvent = async (circuitId, eventId, winningOutcome, numericValue = null) => {
+  try {
+    console.log(`[completeCircuitEvent] Completing event ${eventId} in circuit ${circuitId}`);
+    console.log(`[completeCircuitEvent] Winning outcome: ${winningOutcome}, Numeric value: ${numericValue}`);
+    
+    const requestData = {
+      winning_outcome: winningOutcome
+    };
+    
+    // Include numeric value if provided
+    if (numericValue !== null) {
+      requestData.numeric_value = numericValue;
+    }
+    
+    const response = await fetch(`${API_URL}/api/circuits/${circuitId}/events/${eventId}/complete-event/`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(requestData),
+    });
+    
+    const data = await handleResponse(response);
+    console.log(`[completeCircuitEvent] Response:`, data);
+    return data;
+  } catch (error) {
+    console.error('[completeCircuitEvent] Error completing circuit event:', error);
     throw error;
   }
 };

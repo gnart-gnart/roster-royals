@@ -1458,3 +1458,152 @@ def get_circuit_completed_bets(request, circuit_id):
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def complete_circuit_event(request, circuit_id, event_id):
+    """
+    Complete a specific event within a circuit by setting the winning outcome.
+    Only the circuit captain can complete events.
+    """
+    try:
+        # Get the circuit
+        circuit = get_object_or_404(Circuit, id=circuit_id)
+        
+        # Check if user is the captain
+        if request.user != circuit.captain:
+            return Response(
+                {"error": "Only the circuit captain can complete events"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Check if circuit is already completed
+        if circuit.status == 'completed':
+            return Response(
+                {"error": "This circuit has already been completed"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get the event
+        event = get_object_or_404(LeagueEvent, id=event_id)
+        
+        # Check if event belongs to this circuit
+        try:
+            component_event = CircuitComponentEvent.objects.get(circuit=circuit, league_event=event)
+        except CircuitComponentEvent.DoesNotExist:
+            return Response(
+                {"error": "This event is not part of the specified circuit"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if event is already completed
+        if event.completed:
+            return Response(
+                {"error": "This event has already been completed"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get the winning outcome from request data
+        winning_outcome = request.data.get('winning_outcome')
+        if not winning_outcome:
+            return Response(
+                {"error": "Winning outcome is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # For tiebreaker events with numeric predictions
+        correct_numeric_value = None
+        if event.betting_type in ['tiebreaker_closest', 'tiebreaker_unique']:
+            try:
+                correct_numeric_value = float(request.data.get('numeric_value'))
+                event.tiebreaker_correct_value = correct_numeric_value
+            except (ValueError, TypeError):
+                return Response(
+                    {"error": "Valid numeric value is required for tiebreaker events"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Mark the event as completed
+        event.completed = True
+        if event.market_data is None:
+            event.market_data = {}
+        
+        # Update market data with winning outcome
+        event.market_data['winner'] = winning_outcome
+        if correct_numeric_value is not None:
+            event.market_data['correct_numeric_value'] = correct_numeric_value
+        
+        event.save()
+        
+        # Get all user bets for this event in this circuit
+        # Find all user bets for this event that are related to this circuit
+        # We need to examine the circuit_bets in the market_data to find bets related to this circuit
+        if 'circuit_bets' not in event.market_data:
+            event.market_data['circuit_bets'] = []
+        
+        all_circuit_bets = event.market_data.get('circuit_bets', [])
+        this_circuit_bets = [bet for bet in all_circuit_bets if bet.get('circuit_id') == int(circuit_id)]
+        
+        # Track participants with correct predictions
+        updated_participants = []
+        
+        # Calculate points for each participant who bet on this event
+        for participant in circuit.participants.all():
+            # Check if participant has a bet for this event
+            matching_bets = [bet for bet in this_circuit_bets if bet.get('user_id') == participant.user.id]
+            
+            if matching_bets:
+                bet = matching_bets[0]  # Take the first matching bet
+                is_correct = False
+                
+                # For tiebreaker events with numeric values
+                if event.betting_type in ['tiebreaker_closest', 'tiebreaker_unique'] and correct_numeric_value is not None:
+                    # Store the bet for tiebreaker resolution later
+                    bet['result'] = 'pending_tiebreaker'
+                else:
+                    # For standard events, check if prediction matches winning outcome
+                    user_prediction = bet.get('outcome')
+                    if user_prediction == winning_outcome:
+                        # Correct prediction
+                        is_correct = True
+                        # Calculate points based on event weight
+                        points_earned = component_event.weight
+                        participant.score += points_earned
+                        
+                        # Update bet with result
+                        bet['result'] = 'won'
+                        bet['points_earned'] = points_earned
+                    else:
+                        # Incorrect prediction
+                        bet['result'] = 'lost'
+                        bet['points_earned'] = 0
+                
+                participant.save()
+                updated_participants.append(participant.id)
+        
+        # Update the circuit_bets in market_data
+        event.market_data['circuit_bets'] = all_circuit_bets
+        event.save()
+        
+        # Fetch updated circuit data for response
+        updated_circuit = Circuit.objects.get(id=circuit_id)
+        serializer = CircuitDetailSerializer(updated_circuit)
+        
+        # Include information about completed event
+        response_data = serializer.data
+        response_data['completed_event'] = {
+            'id': event.id,
+            'name': event.event_name,
+            'winning_outcome': winning_outcome,
+            'numeric_value': correct_numeric_value,
+            'weight': component_event.weight
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Error completing circuit event: {str(e)}", exc_info=True)
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

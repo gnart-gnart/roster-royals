@@ -116,7 +116,7 @@ function ProfilePage() {
       // If the URL is already absolute (starts with http or https), return it as is
       if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
         return imageUrl;
-      }
+    }
       // If the URL starts with /media/, prepend the API URL
       if (imageUrl.startsWith('/media/')) {
         return `${process.env.REACT_APP_API_URL}${imageUrl}`;

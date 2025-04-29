@@ -142,9 +142,44 @@ function PlaceCircuitBetPage() {
       // Format the bet data according to the event type
       let outcomeKey = betValue;
       let odds = 1.0; // Default odds value for custom events
+      let numericValue = null;
       
+      // For tiebreaker events - parse numeric value
+      if (componentEvent.betting_type === 'tiebreaker_closest' || componentEvent.betting_type === 'tiebreaker_unique') {
+        // Convert betValue to number for tiebreaker events
+        try {
+          numericValue = parseFloat(betValue);
+          if (isNaN(numericValue)) {
+            throw new Error('Please enter a valid number for the tiebreaker prediction');
+          }
+          // Set outcomeKey to string version for consistency
+          // This is critical - the backend extracts the numeric value from outcomeKey
+          outcomeKey = String(numericValue); // Ensure it's a valid string
+          console.log(`[handleSubmit] Tiebreaker event - parsed numeric value: ${numericValue}, using as outcomeKey: ${outcomeKey}`);
+        } catch (err) {
+          console.error('Error parsing numeric value:', err);
+          throw new Error('Please enter a valid number for your prediction');
+        }
+      }
+      // For number type custom events
+      else if (componentEvent.market_data?.custom && 
+               componentEvent.market_data?.answerType?.toLowerCase() === 'number') {
+        // Convert betValue to number
+        try {
+          numericValue = parseFloat(betValue);
+          if (isNaN(numericValue)) {
+            throw new Error('Please enter a valid number');
+          }
+          // Set outcomeKey to string version for consistency
+          outcomeKey = String(numericValue); // Ensure it's a valid string
+          console.log(`[handleSubmit] Custom number event - parsed numeric value: ${numericValue}, using as outcomeKey: ${outcomeKey}`);
+        } catch (err) {
+          console.error('Error parsing numeric value:', err);
+          throw new Error('Please enter a valid number for your prediction');
+        }
+      }
       // For market events, get odds from the market data
-      if (!componentEvent.market_data?.custom) {
+      else if (!componentEvent.market_data?.custom) {
         console.log('[handleSubmit] Standard event - looking for odds');
         const selectedOutcome = eventDetails.outcomes?.find(
           o => o.name === betValue
@@ -173,7 +208,8 @@ function PlaceCircuitBetPage() {
         amount: 0, // No money is placed on circuit bets
         circuitId: circuitId, // Add circuit ID for backend to know this is a circuit bet
         isCircuitBet: true, // Flag to indicate this is a circuit bet
-        weight: weight // Include the weight of this event in the circuit
+        weight: weight, // Include the weight of this event in the circuit
+        numericValue: numericValue // Add the numeric value if this is a tiebreaker or number-type event
       });
       
       console.log('[handleSubmit] Bet placed successfully:', response);
@@ -184,6 +220,7 @@ function PlaceCircuitBetPage() {
         user_id: user.id,
         circuit_id: parseInt(circuitId),
         outcome: outcomeKey,
+        numeric_value: numericValue,
         created_at: new Date().toISOString()
       });
       
