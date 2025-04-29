@@ -30,7 +30,7 @@ import FunctionsIcon from '@mui/icons-material/Functions';
 import GavelIcon from '@mui/icons-material/Gavel';
 import { format } from 'date-fns';
 import NavBar from '../components/NavBar';
-import { getCircuitDetail, getEventDetails, getLeague, placeBet, getCircuitUserBets } from '../services/api';
+import { getCircuitDetail, getEventDetails, getLeague, placeBet, getCircuitCompletedBets } from '../services/api';
 
 function PlaceCircuitBetPage() {
   const { leagueId, circuitId, eventId } = useParams();
@@ -78,25 +78,33 @@ function PlaceCircuitBetPage() {
           console.log('Detailed event data:', detailedEvent);
           setEventDetails(detailedEvent);
           
-          // Check if user already has a bet on this event in this circuit
-          try {
-            const existingBets = await getCircuitUserBets(circuitId, eventId);
-            console.log('Existing bets for this event in circuit:', existingBets);
-            
-            const currentUserBet = existingBets.find(bet => bet.user_id === user.id);
-            if (currentUserBet) {
-              console.log('User already has a bet:', currentUserBet);
-              setUserBet(currentUserBet);
-              setErrorMsg('You have already placed a prediction on this event for this circuit.');
+          // Check if user is a participant in the circuit
+          const isParticipant = circuitData.participants?.some(p => p.user.id === user.id);
+          
+          if (isParticipant) {
+            // Check if user already has a bet on this event in this circuit
+            try {
+              console.log(`[fetchData] Checking if user has completed bet for event ${eventId} in circuit ${circuitId}`);
+              const completedBets = await getCircuitCompletedBets(circuitId);
               
-              // Pre-fill the form with their existing bet value
-              if (currentUserBet.outcome) {
-                setBetValue(currentUserBet.outcome);
+              if (completedBets.includes(parseInt(eventId)) || completedBets.includes(eventId)) {
+                console.log(`[fetchData] User has already placed a bet on event ${eventId}`);
+                setErrorMsg('You have already placed a prediction on this event for this circuit.');
+                
+                // Create a placeholder bet object to indicate the bet exists
+                setUserBet({
+                  user_id: user.id,
+                  circuit_id: parseInt(circuitId),
+                  event_id: parseInt(eventId),
+                  exists: true
+                });
+              } else {
+                console.log(`[fetchData] User has not yet placed a bet on event ${eventId}`);
               }
+            } catch (err) {
+              console.error('Error checking completed bets:', err);
+              // Continue without failing if we can't fetch completed bets
             }
-          } catch (err) {
-            console.error('Error fetching existing bets:', err);
-            // Continue without failing if we can't fetch bets
           }
         } else {
           setErrorMsg('Event not found in this circuit');
@@ -128,22 +136,29 @@ function PlaceCircuitBetPage() {
         throw new Error('Please select a prediction value');
       }
       
+      console.log(`[handleSubmit] Placing bet with value: ${betValue}`);
+      console.log(`[handleSubmit] Event type:`, componentEvent.market_data?.custom ? 'custom' : 'standard');
+      
       // Format the bet data according to the event type
       let outcomeKey = betValue;
       let odds = 1.0; // Default odds value for custom events
       
       // For market events, get odds from the market data
       if (!componentEvent.market_data?.custom) {
+        console.log('[handleSubmit] Standard event - looking for odds');
         const selectedOutcome = eventDetails.outcomes?.find(
           o => o.name === betValue
         );
         if (selectedOutcome) {
           odds = selectedOutcome.price;
+          console.log(`[handleSubmit] Found odds ${odds} for outcome ${betValue}`);
         }
+      } else {
+        console.log('[handleSubmit] Custom event - using default odds 1.0');
       }
       
       // Call API to place the bet with circuit-specific data
-      await placeBet({
+      const response = await placeBet({
         leagueId: leagueId,
         eventKey: componentEvent.event_key,
         eventId: componentEvent.id,
@@ -161,11 +176,13 @@ function PlaceCircuitBetPage() {
         weight: weight // Include the weight of this event in the circuit
       });
       
+      console.log('[handleSubmit] Bet placed successfully:', response);
       setSuccessMsg('Your prediction has been recorded!');
       
       // Set the user bet locally to prevent multiple submissions
       setUserBet({
         user_id: user.id,
+        circuit_id: parseInt(circuitId),
         outcome: outcomeKey,
         created_at: new Date().toISOString()
       });
@@ -175,6 +192,7 @@ function PlaceCircuitBetPage() {
         navigate(`/league/${leagueId}/circuit/${circuitId}`);
       }, 2000);
     } catch (err) {
+      console.error('[handleSubmit] Error:', err);
       setErrorMsg(err.message || 'Failed to place prediction.');
     }
     
@@ -185,91 +203,175 @@ function PlaceCircuitBetPage() {
   const renderBetInput = () => {
     if (!componentEvent) return null;
     
-    // Check if this is a custom event
-    const isCustomEvent = componentEvent.market_data?.custom;
+    // Log all relevant data for debugging
+    console.log('Rendering input for event:', componentEvent.event_name);
+    console.log('Event data:', {
+      id: componentEvent.id,
+      betting_type: componentEvent.betting_type,
+      is_tiebreaker: isTiebreaker,
+      market_data: componentEvent.market_data,
+      home_team: componentEvent.home_team,
+      away_team: componentEvent.away_team
+    });
+    
+    // Check for tiebreaker events first (highest priority)
+    if (componentEvent.betting_type === 'tiebreaker_closest' || componentEvent.betting_type === 'tiebreaker_unique') {
+      console.log('Rendering number input for tiebreaker event with value:', betValue);
+      return (
+        <TextField
+          label="Your Prediction"
+          type="number"
+          value={betValue}
+          onChange={(e) => setBetValue(e.target.value)}
+          fullWidth
+          required
+          margin="normal"
+          InputProps={{
+            inputProps: { step: 'any' }
+          }}
+        />
+      );
+    }
+    
+    // Then check if this is a custom event
+    const isCustomEvent = componentEvent.market_data?.custom === true;
+    console.log('Is custom event?', isCustomEvent);
     
     if (isCustomEvent) {
-      const answerType = componentEvent.market_data?.answerType;
+      // Get the answer type, ensuring case-insensitive comparison
+      const rawAnswerType = componentEvent.market_data?.answerType || '';
+      const answerType = rawAnswerType.toLowerCase().trim();
       
-      switch (answerType) {
-        case 'number':
-          return (
+      console.log('Raw answer type:', rawAnswerType);
+      console.log('Normalized answer type:', answerType);
+      
+      if (answerType === 'number') {
+        console.log('Rendering number input field for custom event with value:', betValue);
+        return (
+          <TextField
+            label="Your Prediction"
+            type="number"
+            value={betValue}
+            onChange={(e) => setBetValue(e.target.value)}
+            fullWidth
+            required
+            margin="normal"
+            InputProps={{
+              inputProps: { step: 'any' }
+            }}
+          />
+        );
+      } else if (answerType === 'yesno') {
+        console.log('Rendering yes/no radio buttons');
+        return (
+          <FormControl component="fieldset" fullWidth margin="normal">
+            <RadioGroup
+              value={betValue}
+              onChange={(e) => setBetValue(e.target.value)}
+            >
+              <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
+              <FormControlLabel value="No" control={<Radio />} label="No" />
+            </RadioGroup>
+          </FormControl>
+        );
+      } else if (answerType === 'multiplechoice') {
+        console.log('Rendering multiple choice options:', componentEvent.market_data?.answerOptions);
+        const options = componentEvent.market_data?.answerOptions || [];
+        return (
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Select an Option</InputLabel>
+            <Select
+              value={betValue}
+              onChange={(e) => setBetValue(e.target.value)}
+              label="Select an Option"
+            >
+              {options.map((option, index) => (
+                <MenuItem key={index} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        );
+      } else {
+        console.log('Unknown answer type:', answerType);
+        return (
+          <>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Unknown answer type: {rawAnswerType}. Fallback to text input.
+            </Alert>
             <TextField
               label="Your Prediction"
-              type="number"
               value={betValue}
               onChange={(e) => setBetValue(e.target.value)}
               fullWidth
               required
               margin="normal"
-              InputProps={{
-                inputProps: { step: 'any' }
-              }}
             />
-          );
-        case 'yesNo':
-          return (
-            <FormControl component="fieldset" fullWidth margin="normal">
-              <RadioGroup
-                value={betValue}
-                onChange={(e) => setBetValue(e.target.value)}
-              >
-                <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
-                <FormControlLabel value="No" control={<Radio />} label="No" />
-              </RadioGroup>
-            </FormControl>
-          );
-        case 'multipleChoice':
-          const options = componentEvent.market_data?.answerOptions || [];
-          return (
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Select an Option</InputLabel>
-              <Select
-                value={betValue}
-                onChange={(e) => setBetValue(e.target.value)}
-                label="Select an Option"
-              >
-                {options.map((option, index) => (
-                  <MenuItem key={index} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          );
-        default:
-          return <Alert severity="error">Unknown answer type</Alert>;
+          </>
+        );
       }
     } else {
-      // This is a market event (typically sports)
-      // Debug logs to check outcome data
-      console.log('Rendering market event input with outcomes:', eventDetails?.outcomes);
-      console.log('Market data from component event:', componentEvent.market_data);
+      // This is a standard market event (typically sports)
+      console.log('Rendering standard market event input');
+      console.log('Outcomes:', eventDetails?.outcomes);
       
       // Check if outcomes exist in eventDetails
       if (!eventDetails?.outcomes || eventDetails.outcomes.length === 0) {
-        // Fallback to using basic home/away options if no outcomes are available
-        const fallbackOptions = [
-          { name: 'home', price: 1.0 },
-          { name: 'away', price: 1.0 }
-        ];
-        
-        return (
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Select Outcome</InputLabel>
-            <Select
-              value={betValue}
-              onChange={(e) => setBetValue(e.target.value)}
-              label="Select Outcome"
-            >
-              <MenuItem value="home">{componentEvent.home_team || 'Home'} (1.0)</MenuItem>
-              <MenuItem value="away">{componentEvent.away_team || 'Away'} (1.0)</MenuItem>
-            </Select>
-          </FormControl>
-        );
+        console.log('No outcomes available, showing home/away options');
+        // Make sure home/away teams exist before showing them
+        if (componentEvent.home_team || componentEvent.away_team) {
+          return (
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Select Outcome</InputLabel>
+              <Select
+                value={betValue}
+                onChange={(e) => setBetValue(e.target.value)}
+                label="Select Outcome"
+              >
+                {componentEvent.home_team && <MenuItem value="home">{componentEvent.home_team}</MenuItem>}
+                {componentEvent.away_team && <MenuItem value="away">{componentEvent.away_team}</MenuItem>}
+              </Select>
+            </FormControl>
+          );
+        } else {
+          // If no teams, check if there are options in market_data
+          const options = componentEvent.market_data?.options || [];
+          if (options.length > 0) {
+            return (
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Select Option</InputLabel>
+                <Select
+                  value={betValue}
+                  onChange={(e) => setBetValue(e.target.value)}
+                  label="Select Option"
+                >
+                  {options.map((option, index) => (
+                    <MenuItem key={index} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            );
+          } else {
+            // Fallback to text input if no structured options are available
+            return (
+              <TextField
+                label="Your Prediction"
+                value={betValue}
+                onChange={(e) => setBetValue(e.target.value)}
+                fullWidth
+                required
+                margin="normal"
+              />
+            );
+          }
+        }
       }
       
-      // Handle home/away team selection with available outcomes
+      console.log('Showing outcomes with odds');
+      // Handle outcomes with available odds
       return (
         <FormControl fullWidth margin="normal">
           <InputLabel>Select Outcome</InputLabel>
@@ -302,6 +404,28 @@ function PlaceCircuitBetPage() {
       </>
     );
   }
+
+  // Helper function to format prediction display based on event type
+  const formatPredictionDisplay = () => {
+    if (!componentEvent || !userBet || !userBet.outcome) return 'Unknown';
+    
+    const isCustomEvent = componentEvent.market_data?.custom;
+    if (isCustomEvent) {
+      // For custom events, just show the outcome directly
+      return userBet.outcome;
+    } else {
+      // For standard events with teams, format the outcome
+      if (userBet.outcome === 'home') {
+        return componentEvent.home_team || 'Home';
+      } else if (userBet.outcome === 'away') {
+        return componentEvent.away_team || 'Away';
+      } else if (userBet.outcome === 'draw') {
+        return 'Draw';
+      } else {
+        return userBet.outcome;
+      }
+    }
+  };
 
   return (
     <Box sx={{ bgcolor: '#0C0D14', minHeight: '100vh', pb: 4 }}>
@@ -380,13 +504,19 @@ function PlaceCircuitBetPage() {
                     Custom Event: {componentEvent.market_data.answerType} answer required
                   </Typography>
                 </Paper>
-              ) : (
+              ) : componentEvent.betting_type === 'tiebreaker_closest' || componentEvent.betting_type === 'tiebreaker_unique' ? (
                 <Paper sx={{ p: 2, mt: 2, bgcolor: 'rgba(20, 30, 48, 0.5)' }}>
                   <Typography variant="subtitle2" gutterBottom>
-                    Teams: <strong>{componentEvent.home_team}</strong> vs <strong>{componentEvent.away_team}</strong>
+                    Tiebreaker Event: Numerical prediction required
                   </Typography>
                 </Paper>
-              )}
+              ) : componentEvent.home_team || componentEvent.away_team ? (
+                <Paper sx={{ p: 2, mt: 2, bgcolor: 'rgba(20, 30, 48, 0.5)' }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Teams: <strong>{componentEvent.home_team || ''}</strong> {componentEvent.home_team && componentEvent.away_team ? 'vs' : ''} <strong>{componentEvent.away_team || ''}</strong>
+                  </Typography>
+                </Paper>
+              ) : null}
             </CardContent>
           </Card>
         )}
@@ -402,7 +532,7 @@ function PlaceCircuitBetPage() {
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Typography variant="body1">
-                  You predicted: <strong>{userBet.outcome}</strong>
+                  You predicted: <strong>{formatPredictionDisplay()}</strong>
                 </Typography>
               </Grid>
               {userBet.created_at && (

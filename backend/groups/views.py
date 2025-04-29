@@ -305,6 +305,67 @@ def place_bet(request):
             points_wagered=amount
         )
         
+        # Handle circuit bet if specified
+        if 'circuitId' in request.data or request.data.get('isCircuitBet'):
+            circuit_id = request.data.get('circuitId')
+            
+            if not circuit_id:
+                return Response({
+                    'error': 'Circuit ID is required for circuit bets'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                circuit = Circuit.objects.get(id=circuit_id)
+                
+                # Check if user is a participant in the circuit
+                try:
+                    participant = CircuitParticipant.objects.get(circuit=circuit, user=request.user)
+                except CircuitParticipant.DoesNotExist:
+                    return Response({
+                        'error': 'You are not a participant in this circuit'
+                    }, status=status.HTTP_403_FORBIDDEN)
+                
+                # Create a UserBet record linking this bet to the circuit event
+                if league_event:
+                    # Check if this is a component event of the circuit
+                    try:
+                        component = CircuitComponentEvent.objects.get(circuit=circuit, league_event=league_event)
+                        
+                        # Determine the points wagered based on component weight
+                        points_wagered = component.weight
+                        
+                        # Create the user bet
+                        user_bet = UserBet.objects.create(
+                            user=request.user,
+                            bet=bet,
+                            league_event=league_event,
+                            choice=outcome_key,
+                            points_wagered=points_wagered,
+                            points_earned=0,  # Will be calculated when event is completed
+                            result='pending'
+                        )
+                        
+                        # Add this event to the participant's completed_bets
+                        participant.completed_bets.add(league_event)
+                        
+                        # Update response with circuit information
+                        response_data = {
+                            'circuit_id': circuit.id,
+                            'points_wagered': points_wagered,
+                            'user_bet_id': user_bet.id
+                        }
+                        
+                        return Response(response_data, status=status.HTTP_201_CREATED)
+                        
+                    except CircuitComponentEvent.DoesNotExist:
+                        return Response({
+                            'error': 'This event is not part of the specified circuit'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+            except Circuit.DoesNotExist:
+                return Response({
+                    'error': 'Circuit not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+        
         return Response({
             'message': 'Bet placed successfully',
             'betId': bet.id
@@ -333,217 +394,183 @@ def get_competition_events(request, competition_key):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def post_league_event(request):
-    """API endpoint to post a betting event to a league."""
     try:
-        # Get data from request
-        league_id = request.data.get('league_id')
-        event_key = request.data.get('event_key')
-        event_id = request.data.get('event_id')  # ID from Odds API
-        event_name = request.data.get('event_name')
-        sport = request.data.get('sport')
-        commence_time = request.data.get('commence_time')
-        home_team = request.data.get('home_team')
-        away_team = request.data.get('away_team')
-        market_data = request.data.get('market_data', {})
+        data = request.data
+        league_id = data.get('league_id')
+        event_key = data.get('event_key')
+        event_id = data.get('event_id')
+        event_name = data.get('event_name')
+        sport = data.get('sport')
+        commence_time = data.get('commence_time')
+        home_team = data.get('home_team', '')
+        away_team = data.get('away_team', '')
+        market_data = data.get('market_data', {})
+        outcome_key = data.get('outcomeKey', None)
+        wager_amount = data.get('amount', 0)
         
-        # Check if this is a circuit bet (no money wagered)
-        circuit_id = request.data.get('circuitId')
-        is_circuit_bet = request.data.get('isCircuitBet', False)
-        weight = request.data.get('weight', 1)
+        # Check if this is a circuit bet
+        is_circuit_bet = data.get('isCircuitBet', False)
+        circuit_id = data.get('circuitId', None)
         
-        # Log for debugging
-        logger.info(f"Posting league event: {event_name}")
-        logger.info(f"User: {request.user.username} (ID: {request.user.id})")
-        logger.info(f"Market data: {market_data}")
-        if circuit_id:
-            logger.info(f"Circuit bet for circuit ID: {circuit_id}, weight: {weight}")
+        if not league_id:
+            return Response({
+                'error': 'League ID is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Validate required fields
-        if not all([league_id, event_key, event_name, sport]):
-            return Response({'error': 'Missing required fields'}, status=400)
-        
-        # Get the league
         try:
             league = League.objects.get(id=league_id)
         except League.DoesNotExist:
-            return Response({'error': 'League not found'}, status=404)
-            
-        # Check if user is a member of the league or is captain
-        if not (request.user in league.members.all() or request.user == league.captain):
-            return Response({'error': 'You are not authorized to post events to this league'}, status=403)
+            return Response({
+                'error': 'League not found'
+            }, status=status.HTTP_404_NOT_FOUND)
         
-        # If this is a circuit bet, verify user is a participant in the circuit
-        if circuit_id:
-            try:
-                circuit = Circuit.objects.get(id=circuit_id)
-                # Check if user is a participant in the circuit
-                is_participant = circuit.participants.filter(user=request.user).exists()
-                if not is_participant:
-                    return Response({'error': 'You must join the circuit before placing bets'}, status=403)
-            except Circuit.DoesNotExist:
-                return Response({'error': 'Circuit not found'}, status=404)
+        # Check if user is a member of the league
+        if request.user not in league.members.all():
+            return Response({
+                'error': 'You are not a member of this league'
+            }, status=status.HTTP_403_FORBIDDEN)
         
-        # Check if this event already exists in this league
-        existing_event = LeagueEvent.objects.filter(league=league, event_key=event_key).first()
-        if existing_event:
-            logger.info(f"Event {event_key} already exists in league {league_id}")
+        # Check if the event already exists in the league
+        league_event = None
+        try:
+            if event_id:
+                league_event = LeagueEvent.objects.get(id=event_id, league=league)
+            elif event_key:
+                league_event = LeagueEvent.objects.get(event_key=event_key, league=league)
+        except LeagueEvent.DoesNotExist:
+            # Event doesn't exist, create it
+            market_data_to_save = market_data
+            if isinstance(market_data_to_save, str):
+                market_data_to_save = json.loads(market_data_to_save)
             
-            # If this is a circuit bet, check if the user has already bet on this event in this circuit
-            if circuit_id:
-                circuit_bets = existing_event.market_data.get('circuit_bets', [])
-                user_already_bet = any(
-                    bet.get('user_id') == request.user.id and 
-                    bet.get('circuit_id') == int(circuit_id) 
-                    for bet in circuit_bets
-                )
-                
-                if user_already_bet:
-                    return Response({'error': 'You have already placed a prediction on this event for this circuit'}, status=400)
-                
-                # Add circuit bet to the existing event
-                user_bet = {
-                    'user_id': request.user.id,
-                    'username': request.user.username,
-                    'circuit_id': int(circuit_id),
-                    'outcome': market_data.get('outcomeKey', 'home'),
-                    'bet_time': timezone.now().isoformat(),
-                    'weight': weight
-                }
-                
-                # Update the event's market_data
-                if 'circuit_bets' not in existing_event.market_data:
-                    existing_event.market_data['circuit_bets'] = []
-                
-                existing_event.market_data['circuit_bets'].append(user_bet)
-                existing_event.save()
-                
-                logger.info(f"Added circuit bet to existing event: {user_bet}")
-                
-                return Response({
-                    'message': 'Prediction placed on existing event',
-                    'eventId': existing_event.id,
-                    'event': LeagueEventSerializer(existing_event).data
-                }, status=200)
-            
-            # For regular bets (not circuit bets)
-            if existing_event.market_data and 'user_bets' in existing_event.market_data:
-                user_bets = existing_event.market_data['user_bets']
-                if any(bet.get('user_id') == request.user.id for bet in user_bets):
-                    return Response({'error': 'You have already placed a bet on this event'}, status=400)
-            
-            # Process regular bet on an existing event
-            wager_amount = 0
-            if market_data and 'amount' in market_data:
-                wager_amount = float(market_data['amount'])
-                if request.user.money < wager_amount:
-                    return Response({'error': 'Insufficient funds to place this bet'}, status=400)
-            
-            # Add user bet to existing event
-            if wager_amount > 0:
-                # Deduct money from user
-                request.user.money -= Decimal(str(wager_amount))
-                request.user.save()
-                
-                # Prepare user bet data
-                user_bet = {
-                    'user_id': request.user.id,
-                    'username': request.user.username,
-                    'amount': wager_amount,
-                    'odds': market_data.get('odds', 2.0),
-                    'outcomeKey': market_data.get('outcomeKey', 'home'),
-                    'bet_time': timezone.now().isoformat()
-                }
-                
-                # Update the event's market_data
-                if 'user_bets' not in existing_event.market_data:
-                    existing_event.market_data['user_bets'] = []
-                
-                existing_event.market_data['user_bets'].append(user_bet)
-                existing_event.save()
-                
-                logger.info(f"Added user bet to existing event: {user_bet}")
-                
-                return Response({
-                    'message': 'Bet placed on existing event',
-                    'eventId': existing_event.id,
-                    'event': LeagueEventSerializer(existing_event).data
-                }, status=200)
+            league_event = LeagueEvent.objects.create(
+                league=league,
+                event_key=event_key,
+                event_id=event_id,
+                event_name=event_name,
+                sport=sport,
+                commence_time=commence_time,
+                home_team=home_team,
+                away_team=away_team,
+                market_data=market_data_to_save
+            )
         
-        # Create a new event if it doesn't exist
-        # Prepare market data with user bet information
-        enhanced_market_data = market_data.copy() if market_data else {}
-        
-        # If this is a circuit bet
-        if circuit_id:
-            # Initialize circuit_bets array if it doesn't exist
-            if 'circuit_bets' not in enhanced_market_data:
-                enhanced_market_data['circuit_bets'] = []
-            
-            # Add this user's circuit bet
-            circuit_bet = {
-                'user_id': request.user.id,
-                'username': request.user.username,
-                'circuit_id': int(circuit_id),
-                'outcome': market_data.get('outcomeKey', 'home'),
-                'bet_time': timezone.now().isoformat(),
-                'weight': weight
-            }
-            enhanced_market_data['circuit_bets'].append(circuit_bet)
-            logger.info(f"Created circuit bet data: {circuit_bet}")
-        else:
-            # Handle regular bet - add user_bets array if it doesn't exist
-            if 'user_bets' not in enhanced_market_data:
-                enhanced_market_data['user_bets'] = []
-            
-            # Add this user's bet if they're placing one
-            wager_amount = 0
-            if market_data and 'amount' in market_data:
-                wager_amount = float(market_data['amount'])
-                if request.user.money < wager_amount:
-                    return Response({'error': 'Insufficient funds to place this bet'}, status=400)
-                
-                if wager_amount > 0:
-                    user_bet = {
-                        'user_id': request.user.id,
-                        'username': request.user.username,
-                        'amount': wager_amount,
-                        'odds': market_data.get('odds', 2.0),
-                        'outcomeKey': market_data.get('outcomeKey', 'home'),
-                        'bet_time': timezone.now().isoformat()
-                    }
-                    enhanced_market_data['user_bets'].append(user_bet)
-                    logger.info(f"Created user bet data: {user_bet}")
-        
-        # Create the league event
-        league_event = LeagueEvent.objects.create(
+        # Create a bet record
+        bet = Bet.objects.create(
             league=league,
-            event_key=event_key,
-            event_id=event_id,
-            event_name=event_name,
-            sport=sport,
-            commence_time=commence_time,
-            home_team=home_team,
-            away_team=away_team,
-            market_data=enhanced_market_data
+            name=f"Bet on {event_name}",
+            type="moneyline",  # Default
+            points=10,  # Default
+            status="open",
+            deadline=commence_time or timezone.now() + timezone.timedelta(days=1)
         )
         
-        # If there's a wager (for regular bets), deduct money from the user
-        if not is_circuit_bet and 'amount' in market_data and float(market_data['amount']) > 0:
-            wager_amount = float(market_data['amount'])
+        # Get extra bet data
+        numeric_choice = None
+        choice_value = outcome_key
+        is_tiebreaker = False
+        
+        # Create circuit bet if specified
+        if is_circuit_bet and circuit_id:
+            try:
+                circuit = Circuit.objects.get(id=circuit_id)
+                
+                # Check if user is a participant in the circuit
+                try:
+                    participant = CircuitParticipant.objects.get(circuit=circuit, user=request.user)
+                except CircuitParticipant.DoesNotExist:
+                    return Response({
+                        'error': 'You are not a participant in this circuit'
+                    }, status=status.HTTP_403_FORBIDDEN)
+                
+                # Check if this is a component event of the circuit
+                try:
+                    component = CircuitComponentEvent.objects.get(circuit=circuit, league_event=league_event)
+                    
+                    # Check if this is a tiebreaker event
+                    is_tiebreaker = circuit.tiebreaker_event and circuit.tiebreaker_event.id == league_event.id
+                    
+                    # If tiebreaker and numeric value provided, use it
+                    if is_tiebreaker and league_event.betting_type in ['tiebreaker_closest', 'tiebreaker_unique']:
+                        numeric_choice = float(outcome_key)
+                        choice_value = ''  # Clear choice for numeric tiebreakers
+                    
+                    # Determine the points wagered based on component weight
+                    points_wagered = component.weight
+                    
+                    # Create the user bet
+                    user_bet = UserBet.objects.create(
+                        user=request.user,
+                        bet=bet,
+                        league_event=league_event,
+                        choice=choice_value,
+                        numeric_choice=numeric_choice,
+                        points_wagered=points_wagered,
+                        points_earned=0,  # Will be calculated when event is completed
+                        result='pending'
+                    )
+                    
+                    # Add this event to the participant's completed_bets
+                    participant.completed_bets.add(league_event)
+                    
+                    # Update response with circuit information
+                    response_data = {
+                        'circuit_id': circuit.id,
+                        'points_wagered': points_wagered,
+                        'user_bet_id': user_bet.id,
+                        'message': 'Bet placed successfully',
+                        'bet_id': bet.id,
+                        'league_event_id': league_event.id,
+                        'is_circuit_bet': True
+                    }
+                    
+                    return Response(response_data, status=status.HTTP_201_CREATED)
+                    
+                except CircuitComponentEvent.DoesNotExist:
+                    return Response({
+                        'error': 'This event is not part of the specified circuit'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            except Circuit.DoesNotExist:
+                return Response({
+                    'error': 'Circuit not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+        
+        # For regular bets (not circuit bets)
+        # Create user bet entry
+        user_bet = UserBet.objects.create(
+            user=request.user,
+            bet=bet,
+            league_event=league_event,
+            choice=outcome_key,
+            points_wagered=10  # Default
+        )
+        
+        # Handle monetary wager if provided
+        if wager_amount and float(wager_amount) > 0:
+            # Check if user has enough money
+            if request.user.money < Decimal(str(wager_amount)):
+                return Response({
+                    'error': 'Insufficient funds'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Deduct money from user
             request.user.money -= Decimal(str(wager_amount))
             request.user.save()
+                  
+        # Regular bet response
+        response_data = {
+            'message': 'Bet placed successfully',
+            'bet_id': bet.id,
+            'league_event_id': league_event.id,
+            'is_circuit_bet': False
+        }
         
-        # Serialize and return the created event
-        serializer = LeagueEventSerializer(league_event)
-        return Response({
-            'message': 'Event successfully posted to league',
-            'eventId': league_event.id,
-            'event': serializer.data
-        }, status=201)
-        
+        return Response(response_data, status=status.HTTP_201_CREATED)
+    
     except Exception as e:
-        logger.error(f"Error posting league event: {str(e)}", exc_info=True)
-        return Response({'error': str(e)}, status=500)
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -1399,3 +1426,35 @@ def complete_circuit_with_tiebreaker(request, circuit_id):
         return Response({
             'error': f'An error occurred: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_circuit_completed_bets(request, circuit_id):
+    """
+    Return the list of event IDs that the current user has already placed bets on
+    in a specific circuit.
+    """
+    try:
+        # Get the circuit
+        circuit = get_object_or_404(Circuit, id=circuit_id)
+        
+        # Check if user is a participant
+        try:
+            participant = CircuitParticipant.objects.get(circuit=circuit, user=request.user)
+        except CircuitParticipant.DoesNotExist:
+            return Response(
+                {"error": "You are not a participant in this circuit"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get the completed bets
+        completed_event_ids = list(participant.completed_bets.values_list('id', flat=True))
+        
+        # Return the list of event IDs
+        return Response(completed_event_ids, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

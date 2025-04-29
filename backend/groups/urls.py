@@ -17,6 +17,7 @@ urlpatterns = [
     path('circuits/<int:circuit_id>/join/', views.join_circuit, name='join_circuit'),
     path('circuits/<int:circuit_id>/events/<int:event_id>/bets/', views.get_circuit_event_bets, name='get-circuit-event-bets'),
     path('circuits/<int:circuit_id>/complete-with-tiebreaker/', views.complete_circuit_with_tiebreaker, name='complete-circuit-with-tiebreaker'),
+    path('circuits/<int:circuit_id>/completed-bets/', views.get_circuit_completed_bets, name='get_circuit_completed_bets'),
     
     # Market browsing endpoints
     path('market/browse/', views.browse_market, name='browse_market'),

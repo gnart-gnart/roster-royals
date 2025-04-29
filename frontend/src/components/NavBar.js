@@ -226,8 +226,22 @@ function NavBar() {
   };
 
   // Function to get user profile image source
-  const getUserImageSource = (user) => {
+  const getProfileImageUrl = (user) => {
     if (!user) return null;
+    
+    // Try embedded image from user object first
+    if (user.embeddedImageData) {
+      return user.embeddedImageData;
+    }
+    
+    // Then try session storage with user-specific key
+    if (user.id) {
+      const userSpecificKey = `profileImageDataUrl_${user.id}`;
+      const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+      if (profileImageDataUrl) {
+        return profileImageDataUrl;
+      }
+    }
     
     // If profile_image_url is available, use it
     if (user.profile_image_url) {
@@ -235,7 +249,7 @@ function NavBar() {
     }
     
     // Return avatar API URL as fallback
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=random`;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=random`;
   };
 
   return (
@@ -281,9 +295,8 @@ function NavBar() {
             },
           }}
         >
-          {/* Directly use embedded image data */}
           <Avatar 
-            src={user?.embeddedImageData || (user?.id ? sessionStorage.getItem(`profileImageDataUrl_${user.id}`) : null)}
+            src={getProfileImageUrl(user)}
             sx={{ 
               bgcolor: '#8B5CF6',
               width: 32, 
@@ -390,7 +403,7 @@ function NavBar() {
                 <ListItem key={request.id}>
                   <ListItemAvatar>
                     <Avatar 
-                      src={getUserImageSource(request.from_user)} 
+                      src={getProfileImageUrl(request.from_user)} 
                       sx={{ bgcolor: '#8B5CF6' }}
                       imgProps={{
                         onError: (e) => {
@@ -477,7 +490,7 @@ function NavBar() {
                   {notificationType === 'friend_accepted' && notification.related_user && (
                     <ListItemAvatar>
                       <Avatar 
-                        src={getUserImageSource(notification.related_user)} 
+                        src={getProfileImageUrl(notification.related_user)} 
                         sx={{ bgcolor: '#8B5CF6' }}
                         imgProps={{
                           onError: (e) => {

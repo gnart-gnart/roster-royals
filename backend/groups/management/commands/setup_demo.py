@@ -6,9 +6,12 @@ from groups.models import (
     League, Circuit, LeagueEvent, CircuitComponentEvent, 
     CircuitParticipant, UserBet, LeagueInvite, Bet
 )
+from users.models import FriendRequest
 import datetime
 import json
 import logging
+import os
+from django.core.files import File
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -25,8 +28,11 @@ class Command(BaseCommand):
         # Create users if they don't exist
         slowpoke, miles, gwen, pikachu = self.create_users()
         
+        # Make all users friends with each other
+        self.make_users_friends([slowpoke, miles, gwen, pikachu])
+        
         # Create a league with slowpoke as captain and miles, gwen as members
-        league = self.create_league(slowpoke, [miles, gwen])
+        league = self.create_league(slowpoke, [miles, gwen, pikachu])
         
         # Create events for the circuit
         events = self.create_events(league)
@@ -34,8 +40,8 @@ class Command(BaseCommand):
         # Create a circuit with the events
         circuit = self.create_circuit(league, slowpoke, events)
         
-        # Add miles and gwen as participants and place their bets
-        self.add_participants_and_bets(circuit, [miles, gwen], events)
+        # Add all users as participants and place their bets
+        self.add_participants_and_bets(circuit, [slowpoke, miles, gwen], events)
         
         # Create invite for pikachu (will be accepted during demo)
         self.create_invite(league, slowpoke, pikachu)
@@ -58,6 +64,9 @@ class Command(BaseCommand):
         
         # Delete invites
         LeagueInvite.objects.filter(to_user__in=users).delete()
+        
+        # Delete friend requests between these users
+        FriendRequest.objects.filter(from_user__in=users, to_user__in=users).delete()
         
         self.stdout.write(self.style.SUCCESS('Cleared existing data'))
 
@@ -131,7 +140,38 @@ class Command(BaseCommand):
             pikachu.money = Decimal('1000.00')
             pikachu.save()
             
+        # Set profile pictures
+        self.set_profile_pictures([slowpoke, miles, gwen, pikachu])
+            
         return slowpoke, miles, gwen, pikachu
+    
+    def set_profile_pictures(self, users):
+        """Set profile pictures for each user"""
+        pfp_dir = 'demo/pfp'
+        if not os.path.exists(pfp_dir):
+            self.stdout.write(self.style.WARNING(f'Profile picture directory {pfp_dir} not found'))
+            return
+            
+        for user in users:
+            pfp_path = os.path.join(pfp_dir, f'{user.username}.png')
+            if os.path.exists(pfp_path):
+                with open(pfp_path, 'rb') as f:
+                    # Save to profile_images directory with the username as the filename
+                    user.profile_image.save(f'profile_images/{user.username}.png', File(f), save=True)
+                self.stdout.write(self.style.SUCCESS(f'Set profile picture for {user.username}'))
+            else:
+                self.stdout.write(self.style.WARNING(f'Profile picture for {user.username} not found at {pfp_path}'))
+
+    def make_users_friends(self, users):
+        """Make all users friends with each other"""
+        for i, user1 in enumerate(users):
+            for user2 in users[i+1:]:
+                # Check if they're already friends
+                if user2 not in user1.friends.all():
+                    # Add each other as friends
+                    user1.friends.add(user2)
+                    user2.friends.add(user1)
+                    self.stdout.write(self.style.SUCCESS(f'Made {user1.username} and {user2.username} friends'))
 
     def create_league(self, captain, members):
         """Create a demo league"""
@@ -142,10 +182,12 @@ class Command(BaseCommand):
             sports=['basketball', 'hockey', 'baseball', 'football']
         )
         
-        # Add members
+        # Add members (except pikachu)
         league.members.add(captain)
         for member in members:
-            league.members.add(member)
+            # Only add miles and gwen initially, not pikachu (who will be invited during demo)
+            if member.username != 'pikachu':
+                league.members.add(member)
             
         self.stdout.write(self.style.SUCCESS(f'Created league: {league.name}'))
         return league
@@ -168,7 +210,9 @@ class Command(BaseCommand):
             market_data={
                 'home_score': 104,
                 'away_score': 93,
-                'winner': 'Golden State Warriors'
+                'winner': 'Golden State Warriors',
+                'custom': False,
+                'circuit_bets': []  # Add empty circuit_bets array
             }
         )
         events.append(rockets_warriors)
@@ -187,7 +231,9 @@ class Command(BaseCommand):
             market_data={
                 'home_score': 118,
                 'away_score': 99,
-                'winner': 'Oklahoma City Thunder'
+                'winner': 'Oklahoma City Thunder',
+                'custom': False,
+                'circuit_bets': []  # Add empty circuit_bets array
             }
         )
         events.append(grizzlies_thunder)
@@ -202,7 +248,8 @@ class Command(BaseCommand):
             completed=False,
             betting_type='tiebreaker_closest',  # For tiebreaker
             market_data={
-                'options': [str(i) for i in range(10, 50)]  # Points range
+                'options': [str(i) for i in range(10, 50)],  # Points range
+                'circuit_bets': []  # Add empty circuit_bets array
             }
         )
         events.append(lebron_points)
@@ -219,7 +266,8 @@ class Command(BaseCommand):
             completed=False,
             betting_type='standard',
             market_data={
-                'options': ['Team Rocket', 'Team Galactic']
+                'options': ['Team Rocket', 'Team Galactic'],
+                'circuit_bets': []  # Add empty circuit_bets array
             }
         )
         events.append(team_battle)
@@ -263,61 +311,127 @@ class Command(BaseCommand):
             )
             bet_mapping[event.id] = bet
         
+        # Points distribution as requested:
+        # slowpoke - 1 point (one winning bet)
+        # miles - 2 points (one winning bet)
+        # gwen - 3 points (two winning bets)
+        
+        # Get pikachu for creating bets (even though not a participant yet)
+        pikachu = User.objects.get(username='pikachu')
+        all_users = participants + [pikachu]
+        
+        # Create participant entries for first three users in participants list
         for participant in participants:
             # Add as circuit participant
             cp = CircuitParticipant.objects.create(
                 circuit=circuit,
                 user=participant,
                 paid_entry=True,
-                score=0  # Initialize score
+                score=0  # Initialize score - will update below
             )
             
             # Deduct entry fee
             participant.money -= circuit.entry_fee
             participant.save()
             
-            # Place bets on completed events
-            # Rockets vs Warriors (events[0]) - miles and gwen bet differently
-            if participant == participants[0]:  # miles
-                warriors_bet = UserBet.objects.create(
+            # Place bets for each participant and update scores accordingly
+            if participant == participants[0]:  # slowpoke
+                # Bet on Rockets vs. Warriors - bet on Houston Rockets (lost)
+                UserBet.objects.create(
                     user=participant,
                     league_event=events[0],
-                    bet=bet_mapping[events[0].id],  # Use the corresponding Bet
-                    choice='Golden State Warriors',  # Correct choice
-                    points_earned=2,  # Weight is 2
-                    result='won',
-                    points_wagered=2  # Weight is 2
-                )
-                # Update participant score
-                cp.score += 2
-                cp.save()
-            else:  # gwen
-                rockets_bet = UserBet.objects.create(
-                    user=participant,
-                    league_event=events[0],
-                    bet=bet_mapping[events[0].id],  # Use the corresponding Bet
+                    bet=bet_mapping[events[0].id],
                     choice='Houston Rockets',  # Incorrect choice
                     points_earned=0,
                     result='lost',
                     points_wagered=2  # Weight is 2
                 )
-            
-            # Grizzlies vs Thunder (events[1]) - both bet correctly
-            thunder_bet = UserBet.objects.create(
-                user=participant,
-                league_event=events[1],
-                bet=bet_mapping[events[1].id],  # Use the corresponding Bet
-                choice='Oklahoma City Thunder',  # Correct choice
-                points_earned=1,  # Weight is 1
-                result='won',
-                points_wagered=1  # Weight is 1
-            )
-            # Update participant score
-            cp.score += 1
-            cp.save()
+                
+                # Bet on Grizzlies vs. Thunder - bet on Thunder (win)
+                thunder_bet = UserBet.objects.create(
+                    user=participant,
+                    league_event=events[1],
+                    bet=bet_mapping[events[1].id],
+                    choice='Oklahoma City Thunder',  # Correct choice
+                    points_earned=1,  # Weight is 1
+                    result='won',
+                    points_wagered=1  # Weight is 1
+                )
+                # Update score
+                cp.score = 1  # 1 point for slowpoke
+                cp.save()
+                
+                # Add circuit points to user profile
+                if hasattr(participant, 'points'):
+                    participant.points = participant.points + 1
+                    participant.save()
+                
+            elif participant == participants[1]:  # miles
+                # Bet on Rockets vs. Warriors - bet on Warriors (win)
+                warriors_bet = UserBet.objects.create(
+                    user=participant,
+                    league_event=events[0],
+                    bet=bet_mapping[events[0].id],
+                    choice='Golden State Warriors',  # Correct choice
+                    points_earned=2,  # Weight is 2
+                    result='won',
+                    points_wagered=2  # Weight is 2
+                )
+                
+                # Bet on Grizzlies vs. Thunder - bet on Grizzlies (lost)
+                UserBet.objects.create(
+                    user=participant,
+                    league_event=events[1],
+                    bet=bet_mapping[events[1].id],
+                    choice='Memphis Grizzlies',  # Incorrect choice
+                    points_earned=0,
+                    result='lost',
+                    points_wagered=1  # Weight is 1
+                )
+                # Update score
+                cp.score = 2  # 2 points for miles
+                cp.save()
+                
+                # Add circuit points to user profile
+                if hasattr(participant, 'points'):
+                    participant.points = participant.points + 2
+                    participant.save()
+                
+            else:  # gwen
+                # Bet on Rockets vs. Warriors - bet on Warriors (win)
+                warriors_bet = UserBet.objects.create(
+                    user=participant,
+                    league_event=events[0],
+                    bet=bet_mapping[events[0].id],
+                    choice='Golden State Warriors',  # Correct choice
+                    points_earned=2,  # Weight is 2
+                    result='won',
+                    points_wagered=2  # Weight is 2
+                )
+                
+                # Bet on Grizzlies vs. Thunder - bet on Thunder (win)
+                thunder_bet = UserBet.objects.create(
+                    user=participant,
+                    league_event=events[1],
+                    bet=bet_mapping[events[1].id],
+                    choice='Oklahoma City Thunder',  # Correct choice
+                    points_earned=1,  # Weight is 1
+                    result='won',
+                    points_wagered=1  # Weight is 1
+                )
+                # Update score
+                cp.score = 3  # 3 points for gwen
+                cp.save()
+                
+                # Add circuit points to user profile
+                if hasattr(participant, 'points'):
+                    participant.points = participant.points + 3
+                    participant.save()
             
             # Tiebreaker guesses (Lebron points - events[2])
-            if participant == participants[0]:  # miles
+            if participant == participants[0]:  # slowpoke
+                points_guess = 28
+            elif participant == participants[1]:  # miles
                 points_guess = 25
             else:  # gwen
                 points_guess = 22
@@ -325,7 +439,7 @@ class Command(BaseCommand):
             tiebreaker_bet = UserBet.objects.create(
                 user=participant,
                 league_event=events[2],
-                bet=bet_mapping[events[2].id],  # Use the corresponding Bet
+                bet=bet_mapping[events[2].id],
                 choice='',  # Not applicable for tiebreaker
                 numeric_choice=points_guess,
                 points_earned=0,  # Not computed yet
@@ -337,12 +451,22 @@ class Command(BaseCommand):
             cp.tiebreaker_bet = tiebreaker_bet
             cp.save()
             
-            # Team battle bets (events[3]) - gwen will bet Team Rocket (wrong), miles will bet Team Galactic (correct)
-            if participant == participants[0]:  # miles
+            # Team battle bets (events[3]) - each user bets differently
+            if participant == participants[0]:  # slowpoke
                 team_bet = UserBet.objects.create(
                     user=participant,
                     league_event=events[3],
-                    bet=bet_mapping[events[3].id],  # Use the corresponding Bet
+                    bet=bet_mapping[events[3].id],
+                    choice='Team Rocket',  # Will be incorrect
+                    points_earned=0,  # Not computed yet
+                    result='pending',
+                    points_wagered=3  # Weight is 3
+                )
+            elif participant == participants[1]:  # miles
+                team_bet = UserBet.objects.create(
+                    user=participant,
+                    league_event=events[3],
+                    bet=bet_mapping[events[3].id],
                     choice='Team Galactic',  # Will be correct
                     points_earned=0,  # Not computed yet
                     result='pending',
@@ -352,15 +476,68 @@ class Command(BaseCommand):
                 team_bet = UserBet.objects.create(
                     user=participant,
                     league_event=events[3],
-                    bet=bet_mapping[events[3].id],  # Use the corresponding Bet
+                    bet=bet_mapping[events[3].id],
                     choice='Team Rocket',  # Will be incorrect
                     points_earned=0,  # Not computed yet
                     result='pending',
                     points_wagered=3  # Weight is 3
                 )
             
+            # Add completed bets to the participant
+            # Mark first two events as completed bets since they're the ones that have already happened
+            cp.completed_bets.add(events[0], events[1])
+            
             self.stdout.write(self.style.SUCCESS(f'Added participant {participant.username} with bets'))
-    
+        
+        # Create bets for pikachu (even though not a participant yet)
+        # This ensures that when pikachu joins the circuit, their bets will already be visible
+        # Bet on Rockets vs. Warriors - bet on Warriors (win)
+        UserBet.objects.create(
+            user=pikachu,
+            league_event=events[0],
+            bet=bet_mapping[events[0].id],
+            choice='Golden State Warriors',  # Correct choice
+            points_earned=0,  # No points since not a participant yet
+            result='pending',
+            points_wagered=2  # Weight is 2
+        )
+        
+        # Bet on Grizzlies vs. Thunder - bet on Thunder (win)
+        UserBet.objects.create(
+            user=pikachu,
+            league_event=events[1],
+            bet=bet_mapping[events[1].id],
+            choice='Oklahoma City Thunder',  # Correct choice
+            points_earned=0,  # No points since not a participant yet
+            result='pending',
+            points_wagered=1  # Weight is 1
+        )
+        
+        # Tiebreaker guess for pikachu
+        UserBet.objects.create(
+            user=pikachu,
+            league_event=events[2],
+            bet=bet_mapping[events[2].id],
+            choice='',  # Not applicable for tiebreaker
+            numeric_choice=24,  # Pikachu's guess
+            points_earned=0,  # Not computed yet
+            result='pending',
+            points_wagered=1  # Weight is 1
+        )
+        
+        # Team battle bet for pikachu
+        UserBet.objects.create(
+            user=pikachu,
+            league_event=events[3],
+            bet=bet_mapping[events[3].id],
+            choice='Team Galactic',  # Will be correct
+            points_earned=0,  # Not computed yet
+            result='pending',
+            points_wagered=3  # Weight is 3
+        )
+        
+        self.stdout.write(self.style.SUCCESS(f'Created bets for {pikachu.username} (not yet a participant)'))
+
     def create_invite(self, league, from_user, to_user):
         """Create an invite for pikachu to join the league"""
         invite = LeagueInvite.objects.create(

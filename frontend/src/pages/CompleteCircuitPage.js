@@ -53,6 +53,36 @@ function CompleteCircuitPage() {
   const [isCaptain, setIsCaptain] = useState(false);
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
+  // Function to get user profile image URL
+  const getProfileImageUrl = (user) => {
+    // If this is the current user, check for embedded image data
+    if (user?.id === currentUser?.id) {
+      // Try embedded image from user object first
+      if (currentUser.embeddedImageData) {
+        return currentUser.embeddedImageData;
+      }
+      
+      // Then try session storage with user-specific key
+      const userSpecificKey = `profileImageDataUrl_${user.id}`;
+      const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+      if (profileImageDataUrl) {
+        return profileImageDataUrl;
+      }
+    }
+    
+    // Check for profile_image_url property
+    if (user?.profile_image_url) {
+      // Handle relative URLs
+      if (user.profile_image_url.startsWith('/')) {
+        return `${window.location.origin}${user.profile_image_url}`;
+      }
+      return user.profile_image_url;
+    }
+    
+    // Return avatar API URL as fallback
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || 'U')}&background=random`;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -184,7 +214,10 @@ function CompleteCircuitPage() {
                   <TableCell sx={{ fontWeight: 'bold' }}>{index + 1}</TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Avatar sx={{ width: 28, height: 28, mr: 1, fontSize: '0.8rem', bgcolor: '#8B5CF6' }}>
+                      <Avatar 
+                        src={getProfileImageUrl(participant.user)} 
+                        sx={{ width: 28, height: 28, mr: 1, fontSize: '0.8rem', bgcolor: '#8B5CF6' }}
+                      >
                         {participant.user.username ? participant.user.username[0].toUpperCase() : '?'}
                       </Avatar>
                       {participant.user.username}

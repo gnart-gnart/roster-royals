@@ -29,7 +29,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // Completed icon
 import PlayCircleIcon from '@mui/icons-material/PlayCircle'; // Active icon
 import FunctionsIcon from '@mui/icons-material/Functions'; // Weight/Multiplier icon
 import GavelIcon from '@mui/icons-material/Gavel'; // Tiebreaker icon
-import { getCircuitDetail, joinCircuit } from '../services/api';
+import DoneIcon from '@mui/icons-material/Done'; // For events already bet on
+import { getCircuitDetail, joinCircuit, getCircuitCompletedBets } from '../services/api';
 import NavBar from '../components/NavBar';
 import { format } from 'date-fns'; // For date formatting
 import Confetti from 'react-confetti';
@@ -47,6 +48,77 @@ function CircuitPage() {
   const [hasJoined, setHasJoined] = useState(false); // User has joined the circuit
   const [joiningCircuit, setJoiningCircuit] = useState(false); // Loading state for join button
   const [showConfetti, setShowConfetti] = useState(false); // Control confetti animation
+  const [userBets, setUserBets] = useState({}); // Map of eventId -> userHasBet
+  const [loadingBets, setLoadingBets] = useState(false); // Loading state for user bets
+
+  // Function to reload just the user bets
+  const reloadUserBets = async () => {
+    try {
+      setLoadingBets(true);
+      console.log('[reloadUserBets] Fetching completed bets for circuit', circuitId);
+      const completedBets = await getCircuitCompletedBets(circuitId);
+      
+      // Build a map of event ID to whether user has bet on it
+      const betsMap = {};
+      
+      // Process all completed events and log them clearly
+      console.log(`[reloadUserBets] Found ${completedBets.length} completed bets for current user`);
+      
+      // Map each event ID to true in the bets map
+      completedBets.forEach(eventId => {
+        if (eventId) {
+          console.log(`[reloadUserBets] User has completed bet for event ${eventId}`);
+          betsMap[eventId] = true;
+        }
+      });
+      
+      console.log('[reloadUserBets] Final bets map:', betsMap);
+      setUserBets(betsMap);
+    } catch (err) {
+      console.error('[reloadUserBets] Failed to reload user bets:', err);
+      // Don't reset userBets on error to keep any existing data
+    } finally {
+      setLoadingBets(false);
+    }
+  };
+
+  // Reload user bets when navigating back to this page
+  useEffect(() => {
+    // Only reload if the circuit is loaded and user has joined
+    if (circuit && hasJoined) {
+      reloadUserBets();
+    }
+  }, [circuit, hasJoined]);
+
+  // Function to get user profile image URL
+  const getProfileImageUrl = (user) => {
+    // If this is the current user, check for embedded image data
+    if (user?.id === currentUser?.id) {
+      // Try embedded image from user object first
+      if (currentUser.embeddedImageData) {
+        return currentUser.embeddedImageData;
+      }
+      
+      // Then try session storage with user-specific key
+      const userSpecificKey = `profileImageDataUrl_${user.id}`;
+      const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+      if (profileImageDataUrl) {
+        return profileImageDataUrl;
+      }
+    }
+    
+    // Check for profile_image_url property
+    if (user?.profile_image_url) {
+      // Handle relative URLs
+      if (user.profile_image_url.startsWith('/')) {
+        return `${window.location.origin}${user.profile_image_url}`;
+      }
+      return user.profile_image_url;
+    }
+    
+    // Return avatar API URL as fallback
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || 'U')}&background=random`;
+  };
 
   useEffect(() => {
     const fetchCircuit = async () => {
@@ -61,6 +133,35 @@ function CircuitPage() {
         // Check if current user is a participant
         const isParticipant = data.participants?.some(p => p.user.id === currentUser.id);
         setHasJoined(isParticipant);
+
+        // Fetch user's completed bets using the new endpoint
+        if (isParticipant) {
+          try {
+            console.log('[fetchCircuit] Fetching completed bets for circuit', circuitId);
+            const completedBets = await getCircuitCompletedBets(circuitId);
+            
+            // Build a map of event ID to whether user has bet on it
+            const betsMap = {};
+            
+            // Process all completed events and log them clearly
+            console.log(`[fetchCircuit] Found ${completedBets.length} completed bets for current user`);
+            
+            // Map each event ID to true in the bets map
+            completedBets.forEach(eventId => {
+              if (eventId) {
+                console.log(`[fetchCircuit] User has completed bet for event ${eventId}`);
+                betsMap[eventId] = true;
+              }
+            });
+            
+            console.log('[fetchCircuit] Final bets map:', betsMap);
+            setUserBets(betsMap);
+          } catch (betErr) {
+            console.error('[fetchCircuit] Error fetching completed bets:', betErr);
+            // Don't fail the whole circuit load if bets can't be loaded
+            setUserBets({});
+          }
+        }
       } catch (err) {
         setError(err.message || 'Failed to load circuit details.');
         console.error(err);
@@ -231,15 +332,14 @@ function CircuitPage() {
                  onClick={() => navigate(`/league/${leagueId}/circuit/${circuitId}/complete`)}
                  startIcon={<CheckCircleIcon />}
                  sx={{
-                  background: 'linear-gradient(to right, #10B981, #059669)',
+                  background: 'rgba(16, 185, 129, 0.8)',
                   borderRadius: '8px',
                   fontWeight: 'medium',
-                  boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)',
+                  boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)',
                   '&:hover': {
-                    boxShadow: '0 6px 15px rgba(16, 185, 129, 0.4)',
-                    transform: 'translateY(-2px)',
+                    background: 'rgba(16, 185, 129, 0.9)',
+                    boxShadow: '0 3px 6px rgba(16, 185, 129, 0.3)',
                   },
-                  transition: 'all 0.3s ease',
                  }}
                >
                  Complete Circuit
@@ -321,7 +421,7 @@ function CircuitPage() {
           {/* Left Column: Component Events */}
           <Grid item xs={12} md={7}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-              Component Events
+              Events
             </Typography>
             {!hasJoined && circuit.status !== 'completed' && (
               <Alert severity="info" sx={{ mb: 2 }}>
@@ -343,14 +443,21 @@ function CircuitPage() {
                   <TableBody>
                     {circuit.component_events && circuit.component_events.length > 0 ? (
                       circuit.component_events.map(({ league_event, weight }) => (
-                        <TableRow hover key={league_event.id}>
-                          <TableCell sx={{ fontWeight: 'medium' }}>
-                             <Tooltip title={league_event.id === circuit.tiebreaker_event?.id ? "Tiebreaker Event" : ""}>
-                                <Box display="flex" alignItems="center">
-                                    {league_event.id === circuit.tiebreaker_event?.id && <GavelIcon fontSize="inherit" sx={{ mr: 0.5, color: '#A78BFA' }} />}
-                                    {league_event.event_name}
-                                </Box>
-                            </Tooltip>
+                        <TableRow 
+                          key={league_event.id}
+                          sx={{ 
+                            '&:last-child td, &:last-child th': { border: 0 },
+                            backgroundColor: userBets[league_event.id] ? 'rgba(16, 185, 129, 0.1)' : 'inherit',
+                            border: userBets[league_event.id] ? '1px solid rgba(16, 185, 129, 0.3)' : 'inherit',
+                          }}
+                        >
+                          <TableCell component="th" scope="row">
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              {userBets[league_event.id] && (
+                                <DoneIcon color="success" sx={{ mr: 1 }} />
+                              )}
+                              {league_event.event_name}
+                            </Box>
                           </TableCell>
                           <TableCell>{league_event.sport}</TableCell>
                           <TableCell>
@@ -366,15 +473,40 @@ function CircuitPage() {
                                 />
                            </TableCell>
                           <TableCell align="right">
-                             <Button
+                            {userBets[league_event.id] ? (
+                              // User has placed a bet on this event
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="success"
+                                startIcon={<DoneIcon />}
+                                onClick={() => navigate(`/league/${leagueId}/circuit/${circuitId}/event/${league_event.id}/place-bet`)} 
+                                sx={{ ml: 1 }}
+                              >
+                                Bet Placed
+                              </Button>
+                            ) : league_event.completed ? (
+                              // Event is completed but user has no bet
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                disabled
+                                sx={{ ml: 1 }}
+                              >
+                                Event Completed
+                              </Button>
+                            ) : (
+                              // Event is not completed and user has no bet
+                              <Button
                                 size="small"
                                 variant="outlined"
                                 onClick={() => navigate(`/league/${leagueId}/circuit/${circuitId}/event/${league_event.id}/place-bet`)} 
-                                disabled={!hasJoined || league_event.completed || circuit.status === 'completed'} 
+                                disabled={!hasJoined || circuit.status === 'completed'} 
                                 sx={{ ml: 1 }}
                               >
                                 Place Bet
                               </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
@@ -413,7 +545,10 @@ function CircuitPage() {
                           <TableCell sx={{ width: 50, fontWeight: 'bold', color: index < 3 ? '#F59E0B' : 'inherit' }}>{index + 1}</TableCell>
                           <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <Avatar sx={{ width: 28, height: 28, mr: 1, fontSize: '0.8rem', bgcolor: '#8B5CF6' }}>
+                              <Avatar 
+                                src={getProfileImageUrl(p.user)}
+                                sx={{ width: 28, height: 28, mr: 1, fontSize: '0.8rem', bgcolor: '#8B5CF6' }}
+                              >
                                 {p.user.username ? p.user.username[0].toUpperCase() : '?'}
                               </Avatar>
                               {p.user.username}

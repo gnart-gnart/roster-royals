@@ -6,7 +6,7 @@ class Migration(migrations.Migration):
        ('groups', '0015_update_circuit_status'),
    ]
 
-    operations = [
+   operations = [
         migrations.AlterField(
             model_name='circuit',
             name='status',

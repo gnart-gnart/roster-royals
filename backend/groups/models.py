@@ -219,6 +219,12 @@ class CircuitParticipant(models.Model):
         related_name='tiebreaker_participant_link',
         help_text="Link to the user's specific bet on the circuit's tiebreaker event."
     )
+    completed_bets = models.ManyToManyField(
+        LeagueEvent,
+        related_name='circuit_participants_completed',
+        blank=True,
+        help_text="League events that this participant has already placed bets on."
+    )
 
     class Meta:
         unique_together = ('circuit', 'user')
