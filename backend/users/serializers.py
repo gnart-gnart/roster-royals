@@ -6,7 +6,10 @@ class UserSerializer(serializers.ModelSerializer):
     
     def get_profile_image_url(self, obj):
         if hasattr(obj, 'profile_image') and obj.profile_image:
-            return obj.profile_image_url
+            url = obj.profile_image_url
+            print(f"Serializer: profile_image_url for {obj.username}: {url}")
+            return url
+        print(f"Serializer: No profile image for {obj.username}, using default")
         return '/media/profile_images/default_profile.png'
         
     class Meta:

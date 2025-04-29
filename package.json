@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "react-confetti": "^6.4.0",
     "recharts": "^2.15.3"
   }
 }

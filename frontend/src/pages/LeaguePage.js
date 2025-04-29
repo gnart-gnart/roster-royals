@@ -115,9 +115,9 @@ function InviteDialog({ open, onClose, friends, onInvite, loading }) {
   const handleInvite = () => {
     // Ensure we're passing an array of friend IDs
     if (selectedFriends && selectedFriends.length > 0) {
-      onInvite(selectedFriends);
-      setSelectedFriends([]);
-      setSearchQuery('');
+    onInvite(selectedFriends);
+    setSelectedFriends([]);
+    setSearchQuery('');
     } else {
       // If no friends selected, do nothing or show a message
       console.warn("No friends selected for invitation");
@@ -568,8 +568,8 @@ function LeaguePage() {
                         (selectedFriendIds ? [selectedFriendIds] : []);
       
       if (friendIds.length === 0) {
-        setSnackbar({
-          open: true,
+      setSnackbar({
+        open: true,
           message: 'No friends selected to invite',
           severity: 'warning'
         });
@@ -598,9 +598,9 @@ function LeaguePage() {
         setSnackbar({
           open: true,
           message: 'All invites sent successfully!',
-          severity: 'success'
-        });
-        setInviteDialogOpen(false);
+        severity: 'success'
+      });
+      setInviteDialogOpen(false);
       } else if (successCount > 0) {
         // Some invites succeeded
         setSnackbar({
@@ -911,8 +911,8 @@ function LeaguePage() {
               position: 'relative',
               zIndex: 1
             }}>
-              <IconButton 
-                onClick={() => navigate('/home')}
+          <IconButton 
+            onClick={() => navigate('/home')}
                 sx={{ 
                   color: '#f8fafc',
                   bgcolor: 'rgba(255, 255, 255, 0.05)',
@@ -921,38 +921,38 @@ function LeaguePage() {
                   },
                   transition: 'all 0.2s ease'
                 }}
-              >
-                <ArrowBackIcon />
-              </IconButton>
+          >
+            <ArrowBackIcon />
+          </IconButton>
               
-              {isEditing ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-                  <TextField
-                    name="name"
-                    value={editFormData.name}
-                    onChange={handleInputChange}
-                    variant="outlined"
-                    size="small"
-                    sx={{ 
-                      flex: 1,
-                      '& .MuiOutlinedInput-root': {
-                        color: '#f8fafc',
+          {isEditing ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+              <TextField
+                name="name"
+                value={editFormData.name}
+                onChange={handleInputChange}
+                variant="outlined"
+                size="small"
+                sx={{ 
+                  flex: 1,
+                  '& .MuiOutlinedInput-root': {
+                    color: '#f8fafc',
                         bgcolor: 'rgba(15, 23, 42, 0.3)',
-                        '& fieldset': {
-                          borderColor: 'rgba(148, 163, 184, 0.2)',
-                        },
-                        '&:hover fieldset': {
-                          borderColor: 'rgba(148, 163, 184, 0.3)',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#8B5CF6',
-                        },
-                      }
-                    }}
-                  />
+                    '& fieldset': {
+                      borderColor: 'rgba(148, 163, 184, 0.2)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(148, 163, 184, 0.3)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#8B5CF6',
+                    },
+                  }
+                }}
+              />
                   <Tooltip title="Save changes">
-                    <IconButton 
-                      onClick={handleSaveEdit}
+              <IconButton 
+                onClick={handleSaveEdit}
                       sx={{ 
                         color: '#10B981',
                         bgcolor: 'rgba(16, 185, 129, 0.1)',
@@ -960,13 +960,13 @@ function LeaguePage() {
                           bgcolor: 'rgba(16, 185, 129, 0.2)',
                         }
                       }}
-                    >
-                      <SaveIcon />
-                    </IconButton>
+              >
+                <SaveIcon />
+              </IconButton>
                   </Tooltip>
                   <Tooltip title="Cancel">
-                    <IconButton 
-                      onClick={handleCancelEdit}
+              <IconButton 
+                onClick={handleCancelEdit}
                       sx={{ 
                         color: '#EF4444',
                         bgcolor: 'rgba(239, 68, 68, 0.1)',
@@ -974,12 +974,12 @@ function LeaguePage() {
                           bgcolor: 'rgba(239, 68, 68, 0.2)',
                         }
                       }}
-                    >
-                      <CancelIcon />
-                    </IconButton>
+              >
+                <CancelIcon />
+              </IconButton>
                   </Tooltip>
-                </Box>
-              ) : (
+            </Box>
+          ) : (
                 <Typography 
                   variant="h4" 
                   sx={{ 
@@ -997,47 +997,47 @@ function LeaguePage() {
                   }}
                 >
                   <EmojiEventsIcon /> {league?.name}
-                </Typography>
-              )}
+            </Typography>
+          )}
               
-              {isCaptain && !isEditing && (
+          {isCaptain && !isEditing && (
                 <Grow in={true} timeout={1000}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<EditIcon />}
-                    onClick={handleEditClick}
-                    sx={{
-                      borderColor: '#8B5CF6',
-                      color: '#8B5CF6',
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={handleEditClick}
+              sx={{
+                borderColor: '#8B5CF6',
+                color: '#8B5CF6',
                       borderRadius: '8px',
                       px: 2,
                       py: 1,
                       textTransform: 'none',
                       fontWeight: 'medium',
-                      '&:hover': {
-                        borderColor: '#7C3AED',
-                        backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                '&:hover': {
+                  borderColor: '#7C3AED',
+                  backgroundColor: 'rgba(139, 92, 246, 0.08)',
                         transform: 'translateY(-2px)',
-                      },
+                },
                       transition: 'all 0.2s ease',
-                    }}
-                  >
-                    Edit League
-                  </Button>
+              }}
+            >
+              Edit League
+            </Button>
                 </Grow>
               )}
-            </Box>
           </Box>
+        </Box>
         </Fade>
 
         {/* League Details Card with enhanced styling */}
         <Slide direction="up" in={true} timeout={400} mountOnEnter unmountOnExit>
-          <Card sx={{ 
+        <Card sx={{ 
             bgcolor: alpha('#1e293b', 0.7),
             backgroundImage: 'linear-gradient(to bottom right, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))',
             borderRadius: '16px', 
             border: '1px solid rgba(226, 232, 240, 0.1)',
-            mb: 4,
+          mb: 4,
             overflow: 'hidden',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
             position: 'relative',
@@ -1050,11 +1050,11 @@ function LeaguePage() {
               height: '4px',
               background: 'linear-gradient(to right, #8B5CF6, #3B82F6)',
             }
-          }}>
-            <CardContent sx={{ 
-              display: 'flex', 
-              flexDirection: { xs: 'column', md: 'row' },
-              gap: 4,
+        }}>
+          <CardContent sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: 4,
               alignItems: 'flex-start',
               p: { xs: 2.5, md: 3 }
             }}>
@@ -1097,53 +1097,53 @@ function LeaguePage() {
                     transform: 'scale(1.02)'
                   }
                 }}>
-                  <img 
-                    src={isEditing ? getPreviewUrl(editFormData.image) : getImageUrl(league?.image)}
-                    alt={league?.name}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "/images/default_image_updated.png";
-                    }}
-                    style={{
-                      width: '100%',
+              <img 
+                src={isEditing ? getPreviewUrl(editFormData.image) : getImageUrl(league?.image)}
+                alt={league?.name}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "/images/default_image_updated.png";
+                }}
+                style={{
+                  width: '100%',
                       height: '100%',
-                      objectFit: 'cover',
-                    }}
-                  />
+                  objectFit: 'cover',
+                }}
+              />
                 </Box>
-                {isEditing && (
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    fullWidth
+              {isEditing && (
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
                     startIcon={<EditIcon />}
-                    sx={{
-                      mt: 2,
-                      borderColor: '#8B5CF6',
-                      color: '#8B5CF6',
+                  sx={{
+                    mt: 2,
+                    borderColor: '#8B5CF6',
+                    color: '#8B5CF6',
                       textTransform: 'none',
                       fontWeight: 'medium',
                       py: 1,
                       borderRadius: '8px',
-                      '&:hover': {
-                        borderColor: '#7C3AED',
-                        backgroundColor: 'rgba(139, 92, 246, 0.08)',
-                      },
-                    }}
-                  >
-                    Change Image
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={handleImageChange}
-                    />
-                  </Button>
-                )}
-              </Box>
+                    '&:hover': {
+                      borderColor: '#7C3AED',
+                      backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                    },
+                  }}
+                >
+                  Change Image
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                </Button>
+              )}
+            </Box>
 
               {/* Description Section with improved styling */}
-              <Box sx={{ flex: 1 }}>
+            <Box sx={{ flex: 1 }}>
                 <Typography variant="h6" sx={{ 
                   color: '#94A3B8', 
                   mb: 2, 
@@ -1161,37 +1161,37 @@ function LeaguePage() {
                     marginRight: '8px'
                   }
                 }}>
-                  About the League
-                </Typography>
+                About the League
+              </Typography>
                 
-                {isEditing ? (
-                  <TextField
-                    name="description"
-                    value={editFormData.description}
-                    onChange={handleInputChange}
-                    variant="outlined"
-                    fullWidth
-                    multiline
-                    rows={4}
-                    placeholder="Add a description for your league"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        color: '#CBD5E1',
-                        backgroundColor: 'rgba(15, 23, 42, 0.3)',
+              {isEditing ? (
+                <TextField
+                  name="description"
+                  value={editFormData.description}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                  fullWidth
+                  multiline
+                  rows={4}
+                  placeholder="Add a description for your league"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      color: '#CBD5E1',
+                      backgroundColor: 'rgba(15, 23, 42, 0.3)',
                         borderRadius: '8px',
-                        '& fieldset': {
-                          borderColor: 'rgba(148, 163, 184, 0.2)'
-                        },
-                        '&:hover fieldset': {
-                          borderColor: 'rgba(148, 163, 184, 0.3)'
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#8B5CF6'
-                        }
+                      '& fieldset': {
+                        borderColor: 'rgba(148, 163, 184, 0.2)'
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(148, 163, 184, 0.3)'
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#8B5CF6'
                       }
-                    }}
-                  />
-                ) : (
+                    }
+                  }}
+                />
+              ) : (
                   <Typography variant="body1" sx={{ 
                     color: '#CBD5E1', 
                     lineHeight: 1.7, 
@@ -1201,9 +1201,9 @@ function LeaguePage() {
                     bgcolor: 'rgba(15, 23, 42, 0.3)',
                     border: '1px solid rgba(148, 163, 184, 0.1)',
                   }}>
-                    {league?.description || 'No description available.'}
-                  </Typography>
-                )}
+                  {league?.description || 'No description available.'}
+                </Typography>
+              )}
                 
                 {/* League statistics overview */}
                 <Box sx={{ 
@@ -1281,9 +1281,9 @@ function LeaguePage() {
                     </Box>
                   </Box>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
+            </Box>
+          </CardContent>
+        </Card>
         </Slide>
 
         {/* Tabs Navigation */}
@@ -1394,32 +1394,32 @@ function LeaguePage() {
                     }
                   }}>
                     <LayersIcon /> Circuits
-                  </Typography>
-                  {isCaptain && (
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => navigate(`/league/${id}/create-circuit`)}
-                      sx={{
+                </Typography>
+                {isCaptain && (
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => navigate(`/league/${id}/create-circuit`)}
+                    sx={{
                         background: 'linear-gradient(to right, #F59E0B, #D97706)',
-                        color: 'white',
+                      color: 'white',
                         borderRadius: '8px',
-                        textTransform: 'none',
-                        fontWeight: 'medium',
-                        px: 2,
+                      textTransform: 'none',
+                      fontWeight: 'medium',
+                      px: 2,
                         py: 1,
                         boxShadow: '0 4px 10px rgba(245, 158, 11, 0.3)',
-                        '&:hover': {
+                      '&:hover': {
                           boxShadow: '0 6px 15px rgba(245, 158, 11, 0.4)',
                           transform: 'translateY(-2px)',
-                        },
+                      },
                         transition: 'all 0.3s ease',
-                      }}
-                    >
-                      Create Circuit
-                    </Button>
-                  )}
-                </Box>
+                    }}
+                  >
+                    Create Circuit
+                  </Button>
+                )}
+              </Box>
               </Fade>
 
               {/* Circuits List */}
@@ -1428,18 +1428,18 @@ function LeaguePage() {
                   {leagueCircuits.map((circuit, index) => (
                     <Grid item xs={12} sm={6} md={4} key={circuit.id}>
                       <Grow in={true} timeout={600 + (index * 100)}>
-                        <Card 
-                          onClick={() => navigate(`/league/${id}/circuit/${circuit.id}`)}
-                          sx={{ 
+                      <Card 
+                        onClick={() => navigate(`/league/${id}/circuit/${circuit.id}`)}
+                        sx={{ 
                             background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9))',
                             borderRadius: '12px', 
                             border: '1px solid rgba(245, 158, 11, 0.2)',
-                            overflow: 'hidden',
+                          overflow: 'hidden',
                             boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)',
-                            cursor: 'pointer',
+                          cursor: 'pointer',
                             height: '100%',
                             transition: 'all 0.3s ease',
-                            '&:hover': {
+                          '&:hover': {
                               transform: 'translateY(-5px)',
                               boxShadow: '0 12px 20px rgba(0, 0, 0, 0.2)',
                               borderColor: 'rgba(245, 158, 11, 0.4)',
@@ -1471,18 +1471,18 @@ function LeaguePage() {
                                 flexGrow: 1,
                                 textShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',
                               }}>
-                                {circuit.name}
-                              </Typography>
-                              <Chip 
-                                label={circuit.status || 'Upcoming'} 
-                                color={circuit.status === 'active' ? 'success' : circuit.status === 'completed' ? 'default' : 'warning'}
-                                size="small"
+                               {circuit.name}
+                             </Typography>
+                             <Chip 
+                               label={circuit.status || 'Active'} 
+                               color={circuit.status === 'active' ? 'success' : circuit.status === 'completed' ? 'default' : 'warning'}
+                               size="small"
                                 sx={{
                                   fontWeight: 'medium',
                                   boxShadow: '0 2px 5px rgba(0, 0, 0, 0.15)',
                                 }}
-                              />
-                            </Box>
+                             />
+                          </Box>
                             
                             <Box sx={{ 
                               borderLeft: '3px solid rgba(245, 158, 11, 0.3)',
@@ -1503,7 +1503,7 @@ function LeaguePage() {
                                 }
                               }}>
                                 <AttachMoneyIcon /> Entry Fee: ${circuit.entry_fee}
-                              </Typography>
+                          </Typography>
                               <Typography variant="body2" sx={{ 
                                 color: '#94A3B8',
                                 display: 'flex',
@@ -1515,7 +1515,7 @@ function LeaguePage() {
                                 }
                               }}>
                                 <PeopleAltIcon /> {circuit.participant_count || 0} participant(s)
-                              </Typography>
+                          </Typography>
                             </Box>
                             
                             <Box sx={{
@@ -1537,15 +1537,15 @@ function LeaguePage() {
                                 View Details
                               </Button>
                             </Box>
-                          </CardContent>
-                        </Card>
+                        </CardContent>
+                      </Card>
                       </Grow>
                     </Grid>
                   ))}
                 </Grid>
               ) : (
                 <Fade in={true} timeout={800}>
-                  <Card sx={{ 
+                <Card sx={{ 
                     background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8))',
                     borderRadius: '12px', 
                     border: '1px solid rgba(245, 158, 11, 0.15)',
@@ -1568,7 +1568,7 @@ function LeaguePage() {
                     </Avatar>
                     <Typography sx={{ color: '#94A3B8', mb: 2 }}>
                       No circuits running yet. {isCaptain && 'Create one to get started!'}
-                    </Typography>
+                  </Typography>
                     {isCaptain && (
                       <Button
                         variant="outlined"
@@ -1591,13 +1591,13 @@ function LeaguePage() {
                         Create Circuit
                       </Button>
                     )}
-                  </Card>
+                </Card>
                 </Fade>
               )}
             </Grid>
 
             {/* Divider */}
-            <Grid item xs={12}>
+             <Grid item xs={12}>
               <Divider sx={{ 
                 my: 4, 
                 borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -1667,8 +1667,8 @@ function LeaguePage() {
                     }
                   }}>
                     <EmojiEventsIcon /> League Events
-                  </Typography>
-                  {isCaptain && (
+                </Typography>
+                {isCaptain && (
                     <Box sx={{ 
                       display: 'flex', 
                       gap: 2,
@@ -1676,56 +1676,56 @@ function LeaguePage() {
                       width: { xs: '100%', sm: 'auto' },
                       justifyContent: { xs: 'flex-start', sm: 'flex-end' }
                     }}>
-                      <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => navigate(`/league/${id}/create-event`)}
-                        sx={{
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => navigate(`/league/${id}/create-event`)}
+                      sx={{
                           background: 'linear-gradient(to right, #8B5CF6, #6D28D9)',
-                          color: 'white',
+                        color: 'white',
                           borderRadius: '8px',
-                          textTransform: 'none',
-                          fontWeight: 'medium',
-                          px: 2,
+                        textTransform: 'none',
+                        fontWeight: 'medium',
+                        px: 2,
                           py: 1,
                           minWidth: '150px',
                           boxShadow: '0 4px 10px rgba(139, 92, 246, 0.3)',
-                          '&:hover': {
+                        '&:hover': {
                             boxShadow: '0 6px 15px rgba(139, 92, 246, 0.4)',
                             transform: 'translateY(-2px)',
-                          },
+                        },
                           transition: 'all 0.3s ease',
-                        }}
-                      >
-                        Create Event
-                      </Button>
-                      
-                      <Button
-                        variant="outlined"
+                      }}
+                    >
+                      Create Event
+                    </Button>
+                    
+                    <Button
+                      variant="outlined"
                         startIcon={<SearchIcon />}
-                        onClick={() => navigate(`/league/${id}/market`)}
-                        sx={{
-                          borderColor: '#8B5CF6',
-                          color: '#8B5CF6',
+                      onClick={() => navigate(`/league/${id}/market`)}
+                      sx={{
+                        borderColor: '#8B5CF6',
+                        color: '#8B5CF6',
                           borderRadius: '8px',
-                          textTransform: 'none',
-                          fontWeight: 'medium',
-                          px: 2,
+                        textTransform: 'none',
+                        fontWeight: 'medium',
+                        px: 2,
                           py: 1,
                           minWidth: '150px',
-                          '&:hover': {
-                            borderColor: '#7C3AED',
-                            backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                        '&:hover': {
+                          borderColor: '#7C3AED',
+                          backgroundColor: 'rgba(139, 92, 246, 0.08)',
                             transform: 'translateY(-2px)',
-                          },
+                        },
                           transition: 'all 0.3s ease',
-                        }}
-                      >
-                        Browse Market
-                      </Button>
-                    </Box>
-                  )}
-                </Box>
+                      }}
+                    >
+                      Browse Market
+                    </Button>
+                  </Box>
+                )}
+              </Box>
               </Fade>
               
               {/* Events List with enhanced cards */}
@@ -1734,13 +1734,13 @@ function LeaguePage() {
                   {leagueEvents.map((event, index) => (
                     <Grid item xs={12} key={event.id}>
                       <Grow in={true} timeout={800 + (index * 100)}>
-                        <Card sx={{ 
+                      <Card sx={{ 
                           background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9))',
                           borderRadius: '12px', 
                           border: event.completed ? 
                             '1px solid rgba(239, 68, 68, 0.2)' : 
                             '1px solid rgba(16, 185, 129, 0.2)',
-                          overflow: 'hidden',
+                        overflow: 'hidden',
                           boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)',
                           transition: 'all 0.3s ease',
                           '&:hover': {
@@ -1780,18 +1780,18 @@ function LeaguePage() {
                                 }
                               }}>
                                 <SportsTennisIcon /> {event.event_name || 'Event'}
-                              </Typography>
-                              <Chip 
-                                label={event.completed ? 'Completed' : 'Active'} 
-                                color={event.completed ? 'error' : 'success'}
-                                size="small"
+                            </Typography>
+                            <Chip 
+                              label={event.completed ? 'Completed' : 'Active'} 
+                              color={event.completed ? 'error' : 'success'}
+                              size="small"
                                 sx={{ 
                                   fontWeight: 'medium',
                                   boxShadow: '0 2px 5px rgba(0, 0, 0, 0.15)',
                                 }}
-                              />
-                            </Box>
-                            
+                            />
+                          </Box>
+                          
                             <Box sx={{ 
                               p: 2, 
                               mb: 2, 
@@ -1800,14 +1800,14 @@ function LeaguePage() {
                               border: '1px solid rgba(255, 255, 255, 0.05)',
                             }}>
                               <Grid container spacing={2}>
-                                <Grid item xs={6} sm={3}>
+                            <Grid item xs={6} sm={3}>
                                   <Typography variant="body2" sx={{ 
                                     color: '#94A3B8',
                                     fontWeight: 'medium',
                                     mb: 0.5
                                   }}>
-                                    Sport:
-                                  </Typography>
+                                Sport:
+                              </Typography>
                                   <Chip
                                     size="small"
                                     label={event.sport || 'Not specified'}
@@ -1817,16 +1817,16 @@ function LeaguePage() {
                                       fontWeight: 'medium',
                                     }}
                                   />
-                                </Grid>
-                                
-                                <Grid item xs={6} sm={3}>
+                            </Grid>
+                            
+                            <Grid item xs={6} sm={3}>
                                   <Typography variant="body2" sx={{ 
                                     color: '#94A3B8',
                                     fontWeight: 'medium',
                                     mb: 0.5
                                   }}>
-                                    Market:
-                                  </Typography>
+                                Market:
+                              </Typography>
                                   <Chip
                                     size="small"
                                     label={event.markets?.[0]?.key || 'Moneyline'}
@@ -1836,40 +1836,40 @@ function LeaguePage() {
                                       fontWeight: 'medium',
                                     }}
                                   />
-                                </Grid>
-                                
-                                <Grid item xs={6} sm={3}>
+                            </Grid>
+                            
+                            <Grid item xs={6} sm={3}>
                                   <Typography variant="body2" sx={{ 
                                     color: '#94A3B8',
                                     fontWeight: 'medium',
                                     mb: 0.5
                                   }}>
-                                    Home Team:
-                                  </Typography>
+                                Home Team:
+                              </Typography>
                                   <Typography variant="body1" sx={{ 
                                     color: '#CBD5E1',
                                     fontWeight: 'medium'
                                   }}>
-                                    {event.home_team || 'Home'}
-                                  </Typography>
-                                </Grid>
-                                
-                                <Grid item xs={6} sm={3}>
+                                {event.home_team || 'Home'}
+                              </Typography>
+                            </Grid>
+                            
+                            <Grid item xs={6} sm={3}>
                                   <Typography variant="body2" sx={{ 
                                     color: '#94A3B8',
                                     fontWeight: 'medium',
                                     mb: 0.5
                                   }}>
-                                    Away Team:
-                                  </Typography>
+                                Away Team:
+                              </Typography>
                                   <Typography variant="body1" sx={{ 
                                     color: '#CBD5E1',
                                     fontWeight: 'medium'
                                   }}>
-                                    {event.away_team || 'Away'}
-                                  </Typography>
-                                </Grid>
-                              </Grid>
+                                {event.away_team || 'Away'}
+                              </Typography>
+                            </Grid>
+                          </Grid>
                             </Box>
                             
                             <Box sx={{ 
@@ -1878,13 +1878,13 @@ function LeaguePage() {
                               gap: 2,
                               mt: 2
                             }}>
-                              {!event.completed && (
-                                <Button
+                            {!event.completed && (
+                              <Button
                                   variant="contained"
-                                  size="small"
+                                size="small"
                                   startIcon={<AttachMoneyIcon />}
-                                  onClick={() => navigate(`/league/${id}/event/${event.id}/place-user-bet`)}
-                                  sx={{
+                                onClick={() => navigate(`/league/${id}/event/${event.id}/place-user-bet`)}
+                                sx={{
                                     background: 'linear-gradient(to right, #10B981, #059669)',
                                     color: 'white',
                                     borderRadius: '8px',
@@ -1893,52 +1893,52 @@ function LeaguePage() {
                                     px: 2,
                                     py: 1,
                                     boxShadow: '0 4px 10px rgba(16, 185, 129, 0.2)',
-                                    '&:hover': {
+                                  '&:hover': {
                                       boxShadow: '0 6px 15px rgba(16, 185, 129, 0.3)',
                                       transform: 'translateY(-2px)',
-                                    },
+                                  },
                                     transition: 'all 0.3s ease',
-                                  }}
-                                >
-                                  Place Bet
-                                </Button>
-                              )}
-                              
-                              {isCaptain && !event.completed && (
-                                <Button
-                                  variant="outlined"
-                                  size="small"
+                                }}
+                              >
+                                Place Bet
+                              </Button>
+                            )}
+                            
+                            {isCaptain && !event.completed && (
+                              <Button
+                                variant="outlined"
+                                size="small"
                                   startIcon={<EmojiEventsIcon />}
-                                  onClick={() => navigate(`/league/${id}/event/${event.id}/complete`)}
-                                  sx={{
-                                    borderColor: '#F59E0B',
-                                    color: '#F59E0B',
+                                onClick={() => navigate(`/league/${id}/event/${event.id}/complete`)}
+                                sx={{
+                                  borderColor: '#F59E0B',
+                                  color: '#F59E0B',
                                     borderRadius: '8px',
                                     textTransform: 'none',
                                     fontWeight: 'medium',
                                     px: 2,
                                     py: 1,
-                                    '&:hover': {
-                                      borderColor: '#D97706',
-                                      backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                                  '&:hover': {
+                                    borderColor: '#D97706',
+                                    backgroundColor: 'rgba(245, 158, 11, 0.08)',
                                       transform: 'translateY(-2px)',
                                     },
                                     transition: 'all 0.3s ease',
-                                  }}
-                                >
-                                  Complete Event
-                                </Button>
-                              )}
-                            </Box>
-                          </CardContent>
-                        </Card>
+                                }}
+                              >
+                                Complete Event
+                              </Button>
+                            )}
+                          </Box>
+                        </CardContent>
+                      </Card>
                       </Grow>
                     </Grid>
                   ))}
                 </Grid>
               ) : (
                 <Fade in={true} timeout={800}>
-                  <Card sx={{ 
+                <Card sx={{ 
                     background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8))',
                     borderRadius: '12px', 
                     border: '1px solid rgba(139, 92, 246, 0.15)',
@@ -1960,8 +1960,8 @@ function LeaguePage() {
                       <EmojiEventsIcon sx={{ fontSize: '2rem' }} />
                     </Avatar>
                     <Typography sx={{ color: '#94A3B8', mb: 2 }}>
-                      No events yet. {isCaptain && 'Create one to get started!'}
-                    </Typography>
+                    No events yet. {isCaptain && 'Create one to get started!'}
+                  </Typography>
                     {isCaptain && (
                       <Button
                         variant="outlined"
@@ -1984,7 +1984,7 @@ function LeaguePage() {
                         Create Event
                       </Button>
                     )}
-                  </Card>
+                </Card>
                 </Fade>
               )}
             </Grid>
@@ -1997,7 +1997,7 @@ function LeaguePage() {
             <Grid item xs={12} md={6}>
               {/* Members Section with enhanced styling */}
               <Fade in={true} timeout={600}>
-                <Card sx={{ 
+              <Card sx={{ 
                   background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9))',
                   borderRadius: '12px', 
                   border: '1px solid rgba(59, 130, 246, 0.2)',
@@ -2036,14 +2036,14 @@ function LeaguePage() {
                         }
                       }}>
                         <PeopleAltIcon /> Members
-                      </Typography>
-                      {isCaptain && (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<AddIcon />}
-                          onClick={handleOpenInviteDialog}
-                          sx={{
+                    </Typography>
+                    {isCaptain && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<AddIcon />}
+                        onClick={handleOpenInviteDialog}
+                        sx={{
                             borderColor: '#3B82F6',
                             color: '#3B82F6',
                             borderRadius: '8px',
@@ -2051,18 +2051,18 @@ function LeaguePage() {
                             fontWeight: 'medium',
                             py: 0.75,
                             px: 2,
-                            '&:hover': {
+                          '&:hover': {
                               borderColor: '#2563EB',
                               backgroundColor: 'rgba(59, 130, 246, 0.08)',
                               transform: 'translateY(-2px)',
-                            },
+                          },
                             transition: 'all 0.2s ease',
-                          }}
-                        >
-                          Invite
-                        </Button>
-                      )}
-                    </Box>
+                        }}
+                      >
+                        Invite
+                      </Button>
+                    )}
+                  </Box>
 
                     {/* Existing Members List with improved styling */}
                     <List sx={{ 
@@ -2085,7 +2085,7 @@ function LeaguePage() {
                     }}>
                       {members.map((member, index) => (
                         <Grow in={true} timeout={600 + (index * 100)} key={member.id}>
-                          <ListItem
+                      <ListItem
                             sx={{ 
                               py: 1.5,
                               px: 3,
@@ -2106,28 +2106,28 @@ function LeaguePage() {
                                 borderRadius: '0 2px 2px 0',
                               } : {},
                             }}
-                            secondaryAction={
-                              isCaptain && member.id !== user.id && (
+                        secondaryAction={
+                          isCaptain && member.id !== user.id && (
                                 <Tooltip title="Remove member">
-                                  <IconButton
-                                    edge="end"
-                                    onClick={() => handleRemoveMember(member.id)}
+                            <IconButton
+                              edge="end"
+                              onClick={() => handleRemoveMember(member.id)}
                                     sx={{ 
                                       color: '#EF4444',
                                       '&:hover': {
                                         bgcolor: 'rgba(239, 68, 68, 0.1)',
                                       }
                                     }}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
+                            >
+                              <DeleteIcon />
+                            </IconButton>
                                 </Tooltip>
-                              )
-                            }
-                          >
-                            <ListItemAvatar>
-                              <Avatar 
-                                src={getMemberImageSource(member)}
+                          )
+                        }
+                      >
+                        <ListItemAvatar>
+                          <Avatar 
+                            src={getMemberImageSource(member)}
                                 sx={{ 
                                   bgcolor: member.id === league?.captain?.id ? '#8B5CF6' : '#3B82F6',
                                   width: 42,
@@ -2136,35 +2136,35 @@ function LeaguePage() {
                                   borderColor: member.id === league?.captain?.id ? 'rgba(139, 92, 246, 0.5)' : 'rgba(59, 130, 246, 0.5)',
                                   boxShadow: '0 3px 8px rgba(0, 0, 0, 0.2)',
                                 }}
-                              >
-                                {member.username[0].toUpperCase()}
-                              </Avatar>
-                            </ListItemAvatar>
-                            <ListItemText
-                              primary={
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          >
+                            {member.username[0].toUpperCase()}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                   <Typography sx={{ 
                                     color: '#f8fafc',
                                     fontWeight: 'medium'
                                   }}>
-                                    {member.username}
+                                {member.username}
                                     {member.id === user.id && ' (You)'}
-                                  </Typography>
-                                  {member.id === league?.captain?.id && (
-                                    <Chip
-                                      label="Captain"
-                                      size="small"
+                              </Typography>
+                              {member.id === league?.captain?.id && (
+                                <Chip
+                                  label="Captain"
+                                  size="small"
                                       icon={<StarIcon sx={{ fontSize: '0.8rem !important' }} />}
-                                      sx={{
+                                  sx={{
                                         bgcolor: 'rgba(139, 92, 246, 0.15)',
-                                        color: '#8B5CF6',
-                                        fontSize: '0.7rem',
-                                      }}
-                                    />
-                                  )}
-                                </Box>
-                              }
-                              secondary={
+                                    color: '#8B5CF6',
+                                    fontSize: '0.7rem',
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          }
+                          secondary={
                                 <Typography variant="body2" sx={{ 
                                   color: '#10B981',
                                   fontWeight: 'medium',
@@ -2175,22 +2175,22 @@ function LeaguePage() {
                                 }}>
                                   <AttachMoneyIcon sx={{ fontSize: '1rem' }} />
                                   {member.points || 0} points
-                                </Typography>
-                              }
-                            />
-                          </ListItem>
+                            </Typography>
+                          }
+                        />
+                      </ListItem>
                         </Grow>
-                      ))}
-                    </List>
-                  </CardContent>
-                </Card>
+                    ))}
+                  </List>
+                </CardContent>
+              </Card>
               </Fade>
             </Grid>
 
             <Grid item xs={12} md={6}>
               {/* Leaderboard Section with enhanced styling */}
               <Fade in={true} timeout={800}>
-                <Card sx={{ 
+              <Card sx={{ 
                   background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9))',
                   borderRadius: '12px', 
                   border: '1px solid rgba(16, 185, 129, 0.2)',
@@ -2207,8 +2207,8 @@ function LeaguePage() {
                     height: '4px',
                     background: 'linear-gradient(to right, #10B981, #059669)',
                   }
-                }}>
-                  <CardContent>
+              }}>
+                <CardContent>
                     {/* Leaderboard header with decoration */}
                     <Box sx={{ 
                       display: 'flex', 
@@ -2238,7 +2238,7 @@ function LeaguePage() {
                         }
                       }}>
                         <EmojiEventsIcon /> Leaderboard
-                      </Typography>
+                  </Typography>
                     </Box>
 
                     {/* Top 3 winners display with medals */}
@@ -2375,17 +2375,17 @@ function LeaguePage() {
                         background: 'rgba(16, 185, 129, 0.5)',
                       },
                     }}>
-                      {[...members]
-                        .sort((a, b) => (b.points || 0) - (a.points || 0))
-                        .map((member, index) => (
+                  {[...members]
+                    .sort((a, b) => (b.points || 0) - (a.points || 0))
+                    .map((member, index) => (
                           <Grow in={true} timeout={600 + (index * 50)} key={member.id}>
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
                                 mb: 1.5,
-                                p: 1.5,
-                                borderRadius: '8px',
+                          p: 1.5,
+                          borderRadius: '8px',
                                 bgcolor: member.id === user.id ? 'rgba(139, 92, 246, 0.1)' : 'rgba(15, 23, 42, 0.5)',
                                 border: member.id === user.id ? '1px solid rgba(139, 92, 246, 0.2)' : '1px solid rgba(30, 41, 59, 0.8)',
                                 transition: 'transform 0.2s ease, box-shadow 0.2s ease',
@@ -2393,45 +2393,45 @@ function LeaguePage() {
                                   transform: 'translateY(-2px)',
                                   boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
                                 },
-                              }}
-                            >
-                              <Typography
-                                sx={{
+                        }}
+                      >
+                        <Typography
+                          sx={{
                                   width: 28,
                                   height: 28,
-                                  borderRadius: '50%',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  mr: 2,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 'bold',
-                                  color: index < 3 ? '#f8fafc' : '#64748B',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            mr: 2,
+                            fontSize: '0.875rem',
+                            fontWeight: 'bold',
+                            color: index < 3 ? '#f8fafc' : '#64748B',
                                   bgcolor: index === 0 ? '#F59E0B' : index === 1 ? '#94A3B8' : index === 2 ? '#B45309' : 'rgba(15, 23, 42, 0.8)',
                                   border: index < 3 ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
                                   boxShadow: index < 3 ? '0 2px 4px rgba(0, 0, 0, 0.1)' : 'none',
-                                }}
-                              >
-                                {index + 1}
-                              </Typography>
-                              
-                              <Avatar
-                                src={getMemberImageSource(member)}
-                                sx={{
-                                  width: 32,
-                                  height: 32,
-                                  mr: 2,
-                                  bgcolor: member.id === league?.captain?.id ? '#8B5CF6' : '#3B82F6',
+                          }}
+                        >
+                          {index + 1}
+                        </Typography>
+                        
+                        <Avatar
+                          src={getMemberImageSource(member)}
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            mr: 2,
+                            bgcolor: member.id === league?.captain?.id ? '#8B5CF6' : '#3B82F6',
                                   border: '2px solid',
                                   borderColor: member.id === league?.captain?.id ? 'rgba(139, 92, 246, 0.5)' : 'rgba(59, 130, 246, 0.5)',
-                                }}
-                              >
-                                {member.username[0].toUpperCase()}
-                              </Avatar>
-                              
+                          }}
+                        >
+                          {member.username[0].toUpperCase()}
+                        </Avatar>
+                        
                               <Box sx={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography sx={{ color: '#f8fafc', fontWeight: 'medium' }}>
-                                  {member.username}
+                          <Typography sx={{ color: '#f8fafc', fontWeight: 'medium' }}>
+                            {member.username}
                                   {member.id === user.id && (
                                     <Typography component="span" sx={{ 
                                       color: '#8B5CF6',
@@ -2440,9 +2440,9 @@ function LeaguePage() {
                                       fontStyle: 'italic',
                                     }}>
                                       (You)
-                                    </Typography>
+                          </Typography>
                                   )}
-                                </Typography>
+                          </Typography>
                                 <Box sx={{ 
                                   display: 'flex', 
                                   alignItems: 'center', 
@@ -2455,14 +2455,14 @@ function LeaguePage() {
                                   fontSize: '0.85rem',
                                 }}>
                                   {member.points || 0} pts
-                                </Box>
-                              </Box>
+                        </Box>
+                      </Box>
                             </Box>
                           </Grow>
-                        ))}
+                    ))}
                     </Box>
-                  </CardContent>
-                </Card>
+                </CardContent>
+              </Card>
               </Fade>
             </Grid>
           </Grid>
@@ -2471,7 +2471,7 @@ function LeaguePage() {
         {/* Chat Tab */}
         <TabPanel value={tabValue} index={2}>
           <Fade in={true} timeout={800}>
-            <Card sx={{ 
+          <Card sx={{ 
               background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9))',
               borderRadius: '12px', 
               border: '1px solid rgba(139, 92, 246, 0.2)',
@@ -2507,9 +2507,9 @@ function LeaguePage() {
               }
             }}>
               <CardContent sx={{ p: 0, height: '100%', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <Chat leagueId={id} />
-              </CardContent>
-            </Card>
+              <Chat leagueId={id} />
+            </CardContent>
+          </Card>
           </Fade>
         </TabPanel>
 

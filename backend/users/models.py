@@ -20,8 +20,12 @@ class User(AbstractUser):
     def profile_image_url(self):
         """Return the URL of the profile image."""
         if self.profile_image and hasattr(self.profile_image, 'url'):
-            return self.profile_image.url
-        return '/media/profile_images/default_profile.png'
+            url = self.profile_image.url
+            print(f"Profile image URL for {self.username}: {url}")
+            return url
+        default_url = '/media/profile_images/default_profile.png'
+        print(f"Using default profile image for {self.username}: {default_url}")
+        return default_url
 
 class Friendship(models.Model):
     """Model to handle friendships and prevent self-friendship"""

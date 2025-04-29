@@ -70,23 +70,10 @@ ChartJS.register(
 
 function ProfilePage() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || { username: 'user' });
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
+  const [loading, setLoading] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    username: '',
-    bio: ''
-  });
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [showCropper, setShowCropper] = useState(false);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success'
-  });
-  
-  // Add betting stats state
   const [bettingStats, setBettingStats] = useState({
     total_bets: 0,
     win_rate: 0,
@@ -95,23 +82,85 @@ function ProfilePage() {
     user_level: 1,
     date_joined: ''
   });
-  const [loadingStats, setLoadingStats] = useState(false);
-  
-  // Replace mock data with real betting history state
   const [betHistory, setBetHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [selectedBet, setSelectedBet] = useState(null);
   const [betDetailsOpen, setBetDetailsOpen] = useState(false);
-  
-  // Format date from ISO to readable format - Move this function to the top
+  const [showFullHistory, setShowFullHistory] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    username: '',
+    bio: ''
+  });
+  const [image, setImage] = useState(null);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+
+  // Function to get profile image URL from various sources
+  const getProfileImageUrl = (user) => {
+    if (!user) return null;
+    
+    // Debug: Log the user object to see all available image-related properties
+    console.log("User profile data:", user);
+    if (user.profile_image_url) console.log("Profile image URL:", user.profile_image_url);
+    
+    // Function to get the proper image URL
+    const getImageUrl = (imageUrl) => {
+      if (!imageUrl) return null;
+      
+      // If the URL is already absolute (starts with http or https), return it as is
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+    }
+      // If the URL starts with /media/, prepend the API URL
+      if (imageUrl.startsWith('/media/')) {
+        return `${process.env.REACT_APP_API_URL}${imageUrl}`;
+      }
+      // Otherwise, assume it's a relative media path and construct the full URL
+      return `${process.env.REACT_APP_API_URL}/media/${imageUrl.replace('media/', '')}`;
+    };
+    
+    // Try embedded image from user object first
+    if (user.embeddedImageData) {
+      console.log("Using embedded image data from user object");
+      return user.embeddedImageData;
+    }
+    
+    // Then try session storage with user-specific key
+    if (user.id) {
+      const userSpecificKey = `profileImageDataUrl_${user.id}`;
+      const profileImageDataUrl = sessionStorage.getItem(userSpecificKey);
+      if (profileImageDataUrl) {
+        console.log("Using image from session storage");
+        return profileImageDataUrl;
+      }
+    }
+    
+    // Check for profile_image_url (serialized property)
+    if (user.profile_image_url) {
+      return getImageUrl(user.profile_image_url);
+    }
+    
+    // Check for profile_image (direct field from the view)
+    if (user.profile_image) {
+      return getImageUrl(user.profile_image);
+    }
+    
+    // Return avatar API URL as fallback
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=random`;
+  };
+
+  // Format date from ISO to readable format
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toISOString().split('T')[0]; // YYYY-MM-DD format
   };
-
-  // Now that formatDate is defined, we can use it in subsequent functions
   
   // Function to debug the profile image URL
   const validateProfileImageUrl = (url) => {
@@ -165,13 +214,38 @@ function ProfilePage() {
     }
   }, []);
 
-  // Update useEffect to also fetch betting history
+  // Make an explicit call to log the user's profile image
   useEffect(() => {
-    // Attempt to load user data if not already present
+    if (user && user.profile_image_url) {
+      console.log("User has profile_image_url:", user.profile_image_url);
+      console.log("Resolved image URL:", getProfileImageUrl(user));
+    } else {
+      console.log("User doesn't have profile_image_url", user);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    // Always fetch user data when the profile page loads
     const fetchUserData = async () => {
       try {
         setLoading(true);
+        console.log("Fetching user profile data...");
         const userData = await getUserProfile();
+        console.log("Fetched user data:", userData);
+        
+        // Check if there's a profile image URL
+        if (userData.profile_image_url) {
+          console.log("User has profile_image_url:", userData.profile_image_url);
+          
+          // Try to preload the image
+          const img = new Image();
+          img.onload = () => console.log("Profile image preloaded successfully");
+          img.onerror = (e) => console.error("Error preloading profile image:", e);
+          img.src = userData.profile_image_url;
+        } else {
+          console.log("User profile data doesn't include profile_image_url");
+        }
+        
         setUser(userData);
         
         // Store in localStorage
@@ -190,7 +264,7 @@ function ProfilePage() {
       }
     };
     
-    // Execute fetch operations
+    // Execute fetch - always fetch profile data when viewing the profile page
     fetchUserData();
     fetchBettingStats();
     fetchBetHistory();
@@ -385,8 +459,8 @@ function ProfilePage() {
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setSelectedImage(file);
-      setShowCropper(true);
+      setImage(file);
+      setCropDialogOpen(true);
     }
   };
 
@@ -416,7 +490,7 @@ function ProfilePage() {
       console.log(`Stored image in session storage with key: ${userSpecificKey}`);
       
       // Close the cropper
-      setShowCropper(false);
+      setCropDialogOpen(false);
       
       // Show success message
       setSnackbar({
@@ -445,8 +519,8 @@ function ProfilePage() {
   };
 
   const handleCropCancel = () => {
-    setSelectedImage(null);
-    setShowCropper(false);
+    setImage(null);
+    setCropDialogOpen(false);
   };
 
   const handleSubmitProfileUpdate = async (e) => {
@@ -1055,7 +1129,8 @@ function ProfilePage() {
                   mb: 3
                 }}>
                   <Avatar 
-                    src={user.embeddedImageData || (user.id ? sessionStorage.getItem(`profileImageDataUrl_${user.id}`) : null)}
+                    src={getProfileImageUrl(user)}
+                    alt={user.username || "User"}
                     sx={{ 
                       bgcolor: '#8B5CF6', 
                       width: 140, 
@@ -1066,8 +1141,12 @@ function ProfilePage() {
                     }}
                     imgProps={{
                       style: { objectFit: 'cover' },
+                      onLoad: (e) => {
+                        console.log("Profile image loaded successfully:", e.target.src);
+                      },
                       onError: (e) => {
                         console.error('Error loading profile image:', e);
+                        console.log('Image src was:', e.target.src);
                         e.target.src = ''; // Clear src to show fallback
                       }
                     }}
@@ -1964,9 +2043,9 @@ function ProfilePage() {
         </DialogActions>
       </Dialog>
       
-      {showCropper && selectedImage && (
+      {cropDialogOpen && image && (
         <CircularImageCropper
-          image={selectedImage}
+          image={image}
           onCropComplete={handleCropComplete}
           onCancel={handleCropCancel}
         />

@@ -12,10 +12,12 @@ import PlaceBetPage from './pages/PlaceBetPage';
 import CreateEventPage from './pages/CreateEventPage';
 import CreateCircuitPage from './pages/CreateCircuitPage';
 import CircuitPage from './pages/CircuitPage';
+import PlaceCircuitBetPage from './pages/PlaceCircuitBetPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import CompleteEventPage from './pages/CompleteEventPage';
 import SettingsPage from './pages/SettingsPage';
 import UserProfilePage from './pages/UserProfilePage';
+import CompleteCircuitPage from './pages/CompleteCircuitPage';
 
 const theme = createTheme({
   palette: {
@@ -190,6 +192,14 @@ function App() {
             }
           />
           <Route
+            path="/league/:leagueId/circuit/:circuitId/event/:eventId/place-bet"
+            element={
+              <ProtectedRoute>
+                <PlaceCircuitBetPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/league/:leagueId/event/:eventId/place-user-bet"
             element={
               <ProtectedRoute>
@@ -210,6 +220,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <CompleteEventPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/league/:leagueId/circuit/:circuitId/complete"
+            element={
+              <ProtectedRoute>
+                <CompleteCircuitPage />
               </ProtectedRoute>
             }
           />

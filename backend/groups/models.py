@@ -159,11 +159,10 @@ class Circuit(models.Model):
         help_text="The designated tiebreaker event. Must be one of the component events."
     )
     status = models.CharField(max_length=20, choices=[
-        ('upcoming', 'Upcoming'),
         ('active', 'Active'),
         ('calculating', 'Calculating Results'),
         ('completed', 'Completed'),
-    ], default='upcoming')
+    ], default='active')
     winner = models.ForeignKey(
         User,
         related_name='circuits_won',
@@ -183,9 +182,6 @@ class Circuit(models.Model):
             # Ensure tiebreaker is one of the component events
             if self.tiebreaker_event and not self.component_events.filter(pk=self.tiebreaker_event.pk).exists():
                 raise ValidationError("The tiebreaker event must be one of the component events.")
-            # Ensure tiebreaker event type is appropriate
-            if self.tiebreaker_event and self.tiebreaker_event.betting_type == 'standard':
-                raise ValidationError("The selected tiebreaker event must have a tiebreaker betting type (e.g., Closest Guess).")
 
     def __str__(self):
         return f"Circuit: {self.name} in League: {self.league.name}"
@@ -222,6 +218,12 @@ class CircuitParticipant(models.Model):
         blank=True,
         related_name='tiebreaker_participant_link',
         help_text="Link to the user's specific bet on the circuit's tiebreaker event."
+    )
+    completed_bets = models.ManyToManyField(
+        LeagueEvent,
+        related_name='circuit_participants_completed',
+        blank=True,
+        help_text="League events that this participant has already placed bets on."
     )
 
     class Meta:

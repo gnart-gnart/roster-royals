@@ -329,33 +329,51 @@ export const getLeagueEvents = async (leagueId) => {
  */
 export const placeBet = async (betData) => {
   try {
-    console.log(`Placing bet with data:`, betData);
+    console.log(`[placeBet] Placing bet with data:`, betData);
+
+    // Prepare request data in the format expected by the backend
+    const requestData = {
+      league_id: betData.leagueId,
+      event_key: betData.eventKey,
+      event_id: betData.eventId,
+      event_name: betData.eventName,
+      sport: betData.sport,
+      commence_time: betData.commenceTime,
+      home_team: betData.homeTeam,
+      away_team: betData.awayTeam,
+      market_data: {
+        marketKey: betData.marketKey,
+        outcomeKey: betData.outcomeKey,
+        odds: betData.odds,
+        amount: betData.amount
+      },
+      // Add outcomeKey directly at the top level as well
+      // This is critically important for tiebreaker events
+      outcomeKey: betData.outcomeKey
+    };
+    
+    // Add circuit-specific data if this is a circuit bet
+    if (betData.isCircuitBet) {
+      requestData.circuitId = betData.circuitId;
+      requestData.isCircuitBet = true;
+      requestData.weight = betData.weight || 1;
+      
+      console.log(`[placeBet] Placing circuit bet for circuit ${betData.circuitId} with weight ${betData.weight}`);
+      console.log(`[placeBet] Final request data:`, JSON.stringify(requestData));
+    }
 
     // Use getHeaders to stay consistent with other API calls
     const response = await fetch(`${API_URL}/api/leagues/bets/post_league_event/`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({
-        league_id: betData.leagueId,
-        event_key: betData.eventKey,
-        event_id: betData.eventId,
-        event_name: betData.eventName,
-        sport: betData.sport,
-        commence_time: betData.commenceTime,
-        home_team: betData.homeTeam,
-        away_team: betData.awayTeam,
-        market_data: {
-          marketKey: betData.marketKey,
-          outcomeKey: betData.outcomeKey,
-          odds: betData.odds,
-          amount: betData.amount
-        }
-      }),
+      body: JSON.stringify(requestData),
     });
 
-    return handleResponse(response);
+    const data = await handleResponse(response);
+    console.log(`[placeBet] Response:`, data);
+    return data;
   } catch (error) {
-    console.error('Error placing bet:', error);
+    console.error('[placeBet] Error placing bet:', error);
     throw error;
   }
 };
@@ -472,6 +490,111 @@ export const getCircuitDetail = async (circuitId) => {
     }
 };
 
+/**
+ * Fetch user bets for a specific event within a circuit
+ * @param {string|number} circuitId - The ID of the circuit
+ * @param {string|number} eventId - The ID of the event
+ * @returns {Promise<Array>} - A promise that resolves to an array of user bets for the event
+ */
+export const getCircuitUserBets = async (circuitId, eventId) => {
+  try {
+    console.log(`[getCircuitUserBets] Fetching bets for circuit ${circuitId}, event ${eventId}`);
+    
+    const url = eventId ? 
+      `${API_URL}/api/circuits/${circuitId}/events/${eventId}/bets/` : 
+      `${API_URL}/api/circuits/${circuitId}/events/0/bets/`;
+    
+    console.log(`[getCircuitUserBets] API URL: ${url}`);
+    
+    const response = await fetch(url, {
+      headers: getHeaders(),
+    });
+    
+    if (!response.ok) {
+      console.error(`[getCircuitUserBets] API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`[getCircuitUserBets] Error response: ${errorText}`);
+      throw new Error(`Failed to fetch circuit user bets: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // Filter to only include current user's bets
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userId = user.id;
+    const userBets = data.filter(bet => bet.user_id === userId);
+    
+    console.log(`[getCircuitUserBets] Success: Found ${userBets.length} bets for user on event ${eventId} in circuit ${circuitId} (out of ${data.length} total bets)`, userBets);
+    return userBets;
+  } catch (error) {
+    console.error(`[getCircuitUserBets] Exception:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch all user bets for a circuit
+ * @param {string|number} circuitId - The ID of the circuit
+ * @returns {Promise<Array>} - A promise that resolves to an array of the current user's bets for the circuit
+ */
+export const getCurrentUserCircuitBets = async (circuitId) => {
+  try {
+    console.log(`[getCurrentUserCircuitBets] Fetching bets for circuit ${circuitId}`);
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userId = user.id;
+    
+    if (!userId) {
+      console.error('[getCurrentUserCircuitBets] No user ID found in localStorage');
+      return [];
+    }
+    
+    console.log(`[getCurrentUserCircuitBets] Current user ID: ${userId}`);
+    
+    // First try getting all events in the circuit
+    const circuitDetails = await getCircuitDetail(circuitId);
+    
+    if (!circuitDetails || !circuitDetails.component_events || circuitDetails.component_events.length === 0) {
+      console.log('[getCurrentUserCircuitBets] No component events found in circuit');
+      return [];
+    }
+    
+    console.log(`[getCurrentUserCircuitBets] Found ${circuitDetails.component_events.length} events in circuit`);
+    
+    // Get bets for each event and combine them
+    const allBets = [];
+    const eventIds = circuitDetails.component_events.map(ce => ce.league_event.id);
+    
+    console.log(`[getCurrentUserCircuitBets] Event IDs: ${eventIds.join(', ')}`);
+    
+    for (const component of circuitDetails.component_events) {
+      try {
+        const eventId = component.league_event.id;
+        const eventBets = await getCircuitUserBets(circuitId, eventId);
+        
+        // The backend returns only bets for the specified circuit already
+        if (eventBets.length > 0) {
+          console.log(`[getCurrentUserCircuitBets] Found ${eventBets.length} bets for event ${eventId} in circuit ${circuitId}`);
+          // Add event_id to each bet since it's not included in the backend response
+          const betsWithEventId = eventBets.map(bet => ({
+            ...bet,
+            event_id: eventId
+          }));
+          allBets.push(...betsWithEventId);
+        }
+      } catch (err) {
+        console.warn(`[getCurrentUserCircuitBets] Failed to fetch bets for event`, err);
+        // Continue with other events
+      }
+    }
+    
+    console.log(`[getCurrentUserCircuitBets] Total bets found: ${allBets.length}`, allBets);
+    return allBets;
+  } catch (error) {
+    console.error('[getCurrentUserCircuitBets] Error:', error);
+    throw error;
+  }
+};
+
 export const getUserProfile = async () => {
   const response = await fetch(`${API_URL}/api/profile/`, {
     headers: getHeaders(),
@@ -533,5 +656,142 @@ export const updateUserSettings = async (settingsData) => {
     body: JSON.stringify(settingsData),
   });
   return handleResponse(response);
+};
+
+/**
+ * Join a circuit
+ * @param {string|number} circuitId - The ID of the circuit to join
+ * @returns {Promise<Object>} - A promise resolving to the API response
+ */
+export const joinCircuit = async (circuitId) => {
+  try {
+    const response = await fetch(`${API_URL}/api/circuits/${circuitId}/join/`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    console.error('Error joining circuit:', error);
+    throw error;
+  }
+};
+
+/**
+ * Complete a circuit with tiebreaker
+ * @param {number} circuitId - The ID of the circuit to complete
+ * @param {number} tiebreakerEventId - The ID of the tiebreaker event
+ * @param {string|number} tiebreakerValue - The correct value for the tiebreaker
+ * @returns {Promise<Object>} - A promise that resolves to the API response
+ */
+export const completeCircuitWithTiebreaker = async (circuitId, tiebreakerEventId, tiebreakerValue) => {
+  try {
+    console.log(`[completeCircuitWithTiebreaker] Starting for circuit ${circuitId}, tiebreaker event ${tiebreakerEventId}`);
+    console.log(`[completeCircuitWithTiebreaker] Tiebreaker value (${typeof tiebreakerValue}): ${tiebreakerValue}`);
+    
+    // Ensure tiebreakerValue is properly formatted as string if it's a number
+    const formattedValue = typeof tiebreakerValue === 'number' ? String(tiebreakerValue) : tiebreakerValue;
+    
+    // Log the request body before sending
+    const requestBody = {
+      tiebreaker_value: formattedValue
+    };
+    console.log(`[completeCircuitWithTiebreaker] Request body:`, requestBody);
+    
+    // Include the tiebreakerEventId in the URL path instead of the request body
+    const response = await fetch(`${API_URL}/api/circuits/${circuitId}/complete-with-tiebreaker/${tiebreakerEventId}/`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(requestBody),
+    });
+    
+    const data = await handleResponse(response);
+    
+    // Log the response to help diagnose issues
+    console.log(`[completeCircuitWithTiebreaker] Response received:`, data);
+    if (data.winners) {
+      console.log(`[completeCircuitWithTiebreaker] Winners: ${data.winners.length}`, data.winners);
+      console.log(`[completeCircuitWithTiebreaker] Total prize: ${data.total_prize}`);
+      console.log(`[completeCircuitWithTiebreaker] Prize per winner: ${data.prize_per_winner}`);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('[completeCircuitWithTiebreaker] Error completing circuit with tiebreaker:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get events that the current user has already placed bets on in a circuit
+ * @param {string|number} circuitId - The ID of the circuit
+ * @returns {Promise<Array>} - A promise that resolves to an array of event IDs
+ */
+export const getCircuitCompletedBets = async (circuitId) => {
+  try {
+    console.log(`[getCircuitCompletedBets] Fetching completed bets for circuit ${circuitId}`);
+    
+    const response = await fetch(`${API_URL}/api/circuits/${circuitId}/completed-bets/`, {
+      headers: getHeaders(),
+    });
+    
+    if (!response.ok) {
+      console.error(`[getCircuitCompletedBets] API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`[getCircuitCompletedBets] Error response: ${errorText}`);
+      throw new Error(`Failed to fetch completed bets: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`[getCircuitCompletedBets] Success: Found ${data.length} completed bets`, data);
+    return data;
+  } catch (error) {
+    console.error(`[getCircuitCompletedBets] Exception:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Complete a specific event within a circuit
+ * @param {string|number} circuitId - The ID of the circuit
+ * @param {string|number} eventId - The ID of the event to complete
+ * @param {string} winningOutcome - The winning outcome of the event
+ * @param {number|null} numericValue - Optional numeric value for tiebreaker events
+ * @returns {Promise<Object>} - A promise that resolves to the updated circuit data
+ */
+export const completeCircuitEvent = async (circuitId, eventId, winningOutcome, numericValue = null) => {
+  try {
+    console.log(`[completeCircuitEvent] Completing event ${eventId} in circuit ${circuitId}`);
+    console.log(`[completeCircuitEvent] Winning outcome: ${winningOutcome}, Numeric value: ${numericValue}`);
+    
+    const requestData = {
+      winning_outcome: winningOutcome
+    };
+    
+    // Include numeric value if provided
+    if (numericValue !== null) {
+      requestData.numeric_value = numericValue;
+    }
+    
+    const response = await fetch(`${API_URL}/api/circuits/${circuitId}/events/${eventId}/complete-event/`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(requestData),
+    });
+    
+    const data = await handleResponse(response);
+    
+    // Check for participant_updates in the response
+    if (data.participant_updates) {
+      console.log(`[completeCircuitEvent] Participant updates received:`, data.participant_updates);
+    } else {
+      console.warn(`[completeCircuitEvent] No participant_updates in response data`);
+      console.log(`[completeCircuitEvent] Response keys:`, Object.keys(data));
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('[completeCircuitEvent] Error completing circuit event:', error);
+    throw error;
+  }
 };
 
