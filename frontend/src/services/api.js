@@ -759,7 +759,15 @@ export const completeCircuitEvent = async (circuitId, eventId, winningOutcome, n
     });
     
     const data = await handleResponse(response);
-    console.log(`[completeCircuitEvent] Response:`, data);
+    
+    // Check for participant_updates in the response
+    if (data.participant_updates) {
+      console.log(`[completeCircuitEvent] Participant updates received:`, data.participant_updates);
+    } else {
+      console.warn(`[completeCircuitEvent] No participant_updates in response data`);
+      console.log(`[completeCircuitEvent] Response keys:`, Object.keys(data));
+    }
+    
     return data;
   } catch (error) {
     console.error('[completeCircuitEvent] Error completing circuit event:', error);

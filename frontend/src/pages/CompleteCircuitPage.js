@@ -76,6 +76,39 @@ function CompleteCircuitPage() {
   const [isCaptain, setIsCaptain] = useState(false);
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
+  // New state to track participants with recent score changes
+  const [updatedParticipants, setUpdatedParticipants] = useState({});
+  const [lastCompletedEvent, setLastCompletedEvent] = useState(null);
+
+  // Add global CSS to head for animations
+  React.useEffect(() => {
+    // Add keyframes styles to document
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+      @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.05); opacity: 1; }
+        100% { transform: scale(1); opacity: 0.8; }
+      }
+      @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(10px); }
+        50% { opacity: 1; transform: translateY(-5px); }
+        100% { opacity: 0; transform: translateY(-15px); }
+      }
+      @keyframes scoreHighlight {
+        0% { background-color: transparent; }
+        30% { background-color: rgba(16, 185, 129, 0.2); }
+        100% { background-color: transparent; }
+      }
+    `;
+    document.head.appendChild(styleEl);
+    
+    // Cleanup
+    return () => {
+      document.head.removeChild(styleEl);
+    };
+  }, []);
+
   // Function to get user profile image URL
   const getProfileImageUrl = (user) => {
     // If this is the current user, check for embedded image data
@@ -197,6 +230,18 @@ function CompleteCircuitPage() {
     fetchData();
   }, [circuitId, leagueId, currentUser.id]);
 
+  // New effect to clear animations after a delay
+  useEffect(() => {
+    if (Object.keys(updatedParticipants).length > 0) {
+      // Clear the participant updates after a timeout
+      const timer = setTimeout(() => {
+        setUpdatedParticipants({});
+      }, 5000); // 5 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [updatedParticipants]);
+
   // Helper function to get possible outcomes for an event
   const getPossibleOutcomes = (eventComponent) => {
     if (!eventComponent) return [];
@@ -308,6 +353,62 @@ function CompleteCircuitPage() {
         outcome,
         numericValue
       );
+      
+      // Extract info about the completed event from response
+      const completedEventInfo = response.completed_event || {};
+      const eventWeight = completedEventInfo.weight || currentEvent.weight;
+      
+      // Find which participants got points by comparing their scores
+      if (circuit && response) {
+        // Use participant_updates if provided by the API
+        if (response.participant_updates && Object.keys(response.participant_updates).length > 0) {
+          console.log('Using participant_updates from API:', response.participant_updates);
+          
+          // Convert participant_updates to the expected format for animations
+          const newScoreUpdates = {};
+          Object.entries(response.participant_updates).forEach(([userId, data]) => {
+            newScoreUpdates[userId] = {
+              points: data.points,
+              username: data.username,
+              weight: eventWeight
+            };
+          });
+          
+          setUpdatedParticipants(newScoreUpdates);
+        } else {
+          // Fallback to calculating score differences manually
+          console.log('No participant_updates in API response, calculating manually');
+          const prevScores = {};
+          circuit.participants.forEach(p => {
+            prevScores[p.user.id] = p.score;
+          });
+          
+          // Find participants who got points
+          const newScoreUpdates = {};
+          response.participants.forEach(p => {
+            const prevScore = prevScores[p.user.id] || 0;
+            const scoreChange = p.score - prevScore;
+            
+            if (scoreChange > 0) {
+              newScoreUpdates[p.user.id] = {
+                points: scoreChange,
+                username: p.user.username,
+                weight: eventWeight
+              };
+            }
+          });
+          
+          setUpdatedParticipants(newScoreUpdates);
+        }
+        
+        // Set last completed event info for display
+        setLastCompletedEvent({
+          id: event.id,
+          name: event.event_name,
+          outcome: outcome,
+          weight: eventWeight
+        });
+      }
       
       // Update circuit data with the response
       setCircuit(response);
@@ -440,12 +541,15 @@ function CompleteCircuitPage() {
           <TableBody>
             {sortedParticipants.map((participant, index) => {
               const isTopScore = index === 0 || participant.score === sortedParticipants[0].score;
+              const hasUpdate = updatedParticipants[participant.user.id];
               
               return (
                 <TableRow 
                   key={participant.user.id} 
                   sx={{ 
-                    bgcolor: isTopScore && hasTie ? 'rgba(139, 92, 246, 0.1)' : undefined
+                    bgcolor: isTopScore && hasTie ? 'rgba(139, 92, 246, 0.1)' : undefined,
+                    animation: hasUpdate ? 'scoreHighlight 2s ease' : 'none',
+                    transition: 'background-color 0.5s ease'
                   }}
                 >
                   <TableCell sx={{ fontWeight: 'bold' }}>{index + 1}</TableCell>
@@ -453,15 +557,44 @@ function CompleteCircuitPage() {
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Avatar 
                         src={getProfileImageUrl(participant.user)} 
-                        sx={{ width: 28, height: 28, mr: 1, fontSize: '0.8rem', bgcolor: '#8B5CF6' }}
+                        sx={{ 
+                          width: 28, 
+                          height: 28, 
+                          mr: 1, 
+                          fontSize: '0.8rem', 
+                          bgcolor: '#8B5CF6',
+                          ...(hasUpdate && {
+                            animation: 'pulse 1.5s infinite',
+                            boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)'
+                          })
+                        }}
                       >
                         {participant.user.username ? participant.user.username[0].toUpperCase() : '?'}
                       </Avatar>
                       {participant.user.username}
                     </Box>
                   </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'medium' }}>
+                  <TableCell align="right" sx={{ 
+                    fontWeight: 'medium',
+                    position: 'relative'
+                  }}>
                     {participant.score}
+                    {hasUpdate && (
+                      <Box 
+                        component="span" 
+                        sx={{
+                          position: 'absolute',
+                          right: -40,
+                          color: '#10B981',
+                          animation: 'fadeInUp 2.5s forwards',
+                          fontWeight: 'bold',
+                          fontSize: '1rem',
+                          textShadow: '0 0 5px rgba(16, 185, 129, 0.7)'
+                        }}
+                      >
+                        +{hasUpdate.points}
+                      </Box>
+                    )}
                   </TableCell>
                   <TableCell align="center">
                     {isTopScore && hasTie ? (
@@ -471,22 +604,48 @@ function CompleteCircuitPage() {
                         label="Tied for 1st" 
                         icon={<GavelIcon />} 
                       />
-                    ) : (
-                      isTopScore ? (
-                        <Chip 
-                          size="small" 
-                          color="success" 
-                          label="Leader" 
-                          icon={<EmojiEventsIcon />} 
-                        />
-                      ) : null
-                    )}
+                    ) : isTopScore ? (
+                      <Chip 
+                        size="small" 
+                        color="success" 
+                        label="Leader" 
+                        icon={<EmojiEventsIcon />} 
+                      />
+                    ) : hasUpdate ? (
+                      <Chip 
+                        size="small" 
+                        color="primary" 
+                        label={`+${hasUpdate.points} Points!`}
+                        sx={{ 
+                          animation: 'pulse 1.5s infinite',
+                          background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.7), rgba(59, 130, 246, 0.7))',
+                          fontWeight: 'bold',
+                          boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)'
+                        }}
+                      />
+                    ) : null}
                   </TableCell>
                 </TableRow>
               );
             })}
           </TableBody>
         </Table>
+        
+        {lastCompletedEvent && Object.keys(updatedParticipants).length > 0 && (
+          <Box sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <Typography variant="body2" color="primary">
+              <strong>{lastCompletedEvent.name}</strong> completed with outcome: <strong>{lastCompletedEvent.outcome}</strong> (x{lastCompletedEvent.weight} weight)
+            </Typography>
+            <Typography variant="body2" color="success.main" sx={{ mt: 0.5 }}>
+              Points awarded to: {Object.entries(updatedParticipants).map(([id, data], i) => (
+                <span key={id}>
+                  {i > 0 ? ', ' : ''}
+                  <strong>{data.username}</strong> (+{data.points})
+                </span>
+              ))}
+            </Typography>
+          </Box>
+        )}
       </TableContainer>
     );
   };

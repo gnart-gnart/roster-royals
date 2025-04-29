@@ -1289,10 +1289,24 @@ def complete_circuit_with_tiebreaker(request, circuit_id):
                 notification_type='info'
             )
             
-            return Response({
-                'message': f'Circuit completed successfully! Winner: {winner.username}',
-                'prize': str(total_prize)
-            }, status=status.HTTP_200_OK)
+            # Generate formatted winner message for response
+            winner_names = [w.username for w in winners]
+            if len(winner_names) > 1:
+                winner_message = f"Winners: {', '.join(winner_names)} (prize split: ${total_prize / len(winners):.2f} each)"
+            else:
+                winner_message = f"Winner: {winner_names[0]}"
+            
+            # Serialize the updated circuit to include in the response
+            serializer = CircuitDetailSerializer(circuit)
+            response_data = serializer.data
+            response_data.update({
+                'message': f'Circuit completed successfully! {winner_message}',
+                'winners': [{'id': w.id, 'username': w.username} for w in winners],
+                'total_prize': str(total_prize),
+                'prize_per_winner': str(total_prize / len(winners))
+            })
+            
+            return Response(response_data, status=status.HTTP_200_OK)
         
         # Handle tie with tiebreaker
         # Convert tiebreaker value to numeric if possible
@@ -1410,12 +1424,17 @@ def complete_circuit_with_tiebreaker(request, circuit_id):
             else:
                 winner_message = f"Winner: {winner_names[0]}"
             
-            return Response({
+            # Serialize the updated circuit to include in the response
+            serializer = CircuitDetailSerializer(circuit)
+            response_data = serializer.data
+            response_data.update({
                 'message': f'Circuit completed successfully! {winner_message}',
                 'winners': [{'id': w.id, 'username': w.username} for w in winners],
                 'total_prize': str(total_prize),
                 'prize_per_winner': str(prize_per_winner)
-            }, status=status.HTTP_200_OK)
+            })
+            
+            return Response(response_data, status=status.HTTP_200_OK)
         else:
             return Response({
                 'error': 'No valid winners could be determined'
@@ -1511,6 +1530,9 @@ def complete_circuit_event(request, circuit_id, event_id):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Log the winning outcome for debugging
+        logger.info(f"Completing circuit event {event_id} with winning outcome: '{winning_outcome}'")
+        
         # For tiebreaker events with numeric predictions
         correct_numeric_value = None
         if event.betting_type in ['tiebreaker_closest', 'tiebreaker_unique']:
@@ -1535,9 +1557,7 @@ def complete_circuit_event(request, circuit_id, event_id):
         
         event.save()
         
-        # Get all user bets for this event in this circuit
-        # Find all user bets for this event that are related to this circuit
-        # We need to examine the circuit_bets in the market_data to find bets related to this circuit
+        # Initialize circuit_bets in market_data if it doesn't exist
         if 'circuit_bets' not in event.market_data:
             event.market_data['circuit_bets'] = []
         
@@ -1546,51 +1566,153 @@ def complete_circuit_event(request, circuit_id, event_id):
         
         # Track participants with correct predictions
         updated_participants = []
+        participant_updates = {}
+        
+        # Fetch all UserBet models for this event to avoid repeated queries
+        all_user_bets = {bet.user_id: bet for bet in UserBet.objects.filter(league_event=event)}
+        logger.info(f"Found {len(all_user_bets)} user bets for event {event_id}")
         
         # Calculate points for each participant who bet on this event
         for participant in circuit.participants.all():
-            # Check if participant has a bet for this event
-            matching_bets = [bet for bet in this_circuit_bets if bet.get('user_id') == participant.user.id]
+            logger.info(f"Processing participant: {participant.user.username} (ID: {participant.user.id})")
             
-            if matching_bets:
-                bet = matching_bets[0]  # Take the first matching bet
-                is_correct = False
+            # Find bet in the UserBet model
+            user_bet = all_user_bets.get(participant.user.id)
+            if user_bet:
+                logger.info(f"Found UserBet for {participant.user.username}: choice='{user_bet.choice}', result={user_bet.result}")
                 
                 # For tiebreaker events with numeric values
                 if event.betting_type in ['tiebreaker_closest', 'tiebreaker_unique'] and correct_numeric_value is not None:
-                    # Store the bet for tiebreaker resolution later
-                    bet['result'] = 'pending_tiebreaker'
+                    # Store numeric choice for tiebreaker resolution later
+                    user_bet.result = 'pending_tiebreaker'
+                    user_bet.save()
+                    
+                    # Add to circuit_bets for tracking if not already there
+                    if not any(bet.get('user_id') == participant.user.id for bet in this_circuit_bets):
+                        new_bet = {
+                            'user_id': participant.user.id,
+                            'circuit_id': int(circuit_id),
+                            'outcome': str(user_bet.numeric_choice) if user_bet.numeric_choice is not None else user_bet.choice,
+                            'weight': component_event.weight,
+                            'result': 'pending_tiebreaker'
+                        }
+                        all_circuit_bets.append(new_bet)
                 else:
-                    # For standard events, check if prediction matches winning outcome
-                    user_prediction = bet.get('outcome')
-                    if user_prediction == winning_outcome:
+                    # Ensure clean string comparison by trimming whitespace
+                    user_prediction = user_bet.choice.strip() if user_bet.choice else ""
+                    winning_outcome_clean = winning_outcome.strip() if winning_outcome else ""
+                    
+                    # Case-insensitive comparison for text-based choices
+                    is_correct = user_prediction.lower() == winning_outcome_clean.lower()
+                    
+                    if is_correct:
                         # Correct prediction
-                        is_correct = True
+                        logger.info(f"Correct prediction for {participant.user.username}! '{user_prediction}' matches '{winning_outcome_clean}'")
                         # Calculate points based on event weight
                         points_earned = component_event.weight
                         participant.score += points_earned
                         
-                        # Update bet with result
-                        bet['result'] = 'won'
-                        bet['points_earned'] = points_earned
+                        # Update UserBet model
+                        user_bet.result = 'won'
+                        user_bet.points_earned = points_earned
+                        user_bet.save()
+                        
+                        # Track for UI updates
+                        participant_updates[participant.user.id] = {
+                            'points': points_earned,
+                            'username': participant.user.username
+                        }
+                        
+                        # Add to circuit_bets for tracking if not already there
+                        if not any(bet.get('user_id') == participant.user.id for bet in this_circuit_bets):
+                            new_bet = {
+                                'user_id': participant.user.id,
+                                'circuit_id': int(circuit_id),
+                                'outcome': user_prediction,
+                                'weight': component_event.weight,
+                                'result': 'won',
+                                'points_earned': points_earned
+                            }
+                            all_circuit_bets.append(new_bet)
                     else:
                         # Incorrect prediction
-                        bet['result'] = 'lost'
-                        bet['points_earned'] = 0
+                        logger.info(f"Incorrect prediction for {participant.user.username}. '{user_prediction}' does not match '{winning_outcome_clean}'")
+                        user_bet.result = 'lost'
+                        user_bet.points_earned = 0
+                        user_bet.save()
+                        
+                        # Add to circuit_bets for tracking if not already there
+                        if not any(bet.get('user_id') == participant.user.id for bet in this_circuit_bets):
+                            new_bet = {
+                                'user_id': participant.user.id,
+                                'circuit_id': int(circuit_id),
+                                'outcome': user_prediction,
+                                'weight': component_event.weight,
+                                'result': 'lost',
+                                'points_earned': 0
+                            }
+                            all_circuit_bets.append(new_bet)
                 
                 participant.save()
                 updated_participants.append(participant.id)
+            else:
+                # Also check in market_data circuit_bets if no UserBet found
+                matching_bets = [bet for bet in this_circuit_bets if bet.get('user_id') == participant.user.id]
+                if matching_bets:
+                    logger.info(f"Found circuit_bet in market_data for {participant.user.username}")
+                    bet = matching_bets[0]
+                    
+                    # Process bet similarly to UserBet
+                    if event.betting_type in ['tiebreaker_closest', 'tiebreaker_unique'] and correct_numeric_value is not None:
+                        bet['result'] = 'pending_tiebreaker'
+                    else:
+                        user_prediction = bet.get('outcome', '').strip()
+                        winning_outcome_clean = winning_outcome.strip()
+                        
+                        is_correct = user_prediction.lower() == winning_outcome_clean.lower()
+                        
+                        if is_correct:
+                            points_earned = component_event.weight
+                            participant.score += points_earned
+                            bet['result'] = 'won'
+                            bet['points_earned'] = points_earned
+                            
+                            participant_updates[participant.user.id] = {
+                                'points': points_earned,
+                                'username': participant.user.username
+                            }
+                        else:
+                            bet['result'] = 'lost'
+                            bet['points_earned'] = 0
+                    
+                    participant.save()
+                    updated_participants.append(participant.id)
         
         # Update the circuit_bets in market_data
         event.market_data['circuit_bets'] = all_circuit_bets
         event.save()
         
+        # Add notifications for users who earned points
+        for user_id, update in participant_updates.items():
+            try:
+                user = User.objects.get(id=user_id)
+                Notification.objects.create(
+                    user=user,
+                    message=f"Your prediction for {event.event_name} in circuit {circuit.name} was correct! (+{update['points']} points)",
+                    notification_type='info'
+                )
+                logger.info(f"Created win notification for user {user.username} in circuit {circuit.name}")
+            except User.DoesNotExist:
+                logger.warning(f"User with ID {user_id} not found for notification")
+        
         # Fetch updated circuit data for response
         updated_circuit = Circuit.objects.get(id=circuit_id)
         serializer = CircuitDetailSerializer(updated_circuit)
         
-        # Include information about completed event
-        response_data = serializer.data
+        # Include information about completed event and participant updates
+        response_data = dict(serializer.data)  # Convert to regular dict to ensure mutability
+        
+        # Add completed event info to response
         response_data['completed_event'] = {
             'id': event.id,
             'name': event.event_name,
@@ -1598,6 +1720,13 @@ def complete_circuit_event(request, circuit_id, event_id):
             'numeric_value': correct_numeric_value,
             'weight': component_event.weight
         }
+        
+        # Ensure participant_updates is included in the response
+        logger.info(f"Adding participant updates to response: {participant_updates}")
+        response_data['participant_updates'] = participant_updates
+        
+        # Log the final response structure to confirm participant_updates is included
+        logger.info(f"Response keys: {response_data.keys()}")
         
         return Response(response_data, status=status.HTTP_200_OK)
         

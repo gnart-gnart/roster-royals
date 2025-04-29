@@ -352,23 +352,23 @@ class Command(BaseCommand):
                     points_wagered=2  # Weight is 2
                 )
                 
-                # Bet on Grizzlies vs. Thunder - bet on Thunder (win)
+                # Bet on Grizzlies vs. Thunder - bet on Grizzlies (also lost)
                 thunder_bet = UserBet.objects.create(
                     user=participant,
                     league_event=events[1],
                     bet=bet_mapping[events[1].id],
-                    choice='Oklahoma City Thunder',  # Correct choice
-                    points_earned=1,  # Weight is 1
-                    result='won',
+                    choice='Memphis Grizzlies',  # Incorrect choice - changed from Thunder to make him lose
+                    points_earned=0,
+                    result='lost',
                     points_wagered=1  # Weight is 1
                 )
                 # Update score
-                cp.score = 1  # 1 point for slowpoke
+                cp.score = 0  # 0 points for slowpoke - lost both events
                 cp.save()
                 
                 # Add circuit points to user profile
                 if hasattr(participant, 'points'):
-                    participant.points = participant.points + 1
+                    participant.points = participant.points + 0  # No points added
                     participant.save()
                 
             elif participant == participants[1]:  # miles
@@ -435,38 +435,30 @@ class Command(BaseCommand):
             
             # Tiebreaker guesses (Lebron points - events[2])
             if participant == participants[0]:  # slowpoke
-                points_guess = 28
-            elif participant == participants[1]:  # miles
-                points_guess = 25
-            else:  # gwen
-                points_guess = 22
+                # Don't create a tiebreaker bet for Slowpoke - will be done manually during demo
+                pass
+            else:  # Miles and Gwen should have the same guess of 20
+                points_guess = 20
                 
-            tiebreaker_bet = UserBet.objects.create(
-                user=participant,
-                league_event=events[2],
-                bet=bet_mapping[events[2].id],
-                choice='',  # Not applicable for tiebreaker
-                numeric_choice=points_guess,
-                points_earned=0,  # Not computed yet
-                result='pending',
-                points_wagered=1  # Weight is 1
-            )
-            
-            # Set as tiebreaker bet for participant
-            cp.tiebreaker_bet = tiebreaker_bet
-            cp.save()
+                tiebreaker_bet = UserBet.objects.create(
+                    user=participant,
+                    league_event=events[2],
+                    bet=bet_mapping[events[2].id],
+                    choice='',  # Not applicable for tiebreaker
+                    numeric_choice=points_guess,
+                    points_earned=0,  # Not computed yet
+                    result='pending',
+                    points_wagered=1  # Weight is 1
+                )
+                
+                # Set as tiebreaker bet for participant
+                cp.tiebreaker_bet = tiebreaker_bet
+                cp.save()
             
             # Team battle bets (events[3]) - each user bets differently
             if participant == participants[0]:  # slowpoke
-                team_bet = UserBet.objects.create(
-                    user=participant,
-                    league_event=events[3],
-                    bet=bet_mapping[events[3].id],
-                    choice='Team Rocket',  # Will be incorrect
-                    points_earned=0,  # Not computed yet
-                    result='pending',
-                    points_wagered=3  # Weight is 3
-                )
+                # Don't create a team battle bet for Slowpoke - will be done manually during demo
+                pass
             elif participant == participants[1]:  # miles
                 team_bet = UserBet.objects.create(
                     user=participant,
@@ -514,18 +506,6 @@ class Command(BaseCommand):
             bet=bet_mapping[events[1].id],
             choice='Oklahoma City Thunder',  # Correct choice
             points_earned=0,  # No points since not a participant yet
-            result='pending',
-            points_wagered=1  # Weight is 1
-        )
-        
-        # Tiebreaker guess for pikachu
-        UserBet.objects.create(
-            user=pikachu,
-            league_event=events[2],
-            bet=bet_mapping[events[2].id],
-            choice='',  # Not applicable for tiebreaker
-            numeric_choice=24,  # Pikachu's guess
-            points_earned=0,  # Not computed yet
             result='pending',
             points_wagered=1  # Weight is 1
         )
