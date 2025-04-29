@@ -183,9 +183,16 @@ function CompleteCircuitPage() {
           const topScore = sortedParticipants[0].score;
           const tied = sortedParticipants.filter(p => p.score === topScore);
           
+          // Log tied participants for debugging
+          console.log(`Found ${tied.length} participants tied with top score ${topScore}`);
+          tied.forEach(p => console.log(`- ${p.user.username}: ${p.score} points`));
+          
           if (tied.length > 1) {
             setHasTie(true);
             setTiedParticipants(tied);
+          } else {
+            setHasTie(false);
+            setTiedParticipants([]);
           }
         }
         
@@ -294,7 +301,41 @@ function CompleteCircuitPage() {
     setSelectedOutcome(e.target.value);
   };
 
-  // Handle completion of the current event
+  // Function to reload circuit data
+  const reloadCircuitData = async () => {
+    try {
+      const circuitData = await getCircuitDetail(circuitId);
+      console.log("Reloaded circuit data:", circuitData);
+      
+      // Update circuit state
+      setCircuit(circuitData);
+      
+      // Check for ties in the leaderboard
+      if (circuitData.participants && circuitData.participants.length > 0) {
+        const sortedParticipants = [...circuitData.participants].sort((a, b) => b.score - a.score);
+        const topScore = sortedParticipants[0].score;
+        const tied = sortedParticipants.filter(p => p.score === topScore);
+        
+        console.log(`Reloaded data: Found ${tied.length} participants tied with top score ${topScore}`);
+        tied.forEach(p => console.log(`- ${p.user.username}: ${p.score} points`));
+        
+        if (tied.length > 1) {
+          setHasTie(true);
+          setTiedParticipants(tied);
+        } else {
+          setHasTie(false);
+          setTiedParticipants([]);
+        }
+      }
+      
+      return circuitData;
+    } catch (err) {
+      console.error("Error reloading circuit data:", err);
+      // Don't set error state to avoid disrupting UI
+      return null;
+    }
+  };
+
   const handleCompleteEvent = async (e) => {
     e.preventDefault();
     setError('');
@@ -424,6 +465,9 @@ function CompleteCircuitPage() {
       const hasTieAfterUpdate = status.has_tie || false;
       setHasTie(hasTieAfterUpdate);
       
+      // Reload circuit data to get fresh state
+      await reloadCircuitData();
+      
       // Move to next incomplete event or final step
       const remaining = incompleteEvents.slice(activeEventIndex + 1);
       if (remaining.length > 0) {
@@ -462,7 +506,7 @@ function CompleteCircuitPage() {
   };
 
   const handleFinalCircuitCompletion = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError('');
     setSuccess('');
     setSubmitting(true);
@@ -481,55 +525,70 @@ function CompleteCircuitPage() {
         setSubmitting(false);
         return;
       }
-    }
 
-    try {
-      let response;
+      console.log(`Completing circuit ${circuitId} with tiebreaker event ${tiebreakerEvent.id}, value: "${tiebreakerValue}"`);
+      console.log(`Current tied participants: ${tiedParticipants.length} with score ${tiedParticipants[0]?.score || 0}`);
       
-      // Different API calls based on whether tiebreaker is needed
-      if (activeStep === 2) {
+      try {
+        // First reload circuit data to ensure we have latest state
+        await reloadCircuitData();
+        
         // Complete with tiebreaker
-        response = await completeCircuitWithTiebreaker(
+        const response = await completeCircuitWithTiebreaker(
           circuitId, 
           tiebreakerEvent.id, 
           tiebreakerValue
         );
-      } else {
-        // Simple completion - use the final tiebreaker
-        response = await completeCircuitWithTiebreaker(
-          circuitId, 
-          circuit.tiebreaker_event?.id || 0, 
-          "0" // Default value when no tiebreaker is needed
-        );
+        
+        console.log("Tiebreaker completion response:", response);
+        console.log("Winner(s):", response.winners);
+        console.log("Total prize:", response.total_prize);
+        console.log("Prize per winner:", response.prize_per_winner);
+        
+        // Reload circuit data again to ensure we have the latest state after completion
+        await reloadCircuitData();
+        
+        // Update circuit with the response data
+        setCircuit(response);
+        setSuccess(`Circuit completed successfully! ${response.message || ''}`);
+        
+        // Navigate back to circuit page after 2 seconds
+        setTimeout(() => {
+          navigate(`/league/${leagueId}/circuit/${circuitId}`);
+        }, 2000);
+      } catch (err) {
+        console.error("Error completing circuit with tiebreaker:", err);
+        setError(err.message || 'Failed to complete the circuit');
+      } finally {
+        setSubmitting(false);
       }
-      
-      console.log('Circuit completion response:', response);
-      
-      // Show success message with winners information
-      if (response.winners && response.winners.length > 1) {
-        setSuccess(`Circuit has been completed! Winners: ${response.winners.map(w => w.username).join(', ')}. Each winner receives $${response.prize_per_winner}.`);
-      } else if (response.winners && response.winners.length === 1) {
-        setSuccess(`Circuit has been completed! Winner: ${response.winners[0].username}. Prize: $${response.total_prize}.`);
-      } else {
-        setSuccess('Circuit has been completed successfully!');
+    } else {
+      // Simple completion - use the final tiebreaker
+      try {
+        // First reload circuit data to ensure we have latest state
+        await reloadCircuitData();
+        
+        // Complete the circuit directly if there's no tie or tiebreaker needed
+        const response = await completeCircuit(circuitId);
+        
+        console.log("Standard completion response:", response);
+        
+        // Reload circuit data again to ensure we have the latest state after completion
+        await reloadCircuitData();
+        
+        setSuccess(`Circuit completed successfully! ${response.message || ''}`);
+        
+        // Navigate back to circuit page after 2 seconds
+        setTimeout(() => {
+          navigate(`/league/${leagueId}/circuit/${circuitId}`);
+        }, 2000);
+      } catch (err) {
+        console.error("Error completing circuit:", err);
+        setError(err.message || 'Failed to complete the circuit');
+      } finally {
+        setSubmitting(false);
       }
-      
-      // Update circuit
-      setCircuit({
-        ...circuit,
-        status: 'completed'
-      });
-      
-      // Redirect to circuit page after a short delay
-      setTimeout(() => {
-        navigate(`/league/${leagueId}/circuit/${circuitId}`);
-      }, 3000);
-    } catch (err) {
-      console.error('Error completing circuit:', err);
-      setError(err.message || 'Failed to complete the circuit');
     }
-    
-    setSubmitting(false);
   };
 
   const renderParticipantsTable = () => {
@@ -823,6 +882,30 @@ function CompleteCircuitPage() {
       );
     }
     
+    // Recalculate tied participants in case they weren't set correctly
+    const getTiedParticipantsInfo = () => {
+      if (circuit?.participants?.length > 0) {
+        const sortedParticipants = [...circuit.participants].sort((a, b) => b.score - a.score);
+        const topScore = sortedParticipants[0].score;
+        const tied = sortedParticipants.filter(p => p.score === topScore);
+        
+        return {
+          count: tied.length,
+          score: topScore,
+          participants: tied
+        };
+      }
+      
+      return {
+        count: 0,
+        score: 0,
+        participants: []
+      };
+    };
+    
+    // Get current tied participants info
+    const tiedInfo = getTiedParticipantsInfo();
+    
     return (
       <Card sx={{ bgcolor: 'rgba(30, 41, 59, 0.7)', mb: 4 }}>
         <CardContent>
@@ -831,9 +914,32 @@ function CompleteCircuitPage() {
           </Typography>
           
           <Alert severity="info" sx={{ mb: 3 }}>
-            {hasTie ? `${tiedParticipants.length} participants are tied for first place with ${tiedParticipants[0]?.score || 0} points.` : 'Participants are tied for first place.'} 
+            {tiedInfo.count > 1 ? 
+              `${tiedInfo.count} participants are tied for first place with ${tiedInfo.score} points.` : 
+              hasTie ? 
+                'Participants are tied for first place.' :
+                'Please complete the tiebreaker event to finalize the circuit.'
+            } 
             Please enter the correct answer for the tiebreaker event to determine the winner.
           </Alert>
+          
+          {tiedInfo.count > 1 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Tied Participants:
+              </Typography>
+              {tiedInfo.participants.map((p, index) => (
+                <Chip
+                  key={p.user.id}
+                  avatar={<Avatar src={getProfileImageUrl(p.user)} />}
+                  label={`${p.user.username} (${p.score} pts)`}
+                  variant="outlined"
+                  color="primary"
+                  sx={{ mr: 1, mb: 1 }}
+                />
+              ))}
+            </Box>
+          )}
           
           <Typography variant="subtitle1" gutterBottom>
             Tiebreaker Event: {tiebreakerEvent.event_name}

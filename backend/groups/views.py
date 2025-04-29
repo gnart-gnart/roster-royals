@@ -1340,77 +1340,102 @@ def complete_circuit_with_tiebreaker(request, circuit_id):
         
         # Get all tiebreaker bets for this circuit
         if not tiebreaker_event.market_data or 'circuit_bets' not in tiebreaker_event.market_data:
-            return Response({
-                'error': 'No tiebreaker predictions found'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        circuit_bets = tiebreaker_event.market_data.get('circuit_bets', [])
-        
-        # Filter bets to only include those from users tied for the lead in this circuit
-        tied_user_ids = [p.user.id for p in tied_participants]
-        tiebreaker_bets = [bet for bet in circuit_bets 
-                          if bet.get('circuit_id') == int(circuit_id) 
-                          and bet.get('user_id') in tied_user_ids]
-        
-        logger.info(f"Found {len(tiebreaker_bets)} tiebreaker bets for tied participants")
-        
-        # Dictionary to store each user's distance from correct answer
-        user_distances = {}
-        
-        # Calculate distances for each tied participant
-        for bet in tiebreaker_bets:
-            user_id = bet.get('user_id')
-            user_answer = bet.get('outcome')
+            # If no tiebreaker predictions found, declare all tied participants as winners
+            logger.warning(f"No tiebreaker predictions found for circuit {circuit_id}")
             
-            # Skip if user didn't place a bet on the tiebreaker
-            if not user_answer:
-                continue
+            # If no one has placed a tiebreaker bet, all tied participants win equally
+            winners = []
+            for participant in tied_participants:
+                winners.append(participant.user)
                 
-            try:
-                if numeric_tiebreaker:
-                    # For numeric answers, calculate absolute difference
-                    user_value = float(user_answer)
-                    distance = abs(user_value - correct_answer)
-                else:
-                    # For non-numeric answers, it's either exact match (0) or no match (1)
-                    if str(user_answer).lower().strip() == correct_answer:
-                        distance = 0
+            logger.info(f"Splitting prize among all {len(winners)} tied participants")
+        else:
+            circuit_bets = tiebreaker_event.market_data.get('circuit_bets', [])
+            
+            # Filter bets to only include those from users tied for the lead in this circuit
+            tied_user_ids = [p.user.id for p in tied_participants]
+            tiebreaker_bets = [bet for bet in circuit_bets 
+                              if bet.get('circuit_id') == int(circuit_id) 
+                              and bet.get('user_id') in tied_user_ids]
+            
+            logger.info(f"Found {len(tiebreaker_bets)} tiebreaker bets for tied participants")
+            
+            # Dictionary to store each user's distance from correct answer
+            user_distances = {}
+            
+            # Calculate distances for each tied participant
+            for bet in tiebreaker_bets:
+                user_id = bet.get('user_id')
+                user_answer = bet.get('outcome')
+                
+                # Skip if user didn't place a bet on the tiebreaker
+                if not user_answer:
+                    continue
+                    
+                try:
+                    if numeric_tiebreaker:
+                        # For numeric answers, calculate absolute difference
+                        user_value = float(user_answer)
+                        distance = abs(user_value - correct_answer)
                     else:
-                        distance = 1
-                        
-                user_distances[user_id] = distance
-                logger.info(f"User {user_id} distance: {distance}")
-            except (ValueError, TypeError):
-                # If user answer can't be converted to float but should be
-                if numeric_tiebreaker:
-                    user_distances[user_id] = float('inf')  # Maximum distance
-                else:
-                    # Non-numeric comparison
-                    user_distances[user_id] = 1 if str(user_answer).lower().strip() != correct_answer else 0
-        
-        # Now find the user(s) with the minimum distance
-        if not user_distances:
-            return Response({
-                'error': 'None of the tied participants had a valid prediction for the tiebreaker'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        min_distance = min(user_distances.values())
-        closest_user_ids = [user_id for user_id, distance in user_distances.items() if distance == min_distance]
-        
-        logger.info(f"Closest users to tiebreaker answer: {closest_user_ids}")
-        
-        # If still tied after tiebreaker, split the prize
-        winners = []
-        for user_id in closest_user_ids:
-            try:
-                user = User.objects.get(id=user_id)
-                winners.append(user)
-            except User.DoesNotExist:
-                logger.warning(f"User with ID {user_id} not found")
+                        # For non-numeric answers, it's either exact match (0) or no match (1)
+                        if str(user_answer).lower().strip() == correct_answer:
+                            distance = 0
+                        else:
+                            distance = 1
+                            
+                    user_distances[user_id] = distance
+                    logger.info(f"User {user_id} distance: {distance}")
+                except (ValueError, TypeError):
+                    # If user answer can't be converted to float but should be
+                    if numeric_tiebreaker:
+                        user_distances[user_id] = float('inf')  # Maximum distance
+                    else:
+                        # Non-numeric comparison
+                        user_distances[user_id] = 1 if str(user_answer).lower().strip() != correct_answer else 0
+            
+            # For users who didn't place a tiebreaker bet at all, assign maximum distance
+            for participant in tied_participants:
+                if participant.user.id not in user_distances:
+                    user_distances[participant.user.id] = float('inf') if numeric_tiebreaker else 1
+                    logger.info(f"User {participant.user.id} did not place a tiebreaker bet, assigned maximum distance")
+            
+            # Now find the user(s) with the minimum distance
+            if not user_distances:
+                # This should never happen now, but just in case
+                logger.warning("No user distances could be calculated. Splitting prize among all tied participants.")
+                winners = [p.user for p in tied_participants]
+            else:
+                min_distance = min(user_distances.values())
+                closest_user_ids = [user_id for user_id, distance in user_distances.items() if distance == min_distance]
+                
+                logger.info(f"Closest users to tiebreaker answer: {closest_user_ids} with distance {min_distance}")
+                
+                # If only one user has the minimum distance, they're the sole winner
+                # If multiple users are tied for closest, only those users split the prize
+                winners = []
+                for user_id in closest_user_ids:
+                    try:
+                        user = User.objects.get(id=user_id)
+                        winners.append(user)
+                        logger.info(f"Added winner: {user.username} (ID: {user_id})")
+                    except User.DoesNotExist:
+                        logger.warning(f"User with ID {user_id} not found")
+                
+                # If still no winners found (should never happen), include all tied participants
+                if not winners:
+                    logger.warning("No winners could be determined from closest users. Splitting among all tied participants.")
+                    winners = [p.user for p in tied_participants]
         
         # Calculate prize
         total_prize = circuit.entry_fee * participants.count()
         prize_per_winner = Decimal(str(total_prize)) / Decimal(str(len(winners)))
+        
+        # Log winners and prizes clearly for debugging
+        logger.info(f"Total prize: ${total_prize}")
+        logger.info(f"Number of winners: {len(winners)}")
+        logger.info(f"Prize per winner: ${prize_per_winner}")
+        logger.info(f"Winner usernames: {[w.username for w in winners]}")
         
         # Set winner field to first winner for DB purposes (limited to one user)
         # In case of multiple winners, this is mainly for display purposes
@@ -1423,6 +1448,7 @@ def complete_circuit_with_tiebreaker(request, circuit_id):
             for winner in winners:
                 winner.money += prize_per_winner
                 winner.save()
+                logger.info(f"Added ${prize_per_winner} to {winner.username}'s account")
                 
                 # Create notification for winner
                 if len(winners) > 1:

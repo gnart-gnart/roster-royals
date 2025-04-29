@@ -685,18 +685,38 @@ export const joinCircuit = async (circuitId) => {
  */
 export const completeCircuitWithTiebreaker = async (circuitId, tiebreakerEventId, tiebreakerValue) => {
   try {
+    console.log(`[completeCircuitWithTiebreaker] Starting for circuit ${circuitId}, tiebreaker event ${tiebreakerEventId}`);
+    console.log(`[completeCircuitWithTiebreaker] Tiebreaker value (${typeof tiebreakerValue}): ${tiebreakerValue}`);
+    
+    // Ensure tiebreakerValue is properly formatted as string if it's a number
+    const formattedValue = typeof tiebreakerValue === 'number' ? String(tiebreakerValue) : tiebreakerValue;
+    
+    // Log the request body before sending
+    const requestBody = {
+      tiebreaker_event_id: tiebreakerEventId,
+      tiebreaker_value: formattedValue
+    };
+    console.log(`[completeCircuitWithTiebreaker] Request body:`, requestBody);
+    
     const response = await fetch(`${API_URL}/api/circuits/${circuitId}/complete-with-tiebreaker/`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({
-        tiebreaker_event_id: tiebreakerEventId,
-        tiebreaker_value: tiebreakerValue
-      }),
+      body: JSON.stringify(requestBody),
     });
     
-    return handleResponse(response);
+    const data = await handleResponse(response);
+    
+    // Log the response to help diagnose issues
+    console.log(`[completeCircuitWithTiebreaker] Response received:`, data);
+    if (data.winners) {
+      console.log(`[completeCircuitWithTiebreaker] Winners: ${data.winners.length}`, data.winners);
+      console.log(`[completeCircuitWithTiebreaker] Total prize: ${data.total_prize}`);
+      console.log(`[completeCircuitWithTiebreaker] Prize per winner: ${data.prize_per_winner}`);
+    }
+    
+    return data;
   } catch (error) {
-    console.error('Error completing circuit with tiebreaker:', error);
+    console.error('[completeCircuitWithTiebreaker] Error completing circuit with tiebreaker:', error);
     throw error;
   }
 };
