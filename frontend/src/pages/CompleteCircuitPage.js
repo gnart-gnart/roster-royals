@@ -199,6 +199,9 @@ function CompleteCircuitPage() {
           // Check if event is not completed
           if (event.completed) return false;
           
+          // Exclude tiebreaker event from the events completion phase - handle it in the tiebreaker phase instead
+          if (circuitData.tiebreaker_event && event.id === circuitData.tiebreaker_event.id) return false;
+          
           // Check if it's a custom event that needs input
           const isCustomEvent = event.market_data?.custom === true;
           
@@ -432,11 +435,18 @@ function CompleteCircuitPage() {
         setTiebreakerValue('');
         setSuccess(`Event "${event.event_name}" completed successfully. Moving to next event.`);
       } else {
-        // All events completed
-        if (hasTieAfterUpdate && response.tiebreaker_event) {
-          // Need tiebreaker
+        // All regular events completed
+        
+        // Check if circuit has a tiebreaker event that needs to be handled separately
+        const hasTiebreakerEvent = circuit && circuit.tiebreaker_event && !circuit.tiebreaker_event.completed;
+        
+        // Check if there's a tie in scores requiring the tiebreaker
+        const hasTiedParticipants = status.has_tie || status.tiebreaker_needed;
+        
+        if (hasTiebreakerEvent) {
+          // Move to tiebreaker step if there's a tie or tiebreaker event needs completion
           setActiveStep(2);
-          setSuccess('All events completed. Tiebreaker required.');
+          setSuccess(`All regular events completed! ${hasTiedParticipants ? 'Participants are tied - tiebreaker required.' : 'Please complete the tiebreaker event.'}`);
         } else {
           // Ready for final completion
           setActiveStep(3);
@@ -652,10 +662,62 @@ function CompleteCircuitPage() {
 
   const renderEventCompletionStep = () => {
     if (!currentEvent) {
+      // Check if all events are completed and if we need to proceed to final completion
+      const allEventsCompleted = circuit && circuit.component_events && 
+                                circuit.component_events.every(ce => ce.league_event.completed);
+      const needsTiebreaker = circuit && circuit.tiebreaker_event && !circuit.tiebreaker_event.completed;
+      const readyForFinalCompletion = allEventsCompleted && !needsTiebreaker;
+      
       return (
-        <Alert severity="info" sx={{ mt: 3 }}>
-          No events need to be completed.
-        </Alert>
+        <Box sx={{ mt: 3 }}>
+          <Alert severity="info" sx={{ mb: 3 }}>
+            {needsTiebreaker
+              ? "All regular events have been completed. Proceed to the tiebreaker phase to complete the circuit."
+              : readyForFinalCompletion 
+                ? "All events have been completed. Ready for final completion."
+                : "No events need to be completed."}
+          </Alert>
+          
+          {/* Button to proceed to tiebreaker phase if all regular events are completed */}
+          {needsTiebreaker && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<GavelIcon />}
+                onClick={() => setActiveStep(2)}
+                sx={{
+                  background: 'rgba(139, 92, 246, 0.8)',
+                  '&:hover': { background: 'rgba(139, 92, 246, 0.9)' },
+                  px: 3,
+                  py: 1.5
+                }}
+              >
+                Proceed to Tiebreaker
+              </Button>
+            </Box>
+          )}
+          
+          {/* Button to proceed to final completion if all events are completed and no tiebreaker needed */}
+          {readyForFinalCompletion && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<EmojiEventsIcon />}
+                onClick={() => setActiveStep(3)}
+                sx={{
+                  background: 'rgba(16, 185, 129, 0.8)',
+                  '&:hover': { background: 'rgba(16, 185, 129, 0.9)' },
+                  px: 3,
+                  py: 1.5
+                }}
+              >
+                Proceed to Final Completion
+              </Button>
+            </Box>
+          )}
+        </Box>
       );
     }
     

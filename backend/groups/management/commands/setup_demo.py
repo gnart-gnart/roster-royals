@@ -464,7 +464,7 @@ class Command(BaseCommand):
                     user=participant,
                     league_event=events[3],
                     bet=bet_mapping[events[3].id],
-                    choice='Team Galactic',  # Will be correct
+                    choice='Team Rocket',  # Will be incorrect
                     points_earned=0,  # Not computed yet
                     result='pending',
                     points_wagered=3  # Weight is 3

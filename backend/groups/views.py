@@ -1248,11 +1248,29 @@ def complete_circuit_with_tiebreaker(request, circuit_id):
                 'error': 'Tiebreaker event not found'
             }, status=status.HTTP_404_NOT_FOUND)
         
-        # Check if tiebreaker event is completed
+        # If tiebreaker event is not already completed, complete it with the provided value
         if not tiebreaker_event.completed:
-            return Response({
-                'error': 'The tiebreaker event must be completed before the circuit can be finalized'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            logger.info(f"Completing tiebreaker event {tiebreaker_event_id} with value: {tiebreaker_value}")
+            
+            # Initialize market_data if it doesn't exist
+            if tiebreaker_event.market_data is None:
+                tiebreaker_event.market_data = {}
+            
+            # Update market_data with the tiebreaker value
+            try:
+                numeric_value = float(tiebreaker_value)
+                tiebreaker_event.market_data['winner'] = tiebreaker_value
+                tiebreaker_event.market_data['correct_numeric_value'] = numeric_value
+                tiebreaker_event.tiebreaker_correct_value = numeric_value
+            except (ValueError, TypeError):
+                # For non-numeric tiebreaker values
+                tiebreaker_event.market_data['winner'] = tiebreaker_value
+            
+            # Mark as completed
+            tiebreaker_event.completed = True
+            tiebreaker_event.save()
+            
+            logger.info(f"Tiebreaker event {tiebreaker_event_id} marked as completed")
         
         # Get participants ordered by score descending
         participants = circuit.participants.all().order_by('-score')
