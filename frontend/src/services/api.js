@@ -693,12 +693,12 @@ export const completeCircuitWithTiebreaker = async (circuitId, tiebreakerEventId
     
     // Log the request body before sending
     const requestBody = {
-      tiebreaker_event_id: tiebreakerEventId,
       tiebreaker_value: formattedValue
     };
     console.log(`[completeCircuitWithTiebreaker] Request body:`, requestBody);
     
-    const response = await fetch(`${API_URL}/api/circuits/${circuitId}/complete-with-tiebreaker/`, {
+    // Include the tiebreakerEventId in the URL path instead of the request body
+    const response = await fetch(`${API_URL}/api/circuits/${circuitId}/complete-with-tiebreaker/${tiebreakerEventId}/`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(requestBody),

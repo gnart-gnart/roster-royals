@@ -87,7 +87,7 @@ function CompleteCircuitPage() {
     styleEl.textContent = `
       @keyframes pulse {
         0% { transform: scale(1); opacity: 0.8; }
-        50% { transform: scale(1.05); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 15px rgba(16, 185, 129, 0.7); }
         100% { transform: scale(1); opacity: 0.8; }
       }
       @keyframes fadeInUp {
@@ -99,6 +99,10 @@ function CompleteCircuitPage() {
         0% { background-color: transparent; }
         30% { background-color: rgba(16, 185, 129, 0.2); }
         100% { background-color: transparent; }
+      }
+      @keyframes shine {
+        0% { background-position: -100% 0; }
+        100% { background-position: 200% 0; }
       }
     `;
     document.head.appendChild(styleEl);
@@ -672,6 +676,26 @@ function CompleteCircuitPage() {
                         color="secondary" 
                         label="Tied for 1st" 
                         icon={<GavelIcon />} 
+                        sx={{
+                          animation: 'pulse 2s infinite',
+                          background: 'linear-gradient(45deg, rgba(139, 92, 246, 0.8), rgba(192, 132, 252, 0.8))',
+                          fontWeight: 'bold',
+                          boxShadow: '0 0 8px rgba(139, 92, 246, 0.6)',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            top: '-50%',
+                            left: '-50%',
+                            width: '200%',
+                            height: '200%',
+                            background: 'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
+                            transform: 'rotate(30deg)',
+                            backgroundSize: '100% 100%',
+                            animation: 'shine 3s infinite linear'
+                          }
+                        }}
                       />
                     ) : isTopScore ? (
                       <Chip 
@@ -679,6 +703,26 @@ function CompleteCircuitPage() {
                         color="success" 
                         label="Leader" 
                         icon={<EmojiEventsIcon />} 
+                        sx={{
+                          animation: 'pulse 2s infinite',
+                          background: 'linear-gradient(45deg, rgba(16, 185, 129, 0.8), rgba(5, 150, 105, 0.8))',
+                          fontWeight: 'bold',
+                          boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            top: '-50%',
+                            left: '-50%',
+                            width: '200%',
+                            height: '200%',
+                            background: 'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
+                            transform: 'rotate(30deg)',
+                            backgroundSize: '100% 100%',
+                            animation: 'shine 3s infinite linear'
+                          }
+                        }}
                       />
                     ) : hasUpdate ? (
                       <Chip 
@@ -689,7 +733,21 @@ function CompleteCircuitPage() {
                           animation: 'pulse 1.5s infinite',
                           background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.7), rgba(59, 130, 246, 0.7))',
                           fontWeight: 'bold',
-                          boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)'
+                          boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            top: '-50%',
+                            left: '-50%',
+                            width: '200%',
+                            height: '200%',
+                            background: 'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
+                            transform: 'rotate(30deg)',
+                            backgroundSize: '100% 100%',
+                            animation: 'shine 2s infinite linear'
+                          }
                         }}
                       />
                     ) : null}

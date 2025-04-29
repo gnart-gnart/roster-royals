@@ -517,11 +517,7 @@ def post_league_event(request):
                     response_data = {
                         'circuit_id': circuit.id,
                         'points_wagered': points_wagered,
-                        'user_bet_id': user_bet.id,
-                        'message': 'Bet placed successfully',
-                        'bet_id': bet.id,
-                        'league_event_id': league_event.id,
-                        'is_circuit_bet': True
+                        'user_bet_id': user_bet.id
                     }
                     
                     return Response(response_data, status=status.HTTP_201_CREATED)
@@ -1203,295 +1199,311 @@ def get_circuit_event_bets(request, circuit_id, event_id):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def complete_circuit_with_tiebreaker(request, circuit_id):
+def complete_circuit_with_tiebreaker(request, circuit_id, event_id):
     """
-    Complete a circuit by resolving ties with the tiebreaker event.
-    This is used when multiple participants have tied with the highest score.
+    Completes a circuit using a tiebreaker event to determine the winner.
     """
-    try:
-        # Get the circuit
-        circuit = get_object_or_404(Circuit, id=circuit_id)
+    # Get the circuit, tiebreaker event, and validate access
+    circuit = get_object_or_404(Circuit, id=circuit_id)
+    tiebreaker_event = get_object_or_404(LeagueEvent, id=event_id)
+    
+    # Ensure the user is authorized (captain of the league)
+    if request.user.id != circuit.league.captain.id:
+        return Response({"error": "Only the league captain can complete a circuit"}, status=status.HTTP_403_FORBIDDEN)
+
+    # Check if circuit is already completed
+    if circuit.status == 'completed':
+        return Response({"error": "This circuit has already been completed"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Ensure all events are completed
+    incomplete_events = CircuitComponentEvent.objects.filter(circuit=circuit, league_event__completed=False).exclude(league_event=tiebreaker_event)
+    if incomplete_events.exists():
+        return Response({"error": "All events must be completed before finalizing the circuit"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Get the tiebreaker value from the request
+    if 'tiebreaker_value' not in request.data:
+        return Response({"error": "Tiebreaker value is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    tiebreaker_value = request.data.get('tiebreaker_value')
+    
+    print(f"[TIEBREAKER] Starting circuit completion with tiebreaker. Circuit: {circuit_id}, Event: {event_id}, Value: {tiebreaker_value}")
+    
+    # Complete the tiebreaker event if it's not already completed
+    if not tiebreaker_event.completed:
+        print(f"[TIEBREAKER] Tiebreaker event not completed yet, completing it now with value: {tiebreaker_value}")
+        # Set the correct outcome in market_data
+        market_data = tiebreaker_event.market_data or {}
+        market_data['winner'] = tiebreaker_value
+        tiebreaker_event.market_data = market_data
+        tiebreaker_event.completed = True
+        tiebreaker_event.save()
+    else:
+        print(f"[TIEBREAKER] Tiebreaker event already completed, using existing value: {tiebreaker_event.market_data.get('winner', 'N/A')}")
+
+    # Find participants with the highest score
+    participants = CircuitParticipant.objects.filter(circuit=circuit).order_by('-score')
+    
+    if not participants.exists():
+        return Response({"error": "No participants found in this circuit"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    highest_score = participants.first().score
+    tied_participants = participants.filter(score=highest_score)
+    
+    print(f"[TIEBREAKER] Found {tied_participants.count()} participants tied with highest score {highest_score}")
+    for p in tied_participants:
+        print(f"[TIEBREAKER] Tied participant: {p.user.username} with score {p.score}")
+    
+    # Determine the winner(s) based on the tiebreaker
+    if tied_participants.count() == 1:
+        # Only one participant with the highest score, no tiebreaker needed
+        print(f"[TIEBREAKER] Only one participant with highest score: {tied_participants.first().user.username}. No tiebreaker needed.")
+        winners = tied_participants
+    else:
+        # Multiple participants tied for the highest score
+        print(f"[TIEBREAKER] Multiple participants tied, resolving with tiebreaker")
         
-        # Ensure only the captain can complete the circuit
-        if circuit.captain != request.user:
-            return Response({
-                'error': 'Only the league captain can complete the circuit'
-            }, status=status.HTTP_403_FORBIDDEN)
+        # Check if there are any UserBet records for the tiebreaker event
+        tiebreaker_bets = UserBet.objects.filter(
+            user__in=[p.user.id for p in tied_participants],
+            league_event=tiebreaker_event
+        )
         
-        # Ensure circuit is active or in calculating state
-        if circuit.status not in ['active', 'calculating']:
-            return Response({
-                'error': f'Circuit cannot be completed in its current state: {circuit.status}'
-            }, status=status.HTTP_400_BAD_REQUEST)
+        print(f"[TIEBREAKER] Found {tiebreaker_bets.count()} tiebreaker bets")
         
-        # Get tiebreaker data from request
-        tiebreaker_event_id = request.data.get('tiebreaker_event_id')
-        tiebreaker_value = request.data.get('tiebreaker_value')
-        
-        # Validate tiebreaker data
-        if not tiebreaker_event_id or tiebreaker_value is None:
-            return Response({
-                'error': 'Tiebreaker event ID and value are required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Make sure the specified event is the circuit's tiebreaker
-        if not circuit.tiebreaker_event or str(circuit.tiebreaker_event.id) != str(tiebreaker_event_id):
-            return Response({
-                'error': 'The specified event is not the tiebreaker event for this circuit'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Get the tiebreaker event
-        try:
-            tiebreaker_event = LeagueEvent.objects.get(id=tiebreaker_event_id)
-        except LeagueEvent.DoesNotExist:
-            return Response({
-                'error': 'Tiebreaker event not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-        
-        # If tiebreaker event is not already completed, complete it with the provided value
-        if not tiebreaker_event.completed:
-            logger.info(f"Completing tiebreaker event {tiebreaker_event_id} with value: {tiebreaker_value}")
+        if tiebreaker_bets.exists():
+            print(f"[TIEBREAKER] Using existing tiebreaker bets to determine winner")
+            for bet in tiebreaker_bets:
+                print(f"[TIEBREAKER] Bet from {bet.user.username}: {bet.choice}")
             
-            # Initialize market_data if it doesn't exist
-            if tiebreaker_event.market_data is None:
-                tiebreaker_event.market_data = {}
-            
-            # Update market_data with the tiebreaker value
+            # Determine the winner based on the closest guess to the tiebreaker value
             try:
-                numeric_value = float(tiebreaker_value)
-                tiebreaker_event.market_data['winner'] = tiebreaker_value
-                tiebreaker_event.market_data['correct_numeric_value'] = numeric_value
-                tiebreaker_event.tiebreaker_correct_value = numeric_value
+                # Try to parse the tiebreaker value as a number
+                tiebreaker_numeric = float(tiebreaker_value)
+                print(f"[TIEBREAKER] Tiebreaker value is numeric: {tiebreaker_numeric}")
+                
+                # Calculate the distances for each participant's bet
+                bet_distances = {}
+                for bet in tiebreaker_bets:
+                    try:
+                        print(f"[TIEBREAKER] Processing bet for {bet.user.username}: choice='{bet.choice}', numeric_choice={bet.numeric_choice}")
+                        
+                        # Prioritize numeric_choice if available, otherwise try to convert choice
+                        if bet.numeric_choice is not None:
+                            bet_value = float(bet.numeric_choice)
+                            print(f"[TIEBREAKER] Using numeric_choice: {bet_value}")
+                        elif bet.choice and bet.choice.strip():
+                            bet_value = float(bet.choice)
+                            print(f"[TIEBREAKER] Converting choice to number: {bet_value}")
+                        else:
+                            raise ValueError("No valid numeric value in bet")
+                            
+                        distance = abs(bet_value - tiebreaker_numeric)
+                        bet_distances[bet.user.id] = distance
+                        print(f"[TIEBREAKER] User {bet.user.username} (ID: {bet.user.id}) bet {bet_value}, distance: {distance}")
+                    except (ValueError, TypeError) as e:
+                        # If the bet value can't be converted to a number, use a large distance
+                        bet_distances[bet.user.id] = float('inf')
+                        print(f"[TIEBREAKER] User {bet.user.username} bet has invalid numeric value: {e}. Setting distance to infinity")
+                
+                if bet_distances:
+                    # Find the minimum distance
+                    min_distance = min(bet_distances.values())
+                    print(f"[TIEBREAKER] Minimum distance found: {min_distance}")
+                    
+                    # Get all users with the minimum distance
+                    closest_users = [user_id for user_id, distance in bet_distances.items() if distance == min_distance]
+                    print(f"[TIEBREAKER] Users with closest guess: {len(closest_users)}")
+                    for user_id in closest_users:
+                        user = User.objects.get(id=user_id)
+                        print(f"[TIEBREAKER] Closest user: {user.username}")
+                    
+                    # Filter participants to only include those with the closest tiebreaker guess
+                    winners = tied_participants.filter(user__id__in=closest_users)
+                else:
+                    print(f"[TIEBREAKER] No valid numeric bets found, keeping all tied participants as winners")
+                    winners = tied_participants
             except (ValueError, TypeError):
-                # For non-numeric tiebreaker values
-                tiebreaker_event.market_data['winner'] = tiebreaker_value
+                # If tiebreaker value is not a number, use string comparison
+                print(f"[TIEBREAKER] Tiebreaker value is not numeric: {tiebreaker_value}. Using string comparison.")
+                
+                # For non-numeric tiebreakers, exact matches win
+                exact_matches = [bet.user.id for bet in tiebreaker_bets if bet.choice == tiebreaker_value]
+                
+                if exact_matches:
+                    print(f"[TIEBREAKER] Found {len(exact_matches)} users with exact match.")
+                    for user_id in exact_matches:
+                        user = User.objects.get(id=user_id)
+                        print(f"[TIEBREAKER] Exact match user: {user.username}")
+                    
+                    winners = tied_participants.filter(user__id__in=exact_matches)
+                else:
+                    print(f"[TIEBREAKER] No exact matches found, keeping all tied participants as winners")
+                    winners = tied_participants
+        else:
+            # No UserBet records found for the tiebreaker event
+            print(f"[TIEBREAKER] No existing tiebreaker bets found. Looking for UserBet records for the tied participants.")
             
-            # Mark as completed
-            tiebreaker_event.completed = True
-            tiebreaker_event.save()
-            
-            logger.info(f"Tiebreaker event {tiebreaker_event_id} marked as completed")
-        
-        # Get participants ordered by score descending
-        participants = circuit.participants.all().order_by('-score')
-        
-        if not participants.exists():
-            return Response({
-                'error': 'No participants in this circuit'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Get the top score
-        top_score = participants.first().score
-        
-        # Find participants tied for the lead
-        tied_participants = list(participants.filter(score=top_score))
-        
-        logger.info(f"Circuit {circuit_id} has {len(tied_participants)} participants tied with score {top_score}")
-        
-        # If no tie, determine the winner directly
-        if len(tied_participants) == 1:
-            winner = tied_participants[0].user
-            circuit.winner = winner
-            circuit.status = 'completed'
-            circuit.save()
-            
-            # Transfer total entry fees to winner
-            total_prize = circuit.entry_fee * participants.count()
-            winner.money += Decimal(str(total_prize))
-            winner.save()
-            
-            # Create notification for winner
-            Notification.objects.create(
-                user=winner,
-                message=f"Congratulations! You won the circuit '{circuit.name}' with {top_score} points and earned ${total_prize}!",
-                notification_type='info'
+            # If no bets for tiebreaker event, look for UserBet records for the tied participants
+            all_user_bets = UserBet.objects.filter(
+                user__in=[p.user.id for p in tied_participants],
+                league_event=tiebreaker_event
             )
             
-            # Create a winners list containing just the single winner
-            winners = [winner]
+            print(f"[TIEBREAKER] Found {all_user_bets.count()} user bets for the tiebreaker event")
             
-            # Generate formatted winner message for response
-            winner_names = [w.username for w in winners]
-            if len(winner_names) > 1:
-                winner_message = f"Winners: {', '.join(winner_names)} (prize split: ${total_prize / len(winners):.2f} each)"
-            else:
-                winner_message = f"Winner: {winner_names[0]}"
-            
-            # Serialize the updated circuit to include in the response
-            serializer = CircuitDetailSerializer(circuit)
-            response_data = serializer.data
-            response_data.update({
-                'message': f'Circuit completed successfully! {winner_message}',
-                'winners': [{'id': w.id, 'username': w.username} for w in winners],
-                'total_prize': str(total_prize),
-                'prize_per_winner': str(total_prize / len(winners))
-            })
-            
-            return Response(response_data, status=status.HTTP_200_OK)
-        
-        # Handle tie with tiebreaker
-        # Convert tiebreaker value to numeric if possible
-        try:
-            correct_answer = float(tiebreaker_value)
-            numeric_tiebreaker = True
-        except (ValueError, TypeError):
-            correct_answer = str(tiebreaker_value).lower().strip()
-            numeric_tiebreaker = False
-        
-        # Get all tiebreaker bets for this circuit
-        if not tiebreaker_event.market_data or 'circuit_bets' not in tiebreaker_event.market_data:
-            # If no tiebreaker predictions found, declare all tied participants as winners
-            logger.warning(f"No tiebreaker predictions found for circuit {circuit_id}")
-            
-            # If no one has placed a tiebreaker bet, all tied participants win equally
-            winners = []
-            for participant in tied_participants:
-                winners.append(participant.user)
+            if all_user_bets.exists():
+                print(f"[TIEBREAKER] Using user bets to determine winner")
                 
-            logger.info(f"Splitting prize among all {len(winners)} tied participants")
-        else:
-            circuit_bets = tiebreaker_event.market_data.get('circuit_bets', [])
-            
-            # Filter bets to only include those from users tied for the lead in this circuit
-            tied_user_ids = [p.user.id for p in tied_participants]
-            tiebreaker_bets = [bet for bet in circuit_bets 
-                              if bet.get('circuit_id') == int(circuit_id) 
-                              and bet.get('user_id') in tied_user_ids]
-            
-            logger.info(f"Found {len(tiebreaker_bets)} tiebreaker bets for tied participants")
-            
-            # Dictionary to store each user's distance from correct answer
-            user_distances = {}
-            
-            # Calculate distances for each tied participant
-            for bet in tiebreaker_bets:
-                user_id = bet.get('user_id')
-                user_answer = bet.get('outcome')
-                
-                # Skip if user didn't place a bet on the tiebreaker
-                if not user_answer:
-                    continue
-                    
                 try:
-                    if numeric_tiebreaker:
-                        # For numeric answers, calculate absolute difference
-                        user_value = float(user_answer)
-                        distance = abs(user_value - correct_answer)
-                    else:
-                        # For non-numeric answers, it's either exact match (0) or no match (1)
-                        if str(user_answer).lower().strip() == correct_answer:
-                            distance = 0
-                        else:
-                            distance = 1
+                    # Try to parse the tiebreaker value as a number
+                    tiebreaker_numeric = float(tiebreaker_value)
+                    print(f"[TIEBREAKER] Tiebreaker value is numeric: {tiebreaker_numeric}")
+                    
+                    # Calculate the distances for each participant's bet
+                    bet_distances = {}
+                    for bet in all_user_bets:
+                        try:
+                            print(f"[TIEBREAKER] Processing bet for {bet.user.username}: choice='{bet.choice}', numeric_choice={bet.numeric_choice}")
                             
-                    user_distances[user_id] = distance
-                    logger.info(f"User {user_id} distance: {distance}")
-                except (ValueError, TypeError):
-                    # If user answer can't be converted to float but should be
-                    if numeric_tiebreaker:
-                        user_distances[user_id] = float('inf')  # Maximum distance
+                            # Prioritize numeric_choice if available, otherwise try to convert choice
+                            if bet.numeric_choice is not None:
+                                bet_value = float(bet.numeric_choice)
+                                print(f"[TIEBREAKER] Using numeric_choice: {bet_value}")
+                            elif bet.choice and bet.choice.strip():
+                                bet_value = float(bet.choice)
+                                print(f"[TIEBREAKER] Converting choice to number: {bet_value}")
+                            else:
+                                raise ValueError("No valid numeric value in bet")
+                                
+                            distance = abs(bet_value - tiebreaker_numeric)
+                            bet_distances[bet.user.id] = distance
+                            print(f"[TIEBREAKER] User {bet.user.username} (ID: {bet.user.id}) bet {bet_value}, distance: {distance}")
+                        except (ValueError, TypeError) as e:
+                            # If the bet value can't be converted to a number, use a large distance
+                            bet_distances[bet.user.id] = float('inf')
+                            print(f"[TIEBREAKER] User {bet.user.username} bet has invalid numeric value: {e}. Setting distance to infinity")
+                    
+                    if bet_distances:
+                        # Find the minimum distance
+                        min_distance = min(bet_distances.values())
+                        print(f"[TIEBREAKER] Minimum distance found: {min_distance}")
+                        
+                        # Get all users with the minimum distance
+                        closest_users = [user_id for user_id, distance in bet_distances.items() if distance == min_distance]
+                        print(f"[TIEBREAKER] Users with closest guess: {closest_users}")
+                        for user_id in closest_users:
+                            try:
+                                user = User.objects.get(id=user_id)
+                                print(f"[TIEBREAKER] Closest user: {user.username} (ID: {user_id})")
+                            except User.DoesNotExist:
+                                print(f"[TIEBREAKER] User with ID {user_id} not found")
+                        
+                        # Filter participants to only include those with the closest tiebreaker guess
+                        winners = tied_participants.filter(user__id__in=closest_users)
+                        print(f"[TIEBREAKER] Winners after filtering for closest guess: {winners.count()}")
+                        for winner in winners:
+                            print(f"[TIEBREAKER] Winner: {winner.user.username} (ID: {winner.user.id})")
                     else:
-                        # Non-numeric comparison
-                        user_distances[user_id] = 1 if str(user_answer).lower().strip() != correct_answer else 0
-            
-            # For users who didn't place a tiebreaker bet at all, assign maximum distance
-            for participant in tied_participants:
-                if participant.user.id not in user_distances:
-                    user_distances[participant.user.id] = float('inf') if numeric_tiebreaker else 1
-                    logger.info(f"User {participant.user.id} did not place a tiebreaker bet, assigned maximum distance")
-            
-            # Now find the user(s) with the minimum distance
-            if not user_distances:
-                # This should never happen now, but just in case
-                logger.warning("No user distances could be calculated. Splitting prize among all tied participants.")
-                winners = [p.user for p in tied_participants]
+                        print(f"[TIEBREAKER] No valid numeric bets found, keeping all tied participants as winners")
+                        winners = tied_participants
+                except (ValueError, TypeError):
+                    # If tiebreaker value is not a number, use string comparison
+                    print(f"[TIEBREAKER] Tiebreaker value is not numeric: {tiebreaker_value}. Using string comparison.")
+                    
+                    # For non-numeric tiebreakers, exact matches win
+                    exact_matches = [bet.user.id for bet in all_user_bets if bet.choice == tiebreaker_value]
+                    
+                    if exact_matches:
+                        print(f"[TIEBREAKER] Found {len(exact_matches)} users with exact match.")
+                        for user_id in exact_matches:
+                            user = User.objects.get(id=user_id)
+                            print(f"[TIEBREAKER] Exact match user: {user.username}")
+                        
+                        winners = tied_participants.filter(user__id__in=exact_matches)
+                    else:
+                        print(f"[TIEBREAKER] No exact matches found, keeping all tied participants as winners")
+                        winners = tied_participants
             else:
-                min_distance = min(user_distances.values())
-                closest_user_ids = [user_id for user_id, distance in user_distances.items() if distance == min_distance]
-                
-                logger.info(f"Closest users to tiebreaker answer: {closest_user_ids} with distance {min_distance}")
-                
-                # If only one user has the minimum distance, they're the sole winner
-                # If multiple users are tied for closest, only those users split the prize
-                winners = []
-                for user_id in closest_user_ids:
-                    try:
-                        user = User.objects.get(id=user_id)
-                        winners.append(user)
-                        logger.info(f"Added winner: {user.username} (ID: {user_id})")
-                    except User.DoesNotExist:
-                        logger.warning(f"User with ID {user_id} not found")
-                
-                # If still no winners found (should never happen), include all tied participants
-                if not winners:
-                    logger.warning("No winners could be determined from closest users. Splitting among all tied participants.")
-                    winners = [p.user for p in tied_participants]
-        
-        # Calculate prize
-        total_prize = circuit.entry_fee * participants.count()
-        prize_per_winner = Decimal(str(total_prize)) / Decimal(str(len(winners)))
-        
-        # Log winners and prizes clearly for debugging
-        logger.info(f"Total prize: ${total_prize}")
-        logger.info(f"Number of winners: {len(winners)}")
-        logger.info(f"Prize per winner: ${prize_per_winner}")
-        logger.info(f"Winner usernames: {[w.username for w in winners]}")
-        
-        # Set winner field to first winner for DB purposes (limited to one user)
-        # In case of multiple winners, this is mainly for display purposes
-        if winners:
-            circuit.winner = winners[0]
-            circuit.status = 'completed'
-            circuit.save()
-            
-            # Distribute prize
-            for winner in winners:
-                winner.money += prize_per_winner
-                winner.save()
-                logger.info(f"Added ${prize_per_winner} to {winner.username}'s account")
-                
-                # Create notification for winner
-                if len(winners) > 1:
-                    Notification.objects.create(
-                        user=winner,
-                        message=f"Congratulations! You tied for 1st place in the circuit '{circuit.name}' with {top_score} points. Your share of the prize is ${prize_per_winner:.2f}!",
-                        notification_type='info'
-                    )
-                else:
-                    Notification.objects.create(
-                        user=winner,
-                        message=f"Congratulations! You won the circuit '{circuit.name}' with {top_score} points and earned ${prize_per_winner:.2f}!",
-                        notification_type='info'
-                    )
-            
-            # Generate formatted winner message for response
-            winner_names = [w.username for w in winners]
-            if len(winner_names) > 1:
-                winner_message = f"Winners: {', '.join(winner_names)} (prize split: ${prize_per_winner:.2f} each)"
-            else:
-                winner_message = f"Winner: {winner_names[0]}"
-            
-            # Serialize the updated circuit to include in the response
-            serializer = CircuitDetailSerializer(circuit)
-            response_data = serializer.data
-            response_data.update({
-                'message': f'Circuit completed successfully! {winner_message}',
-                'winners': [{'id': w.id, 'username': w.username} for w in winners],
-                'total_prize': str(total_prize),
-                'prize_per_winner': str(prize_per_winner)
-            })
-            
-            return Response(response_data, status=status.HTTP_200_OK)
-        else:
-            return Response({
-                'error': 'No valid winners could be determined'
-            }, status=status.HTTP_400_BAD_REQUEST)
+                print(f"[TIEBREAKER] No bets found for tied participants and tiebreaker event, keeping all tied participants as winners")
+                winners = tied_participants
+
+    # Calculate the prize amount
+    total_participants = participants.count()
+    total_prize = circuit.entry_fee * total_participants
     
-    except Exception as e:
-        logger.error(f"Error completing circuit with tiebreaker: {str(e)}", exc_info=True)
-        return Response({
-            'error': f'An error occurred: {str(e)}'
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    print(f"[TIEBREAKER] Total prize pool: {total_prize}")
+    print(f"[TIEBREAKER] Number of winners: {winners.count()}")
+    
+    # If there's only one winner, they get the full prize
+    if winners.count() == 1:
+        winner = winners.first()
+        prize_per_winner = total_prize
+        print(f"[TIEBREAKER] Single winner: {winner.user.username} gets full prize: {prize_per_winner}")
+        
+        # Update winner's money balance
+        winner.user.money = winner.user.money + Decimal(str(prize_per_winner))
+        winner.user.save()
+        print(f"[TIEBREAKER] Added {prize_per_winner} to {winner.user.username}'s account balance")
+        
+        # Create notification for the winner
+        Notification.objects.create(
+            user=winner.user,
+            message=f"Congratulations! You won circuit '{circuit.name}' with {winner.score} points and earned ${prize_per_winner}!",
+            notification_type='info'
+        )
+        print(f"[TIEBREAKER] Created win notification for {winner.user.username}")
+    else:
+        # Otherwise, split the prize equally
+        prize_per_winner = total_prize / winners.count()
+        print(f"[TIEBREAKER] Multiple winners, each gets: {prize_per_winner}")
+        
+        # Update each winner's money balance and create notification
+        for winner in winners:
+            # Update winner's money balance
+            winner.user.money = winner.user.money + Decimal(str(prize_per_winner))
+            winner.user.save()
+            print(f"[TIEBREAKER] Added {prize_per_winner} to {winner.user.username}'s account balance")
+            
+            # Create notification
+            Notification.objects.create(
+                user=winner.user,
+                message=f"Congratulations! You tied for 1st place in circuit '{circuit.name}' with {winner.score} points and earned ${prize_per_winner}!",
+                notification_type='info'
+            )
+            print(f"[TIEBREAKER] Created win notification for {winner.user.username}")
+    
+    winner_data = []
+    
+    # Award the prize to the winner(s)
+    for winner in winners:
+        winner.prize_amount = prize_per_winner
+        winner.save()
+        
+        # Add winner data for the response
+        winner_data.append({
+            'id': winner.user.id,
+            'username': winner.user.username,
+            'score': winner.score,
+            'prize': prize_per_winner
+        })
+        
+        print(f"[TIEBREAKER] Prize of {prize_per_winner} awarded to {winner.user.username}")
+    
+    # Complete the circuit
+    circuit.status = 'completed'
+    circuit.save()
+    
+    print(f"[TIEBREAKER] Circuit {circuit_id} marked as completed")
+    
+    # Return the winners and prize information
+    return Response({
+        'message': 'Circuit completed successfully',
+        'circuit_id': circuit.id,
+        'circuit_name': circuit.name,
+        'total_prize': total_prize,
+        'prize_per_winner': prize_per_winner,
+        'winners': winner_data
+    })
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
