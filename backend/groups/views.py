@@ -1289,6 +1289,9 @@ def complete_circuit_with_tiebreaker(request, circuit_id):
                 notification_type='info'
             )
             
+            # Create a winners list containing just the single winner
+            winners = [winner]
+            
             # Generate formatted winner message for response
             winner_names = [w.username for w in winners]
             if len(winner_names) > 1:
