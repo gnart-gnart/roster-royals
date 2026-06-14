@@ -1,4 +1,6 @@
 # Roster Royals
+> [!NOTE]
+> This project is no longer being maintained and is no longer publically available for use. You can still download and build it yourself.
 
 Roster Royals is a web application that allows users to create and manage sports betting leagues with friends. This README provides instructions for setting up the development environment, running the application locally, and understanding the production deployment process.
 
